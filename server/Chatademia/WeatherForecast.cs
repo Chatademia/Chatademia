@@ -1,4 +1,4 @@
-namespace Chatademia
+namespace chatademia
 {
     public class WeatherForecast
     {

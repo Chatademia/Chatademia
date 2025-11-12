@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace Chatademia.Controllers
+namespace chatademia.Controllers
 {
     [ApiController]
     [Route("[controller]")]

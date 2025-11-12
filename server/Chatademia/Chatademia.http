@@ -1,6 +1,6 @@
-@Chatademia_HostAddress = http://localhost:5047
+@chatademia_HostAddress = http://localhost:5165
 
-GET {{Chatademia_HostAddress}}/weatherforecast/
+GET {{chatademia_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
