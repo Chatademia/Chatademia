@@ -10,11 +10,11 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
 # Kopiujemy tylko plik projektu
-COPY server/Chatademia/Chatademia.csproj ./Chatademia/
+COPY Chatademia/Chatademia.csproj ./Chatademia/
 RUN dotnet restore ./Chatademia/Chatademia.csproj
 
 # Kopiujemy całą zawartość katalogu Chatademia
-COPY server/Chatademia/ ./Chatademia/
+COPY Chatademia/ ./Chatademia/
 
 WORKDIR /src/Chatademia
 RUN dotnet build Chatademia.csproj -c ${BUILD_CONFIGURATION} -o /app/build
