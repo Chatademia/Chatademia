@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: chatademia-postgres
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d
+    networks:
+      - chatnet
+
+  chatademia:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chatademia-server
+    depends_on:
+      - postgres
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: myuser
+      DB_PASSWORD: mypassword
+      DB_NAME: mydb
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    networks:
+      - chatnet
+
+networks:
+  chatnet:
+
+volumes:
+  pgdata:
