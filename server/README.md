@@ -9,5 +9,7 @@
 
 
 ### When you're done testing or want to rebuild the image from scratch:
-- `docker stop chatademia`
-- `docker rm chatademia`
+- `docker stop chatademia-server`
+- `docker stop chatademia-postgres`
+- `docker rm chatademia-server`
+- `docker rm chatademia-postgres`
