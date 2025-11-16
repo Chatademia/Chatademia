@@ -4,8 +4,7 @@
 - Install Docker https://docs.docker.com/desktop/setup/install/windows-install/
 - Run the docker engine (opening downloaded docker dektop should do it)
 - Open a terminal and navigate to the /server directory of the project.
-- `docker build -t chatademia .`
-- `docker run -d -p 8080:8080 --name chatademia chatademia`
+- `docker-compose up --build`
 - The api should now be available at http://localhost:8080/, like http://localhost:8080/weatherforecast
 
 
