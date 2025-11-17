@@ -6,8 +6,10 @@
 - Open a terminal and navigate to the /server directory of the project.
 - `docker-compose up --build`
 - The api should now be available at http://localhost:8080/, like http://localhost:8080/weatherforecast
+- The documentation and visualization are now available at http://localhost:8080/scalar/v1
 
 
 ### When you're done testing or want to rebuild the image from scratch:
 - `docker-compose down -v`
+
 
