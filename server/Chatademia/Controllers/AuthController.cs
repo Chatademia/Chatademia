@@ -6,13 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace chatademia.Controllers
 {
     [ApiController]
-    //[Route("api/login")]
     [Route("api/[controller]")]
-    public class LoginController : ControllerBase
+    public class AuthController : ControllerBase
     {
-        public LoginServices _loginServices;
+        public AuthServices _loginServices;
 
-        public LoginController(LoginServices loginServices)
+        public AuthController(AuthServices loginServices)
         {
             _loginServices = loginServices;
         }
@@ -22,6 +21,13 @@ namespace chatademia.Controllers
         {
             _loginServices.Login(PIN);
             return Ok();
+        }
+
+        [HttpGet("login-url")]
+        public IActionResult LoginUrl()
+        {
+            var url = _loginServices.LoginUrl();
+            return Ok(url);
         }
     }
 }

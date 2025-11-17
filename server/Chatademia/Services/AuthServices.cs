@@ -2,11 +2,11 @@
 
 namespace chatademia.Services
 {
-    public class LoginServices
+    public class AuthServices
     {
         private AppDbContext _context;
 
-        public LoginServices(AppDbContext context)
+        public AuthServices(AppDbContext context)
         {
             _context = context;
         }
@@ -14,6 +14,13 @@ namespace chatademia.Services
         public void Login(int PIN)
         {
             // Implement login logic here
+            return;
+        }
+
+        public string LoginUrl()
+        {
+            // Implement login URL logic here
+            return "https://example.com/login";
         }
     }
 }
