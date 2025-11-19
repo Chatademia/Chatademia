@@ -27,7 +27,10 @@ namespace chatademia.Services
 
         public void Login(int PIN)
         {
-            // Implement login logic here
+            User new_user = new User();
+            new_user.Username = PIN.ToString();
+            _context.Users.Add(new_user);
+            _context.SaveChanges();
             return;
         }
 
