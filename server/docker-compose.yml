@@ -22,6 +22,8 @@ services:
     depends_on:
       - postgres
     environment:
+      USOS_KEY: ${USOS_KEY}
+      USOS_SECRET: ${USOS_SECRET}
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: myuser
