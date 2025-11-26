@@ -17,12 +17,12 @@ namespace chatademia.Controllers
         }
 
         [HttpGet("pin")]
-        public IActionResult Login([FromQuery] string oauth_token, [FromQuery] int oauth_verifier)
+        public async Task<IActionResult> Login([FromQuery] string oauth_token, [FromQuery] string oauth_verifier)
         {
             //Console.WriteLine("oauth_token: " + oauth_token);
             //Console.WriteLine("oauth_verifier: " + oauth_verifier);
 
-            _loginServices.Login(oauth_verifier);
+            _loginServices.Login(oauth_token, oauth_verifier);
             return Ok();
         }
 
