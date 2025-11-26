@@ -16,10 +16,13 @@ namespace chatademia.Controllers
             _loginServices = loginServices;
         }
 
-        [HttpPost("pin")]
-        public IActionResult Login(int PIN)
+        [HttpGet("pin")]
+        public IActionResult Login([FromQuery] string oauth_token, [FromQuery] int oauth_verifier)
         {
-            _loginServices.Login(PIN);
+            //Console.WriteLine("oauth_token: " + oauth_token);
+            //Console.WriteLine("oauth_verifier: " + oauth_verifier);
+
+            _loginServices.Login(oauth_verifier);
             return Ok();
         }
 

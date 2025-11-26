@@ -14,6 +14,7 @@ namespace chatademia.Services
         private string BASE_URL = "https://usosapps.amu.edu.pl";
         private string REQUEST_TOKEN_URL = "/services/oauth/request_token";
         private string AUTHORIZE_URL = "/services/oauth/authorize";
+        private string CALLBACK_URL = "http://localhost:8080/api/Auth/pin";
         private string ACCESS_TOKEN_URL = "/services/oauth/access_token";
 
         public AuthServices(AppDbContext context, IConfiguration config)
@@ -47,12 +48,13 @@ namespace chatademia.Services
 
             var parameters = new SortedDictionary<string, string>
             {
-                { "oauth_callback", "oob" },
+                { "oauth_callback", CALLBACK_URL },
                 { "oauth_consumer_key", _USOS_KEY },
                 { "oauth_nonce", nonce },
                 { "oauth_signature_method", "HMAC-SHA1" },
                 { "oauth_timestamp", timestamp },
-                { "oauth_version", "1.0" }
+                { "oauth_version", "1.0" },
+                { "scopes", "offline_access | studies" }
             };
 
             string parameterString = string.Join("&",
@@ -84,6 +86,14 @@ namespace chatademia.Services
 
             string authHeader = BuildOAuthHeader(requestUrl, "POST");
             client.DefaultRequestHeaders.Add("Authorization", authHeader);
+
+            //var body = new
+            //{
+                //scopes = new[] { "offline_access", "studies" }
+            //};
+
+            //string json = System.Text.Json.JsonSerializer.Serialize(body);
+            //var body_serialized = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
             var response = await client.PostAsync(requestUrl, null);
             string content = await response.Content.ReadAsStringAsync();
