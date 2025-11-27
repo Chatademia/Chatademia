@@ -32,5 +32,12 @@ namespace chatademia.Controllers
             var url = await _loginServices.LoginUrl();
             return Ok(url);
         }
+
+        [HttpGet("user-data")]
+        public async Task<IActionResult> UserData(Guid id) // ADD AUTHORISATION!!!
+        {
+            var userData = await _loginServices.GetUserData(id);
+            return Ok(userData);
+        }
     }
 }

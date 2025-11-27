@@ -17,6 +17,7 @@ namespace chatademia.Services
         private string ACCESS_TOKEN_URL = "/services/oauth/access_token";
         private string AUTHORIZE_URL = "/services/oauth/authorize";
         private string CALLBACK_URL = "http://localhost:8080/api/Auth/pin";
+        //private string CALLBACK_URL = "https://www.google.com/";
 
         private string BuildOAuthHeaderAcces(string url, string method, string oauth_token,string oauth_verifier, string oauth_token_secret)
         {
@@ -119,15 +120,15 @@ namespace chatademia.Services
             Console.WriteLine("Response body:\n" + content);
 
             var query = HttpUtility.ParseQueryString(content);
-            string accesToken = query["oauth_token"].ToString();
-            string accesSecret = query["oauth_token_secret"].ToString();
+            string accessToken = query["oauth_token"].ToString();
+            string accessSecret = query["oauth_token_secret"].ToString();
 
             Console.WriteLine("\n=== TOKENS RECEIVED ===");
-            Console.WriteLine("oauth_token_acces = " + accesToken);
-            Console.WriteLine("oauth_token_secret_acces = " + accesSecret); 
+            Console.WriteLine("oauth_token_acces = " + accessToken);
+            Console.WriteLine("oauth_token_secret_acces = " + accessSecret); 
 
 
-            user.PermaAccesToken = accesSecret;
+            user.PermaAccessToken = accessSecret;
             await _context.SaveChangesAsync();
 
             return;
@@ -168,13 +169,20 @@ namespace chatademia.Services
             User new_user = new User();
             new_user.OAuthToken = requestToken;
             new_user.OAuthTokenSecret = requestSecret;
-            new_user.PermaAccesToken = "test";
+            new_user.PermaAccessToken = "test";
             await _context.Users.AddAsync(new_user);
             await _context.SaveChangesAsync();
 
             Console.WriteLine("GOT HERE");
 
             return finalUrl;
+        }
+
+
+        public async Task<User> GetUserData(Guid id) // to finish
+        {
+            using var _context = _factory.CreateDbContext();
+            var user = _context.Users.FirstOrDefaultAsync(u => u.Id == id);
         }
     }
 }
