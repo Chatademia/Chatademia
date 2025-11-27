@@ -9,6 +9,7 @@ import {useState} from "react";
 import edit from "../assets/edit.svg";
 import invite from "../assets/users.svg";
 import leave from "../assets/logoutRed.svg";
+import {Link} from "react-router-dom";
 
 function Chat() {
 
@@ -55,10 +56,12 @@ function Chat() {
                  
                  {logoutBar && (
                         <div className="absolute bottom-14 left-4 bg-white border rounded-lg shadow-lg w-72 z-10">
+                            <Link to="/">
                             <div className="flex gap-2 items-center justify-left px-4">
                                 <img src={leave} alt="leave" className="h-5 w-5"/>
                                 <h1 className="px-4 py-2 font-semibold text-red-400 cursor-pointer">Wyloguj się</h1>
                             </div>
+                            </Link>
                         </div>
                       )}
 
