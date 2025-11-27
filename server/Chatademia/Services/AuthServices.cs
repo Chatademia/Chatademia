@@ -182,7 +182,8 @@ namespace chatademia.Services
         public async Task<User> GetUserData(Guid id) // to finish
         {
             using var _context = _factory.CreateDbContext();
-            var user = _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            return user;
         }
     }
 }
