@@ -96,11 +96,10 @@ namespace chatademia.Services
                 throw new ArgumentNullException("USOS_SECRET is missing from configuration");
         }
 
-        public async Task Login(string oauth_token,string oauth_verifier)
+        public async Task<string> Login(string oauth_token,string oauth_verifier)
         {
             using var _context = _factory.CreateDbContext();
             User user = await _context.Users.FirstOrDefaultAsync(u => u.OAuthToken == oauth_token);
-            Console.WriteLine(_context.Entry(user).State);
 
             string requestUrl = BASE_URL + ACCESS_TOKEN_URL;
 
@@ -131,7 +130,7 @@ namespace chatademia.Services
             user.PermaAccessToken = accessSecret;
             await _context.SaveChangesAsync();
 
-            return;
+            return accessSecret;
         }
 
         public async Task<string> LoginUrl()
@@ -173,16 +172,25 @@ namespace chatademia.Services
             await _context.Users.AddAsync(new_user);
             await _context.SaveChangesAsync();
 
-            Console.WriteLine("GOT HERE");
 
             return finalUrl;
         }
 
-
-        public async Task<User> GetUserData(Guid id) // to finish
+        public async Task<User> GetUserData(string oauth_token, string oauth_verifier) // to finish
         {
             using var _context = _factory.CreateDbContext();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+            var access_token = await Login(oauth_token, oauth_verifier);
+            if (access_token == null)
+                throw new Exception("Login() returned null access token");
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.PermaAccessToken == access_token); //to implement USOS query later
+            if (user == null)
+                throw new Exception($"User with PermaAccessToken '{access_token}' not found");
+
+            user.FirstName = "TestName";
+            user.LastName = "TestName";
+            await _context.SaveChangesAsync();
             return user;
         }
     }

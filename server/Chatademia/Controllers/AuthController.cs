@@ -22,7 +22,7 @@ namespace chatademia.Controllers
             //Console.WriteLine("oauth_token: " + oauth_token);
             //Console.WriteLine("oauth_verifier: " + oauth_verifier);
 
-            _loginServices.Login(oauth_token, oauth_verifier);
+            await _loginServices.Login(oauth_token, oauth_verifier);
             return Ok();
         }
 
@@ -34,9 +34,9 @@ namespace chatademia.Controllers
         }
 
         [HttpGet("user-data")]
-        public async Task<IActionResult> UserData(Guid id) // ADD AUTHORISATION!!!
+        public async Task<IActionResult> UserData([FromQuery] string oauth_token, [FromQuery] string oauth_verifier)
         {
-            var userData = await _loginServices.GetUserData(id);
+            var userData = await _loginServices.GetUserData(oauth_token, oauth_verifier);
             return Ok(userData);
         }
     }

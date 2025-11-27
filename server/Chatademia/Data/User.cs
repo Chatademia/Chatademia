@@ -10,7 +10,7 @@ namespace chatademia.Data
         public string LastName { get; set; } = "";
         public string OAuthToken { get; set; } = "";
         public string OAuthTokenSecret { get; set; } = "";
-        public string PermaAccessToken { get; set; } = "";
+        public string PermaAccessToken { get; set; } = ""; // TO REMOVE FIELD!
         public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
         public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 
