@@ -1,14 +1,15 @@
 ﻿using chatademia.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
-using System.Web;
 using System.Security.Cryptography;
 using System.Text;
+using System.Web;
 
 namespace chatademia.Services
 {
     public class AuthServices
     {
-        private AppDbContext _context;
+        private readonly IDbContextFactory<AppDbContext> _factory;
         private readonly string _USOS_KEY;
         private readonly string _USOS_SECRET;
         private string BASE_URL = "https://usosapps.amu.edu.pl";
@@ -85,9 +86,9 @@ namespace chatademia.Services
             return header;
         }
 
-        public AuthServices(AppDbContext context, IConfiguration config)
+        public AuthServices(IDbContextFactory<AppDbContext> factory, IConfiguration config)
         {
-            _context = context;
+            _factory = factory;
             _USOS_KEY = config["USOS_KEY"] ?? 
                 throw new ArgumentNullException("USOS_KEY is missing from configuration");
             _USOS_SECRET = config["USOS_SECRET"] ?? 
@@ -96,17 +97,19 @@ namespace chatademia.Services
 
         public async Task Login(string oauth_token,string oauth_verifier)
         {
-            var User = _context.Users.FirstOrDefault(u => u.OAuthToken == oauth_token);
+            using var _context = _factory.CreateDbContext();
+            User user = await _context.Users.FirstOrDefaultAsync(u => u.OAuthToken == oauth_token);
+            Console.WriteLine(_context.Entry(user).State);
 
             string requestUrl = BASE_URL + ACCESS_TOKEN_URL;
 
             Console.WriteLine("=== Step 1: ACCESS TOKEN ===");
             Console.WriteLine("Request URL: " + requestUrl);
-            Console.WriteLine("Request token secret : " + User.OAuthTokenSecret);
+            Console.WriteLine("Request token secret : " + user.OAuthTokenSecret);
 
             using var client = new HttpClient();
 
-            string authHeader = BuildOAuthHeaderAcces(requestUrl, "POST", oauth_token, oauth_verifier, User.OAuthTokenSecret);
+            string authHeader = BuildOAuthHeaderAcces(requestUrl, "POST", oauth_token, oauth_verifier, user.OAuthTokenSecret);
             client.DefaultRequestHeaders.Add("Authorization", authHeader);
 
             var response = await client.PostAsync(requestUrl, null);
@@ -116,26 +119,23 @@ namespace chatademia.Services
             Console.WriteLine("Response body:\n" + content);
 
             var query = HttpUtility.ParseQueryString(content);
-            string accesToken = query["oauth_token"];
-            string accesSecret = query["oauth_token_secret"];
+            string accesToken = query["oauth_token"].ToString();
+            string accesSecret = query["oauth_token_secret"].ToString();
 
             Console.WriteLine("\n=== TOKENS RECEIVED ===");
             Console.WriteLine("oauth_token_acces = " + accesToken);
-            Console.WriteLine("oauth_token_secret_acces = " + accesSecret);
+            Console.WriteLine("oauth_token_secret_acces = " + accesSecret); 
 
-            //if(accesSecret == null)
-            //{
-            //    accesSecret = "";
-            //}
 
-            User.PermaAccesToken = accesSecret;   // attach to context
-            _context.SaveChanges();
+            user.PermaAccesToken = accesSecret;
+            await _context.SaveChangesAsync();
 
             return;
         }
 
         public async Task<string> LoginUrl()
         {
+            using var _context = _factory.CreateDbContext();
             string requestUrl = BASE_URL + REQUEST_TOKEN_URL;
 
             Console.WriteLine("=== Step 1: REQUEST TOKEN ===");
@@ -168,9 +168,11 @@ namespace chatademia.Services
             User new_user = new User();
             new_user.OAuthToken = requestToken;
             new_user.OAuthTokenSecret = requestSecret;
-            new_user.PermaAccesToken = "";
-            _context.Users.Add(new_user);
-            _context.SaveChanges();
+            new_user.PermaAccesToken = "test";
+            await _context.Users.AddAsync(new_user);
+            await _context.SaveChangesAsync();
+
+            Console.WriteLine("GOT HERE");
 
             return finalUrl;
         }

@@ -8,7 +8,7 @@ namespace chatademia.Data
         public Guid Id { get; init; } = Guid.NewGuid();
         public string Content { get; set; }
         public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
-        public DateTimeOffset UpdatedAt { get; init; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 
         public required Guid UserId { get; init; }
     }
