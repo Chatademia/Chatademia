@@ -1,9 +1,9 @@
-import "./App.css";
+import "../App.css";
 import { useState, useRef } from "react";
-import appPreview from "./assets/app-preview.png";
-import appIcon from "./assets/icon.png";
+import appPreview from "../assets/app-preview.png";
+import appIcon from "../assets/icon.png";
 
-function App() {
+function Home() {
   const [transform, setTransform] = useState({ x: 0, y: 0 });
   const imageRef = useRef(null);
 
@@ -142,4 +142,4 @@ function App() {
   );
 }
 
-export default App;
+export default Home;
