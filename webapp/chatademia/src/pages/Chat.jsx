@@ -73,6 +73,26 @@ function Chat() {
                     </div>
                     <h1 className="font-semibold text-xl text-black">Inżynieria Oprogramowania (gr. 24)</h1>
                 </div>
+                <div className="bg-white h-[82.885%] overflow-y-auto">
+
+                </div>
+                <div className="h-[9.375%] p-5 flex gap-5 items-center">
+                    <button>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m0-3-3-3m0 0-3 3m3-3V15" />
+                        </svg>
+                    </button>
+                    <div className="relative w-full">
+                        <input className="w-full rounded-lg border border-gray-200 py-3 text-gray-300 text-xs px-2" placeholder="Wprowadź wiadomość"/>
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="purple" viewBox="0 0 24 24" strokeWidth={1.5} stroke="purple" className="size-6">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                            </svg>
+                        </div>
+                        {/* naprawic te ikoenke  */}
+                    </div>
+                </div>
+
             </div>
             <div className="w-1/4 border relative">
                 <div className=" flex gap-2 pr-4 h-[7.74%] justify-between p-5 border-b items-center relative">
@@ -126,3 +146,4 @@ function Chat() {
 }
 
 export default Chat;
+
