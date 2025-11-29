@@ -14,19 +14,14 @@
 - `docker-compose down -v`
 
 # API
-### Proposed usage of API for webapp: (pending review)
-- User: 
-  - wants to enter page at: http://example.com
-- Webapp: 
-  - calls `/api/Auth/login-url`
-  - passes http://example.com as an argument
-  - api creates link for user to be redirected to
-  - careated link verifies user session and returns user back to http://example.com
-  - webapp recieves `oauth_token` and `oauth_token_secret`
-  - webapp can now use these params to call other CRUD endpoints 
-- Server:
-  - `/api/Auth/login-url` gets called
-  - LoginUrl() gets called with callback as http://example.com
-  - other CRUD endpoints now use Login() logic to first verify session
-  - when successful endpoint gets data with access_token
+### Usage of API:
+- User flow: 
+  - User visits the welcome page
+  - User clicks the “Login” button
+  - Webapp calls `GET /api/Auth/login-url` with the desired callback page as a parameter
+  - API returns a login URL, which the webapp redirects the user to
+  - After successful login, the webapp receives `oauth_token` and `oauth_verifier` from the OAuth callback
+  - Webapp calls `GET /api/Auth/access-token` and passing oauth_token and oauth_verifier as parameters
+  - API returns the `access_token`, which becomes the user’s session token
+  - For all subsequent API requests, the webapp includes this `access_token` to authenticate the user
 
