@@ -97,7 +97,7 @@ namespace chatademia.Services
                 throw new ArgumentNullException("USOS_SECRET is missing from configuration");
         }
 
-        public async Task<string> Login(string oauth_token,string oauth_verifier)
+        public async Task<Guid> Login(string oauth_token,string oauth_verifier)
         {
             using var _context = _factory.CreateDbContext();
             User user = await _context.Users.FirstOrDefaultAsync(u => u.OAuthToken == oauth_token);
@@ -129,10 +129,13 @@ namespace chatademia.Services
             Console.WriteLine("oauth_token_secret_acces = " + accessSecret); 
 
 
-            user.PermaAccessToken = accessSecret;
+            user.PermaAccessToken = accessToken;
+            user.PermaAccessTokenSecret = accessSecret;
+            Guid session = Guid.NewGuid();
+            user.Session = session;
             await _context.SaveChangesAsync();
 
-            return accessSecret;
+            return session;
         }
 
         public async Task<string> LoginUrl(string callbackURL)
@@ -219,17 +222,17 @@ namespace chatademia.Services
 
 
 
-        public async Task<UserVM> GetUserData(string access_token, string oauth_verifier) // to finish
+        public async Task<UserVM> GetUserData(Guid session)
         {
             using var _context = _factory.CreateDbContext();
 
-            //var access_token = await Login(oauth_token, oauth_verifier);
-            if (access_token == null)
-                throw new Exception("Login() returned null access token");
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Session == session);
+            if (user == null)
+            throw new Exception($"Invalid session");
 
-            //var user = await _context.Users.FirstOrDefaultAsync(u => u.PermaAccessToken == access_token); //to implement USOS query later
-            //if (user == null)
-                //throw new Exception($"User with PermaAccessToken '{access_token}' not found");
+
+            string access_token = user.PermaAccessToken;
+            string oauth_verifier = user.PermaAccessTokenSecret;
 
 
             string requestUrl = BASE_URL + USER_URL;
@@ -254,13 +257,18 @@ namespace chatademia.Services
 
             Console.WriteLine("user data: " + firstName + lastName);
 
-            UserVM user = new UserVM();
-            user.Id = id;
             user.FirstName = firstName;
             user.LastName = lastName;
 
+            UserVM user_data = new UserVM();
+            user_data.Id = id;
+            user_data.FirstName = firstName;
+            user_data.LastName = lastName;
+
+            /*
             var old_user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
 
+            
             if (old_user == null) // will need to be made db compatible, right now it's not compatible with login_url
             {
                 User new_user = new User(); 
@@ -269,10 +277,10 @@ namespace chatademia.Services
                 new_user.LastName = lastName;
                 _context.Users.Add(new_user);
                 await _context.SaveChangesAsync();
-                return user;
             }
+            */
 
-            return user;
+            return user_data;
         }
     }
 }
