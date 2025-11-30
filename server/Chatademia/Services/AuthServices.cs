@@ -1,8 +1,10 @@
 ﻿using chatademia.Data;
+using Chatademia.Data.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Web;
 
 namespace chatademia.Services
@@ -17,6 +19,7 @@ namespace chatademia.Services
         private string ACCESS_TOKEN_URL = "/services/oauth/access_token";
         private string AUTHORIZE_URL = "/services/oauth/authorize";
         private string CALLBACK_URL = "http://localhost:8080/api/Auth/pin";
+        private string USER_URL = "/services/users/user";
         //private string CALLBACK_URL = "https://www.google.com/";
 
         private string BuildOAuthHeaderAcces(string url, string method, string oauth_token,string oauth_verifier, string oauth_token_secret)
@@ -115,6 +118,7 @@ namespace chatademia.Services
             var response = await client.PostAsync(requestUrl, null);
             string content = await response.Content.ReadAsStringAsync();
 
+            Console.WriteLine("Login");
             Console.WriteLine("Status: " + response.StatusCode);
             Console.WriteLine("Response body:\n" + content);
 
@@ -149,6 +153,7 @@ namespace chatademia.Services
             var response = await client.PostAsync(requestUrl, null);
             string content = await response.Content.ReadAsStringAsync();
 
+            Console.WriteLine("LoginUrl");
             Console.WriteLine("Status: " + response.StatusCode);
             Console.WriteLine("Response body:\n" + content);
 
@@ -166,6 +171,7 @@ namespace chatademia.Services
             Console.WriteLine(finalUrl);
 
             User new_user = new User();
+            new_user.Id = Guid.NewGuid().ToString(); // will need to be made usos compatible
             new_user.OAuthToken = requestToken;
             new_user.OAuthTokenSecret = requestSecret;
             new_user.PermaAccessToken = "test";
@@ -176,21 +182,98 @@ namespace chatademia.Services
             return finalUrl;
         }
 
-        public async Task<User> GetUserData(string oauth_token, string oauth_verifier) // to finish
+
+        private string BuildOAuthHeaderUser(string url, string method, string oauth_token, string oauth_verifier)
+        {
+            string nonce = Guid.NewGuid().ToString("N");
+            string timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+
+            var parameters = new SortedDictionary<string, string>
+            {
+                { "oauth_consumer_key", _USOS_KEY },
+                { "oauth_nonce", nonce },
+                { "oauth_signature_method", "HMAC-SHA1" },
+                { "oauth_timestamp", timestamp },
+                { "oauth_version", "1.0" },
+                //{ "oauth_verifier", oauth_verifier},
+                { "oauth_token", oauth_token},
+                { "fields", "id|first_name|last_name" }
+            };
+
+            string parameterString = string.Join("&",
+                parameters.Select(p => $"{p.Key}={Uri.EscapeDataString(p.Value)}"));
+
+            string baseString = $"{method.ToUpper()}&{Uri.EscapeDataString(url)}&{Uri.EscapeDataString(parameterString)}";
+
+            string signingKey = $"{_USOS_SECRET}&{oauth_verifier}"; //FIXME: add to key
+
+            using var hasher = new HMACSHA1(Encoding.ASCII.GetBytes(signingKey));
+            string signature = Convert.ToBase64String(hasher.ComputeHash(Encoding.ASCII.GetBytes(baseString)));
+
+            parameters.Add("oauth_signature", signature);
+
+            string header = "OAuth " + string.Join(", ",
+                parameters.Select(p => $"{p.Key}=\"{Uri.EscapeDataString(p.Value)}\""));
+
+            return header;
+        }
+
+
+
+
+        public async Task<UserVM> GetUserData(string access_token, string oauth_verifier) // to finish
         {
             using var _context = _factory.CreateDbContext();
 
-            var access_token = await Login(oauth_token, oauth_verifier);
+            //var access_token = await Login(oauth_token, oauth_verifier);
             if (access_token == null)
                 throw new Exception("Login() returned null access token");
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.PermaAccessToken == access_token); //to implement USOS query later
-            if (user == null)
-                throw new Exception($"User with PermaAccessToken '{access_token}' not found");
+            //var user = await _context.Users.FirstOrDefaultAsync(u => u.PermaAccessToken == access_token); //to implement USOS query later
+            //if (user == null)
+                //throw new Exception($"User with PermaAccessToken '{access_token}' not found");
 
-            user.FirstName = "TestName";
-            user.LastName = "TestName";
-            await _context.SaveChangesAsync();
+
+            string requestUrl = BASE_URL + USER_URL;
+
+            using var client = new HttpClient();
+
+            string authHeader = BuildOAuthHeaderUser(requestUrl, "GET", access_token, oauth_verifier);
+            client.DefaultRequestHeaders.Add("Authorization", authHeader);
+
+            var response = await client.GetAsync(requestUrl);
+            string content = await response.Content.ReadAsStringAsync();
+
+            Console.WriteLine("UserData");
+            Console.WriteLine("Status: " + response.StatusCode);
+            Console.WriteLine("Response body:\n" + content);
+
+            var data = JsonSerializer.Deserialize<Dictionary<string, string>>(content);
+
+            string id = data["id"];
+            string firstName = data["first_name"];
+            string lastName = data["last_name"];
+
+            Console.WriteLine("user data: " + firstName + lastName);
+
+            UserVM user = new UserVM();
+            user.Id = id;
+            user.FirstName = firstName;
+            user.LastName = lastName;
+
+            var old_user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+            if (old_user == null) // will need to be made db compatible, right now it's not compatible with login_url
+            {
+                User new_user = new User(); 
+                new_user.Id = id; 
+                new_user.FirstName = firstName;
+                new_user.LastName = lastName;
+                _context.Users.Add(new_user);
+                await _context.SaveChangesAsync();
+                return user;
+            }
+
             return user;
         }
     }

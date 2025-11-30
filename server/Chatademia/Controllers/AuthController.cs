@@ -33,7 +33,7 @@ namespace chatademia.Controllers
             return Ok(url);
         }
 
-        [HttpGet("user-data")]
+        [HttpGet("user")]
         public async Task<IActionResult> UserData([FromQuery] string oauth_token, [FromQuery] string oauth_verifier)
         {
             var userData = await _loginServices.GetUserData(oauth_token, oauth_verifier);
