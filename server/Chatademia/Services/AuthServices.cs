@@ -220,16 +220,14 @@ namespace chatademia.Services
         }
 
 
-
-
         public async Task<UserVM> GetUserData(Guid session)
         {
             using var _context = _factory.CreateDbContext();
-
+            
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Session == session);
-            if (user == null)
+            
+            if(user == null)
             throw new Exception($"Invalid session");
-
 
             string access_token = user.PermaAccessToken;
             string oauth_verifier = user.PermaAccessTokenSecret;
@@ -281,6 +279,21 @@ namespace chatademia.Services
             */
 
             return user_data;
+        }
+        
+        public async Task TerminateSession(Guid session)
+        {
+            using var _context = _factory.CreateDbContext();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Session == session);
+            
+            if(user == null)
+            throw new Exception($"Invalid session");
+
+            Console.WriteLine("Terminating session…\n");
+            user.Session = null;
+
+            await _context.SaveChangesAsync();
         }
     }
 }

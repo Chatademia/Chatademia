@@ -39,5 +39,11 @@ namespace chatademia.Controllers
             var userData = await _loginServices.GetUserData(session);
             return Ok(userData);
         }
+
+        [HttpGet("terminate-session")]
+        public async Task TerminateSession([FromQuery] Guid session)
+        {
+            await _loginServices.TerminateSession(session);
+        }
     }
 }
