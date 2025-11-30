@@ -27,9 +27,9 @@ namespace chatademia.Controllers
         }
 
         [HttpGet("login-url")]
-        public async Task<IActionResult> LoginUrl()
+        public async Task<IActionResult> LoginUrl([FromQuery] string callbackUrl)
         {
-            var url = await _loginServices.LoginUrl();
+            var url = await _loginServices.LoginUrl(callbackUrl);
             return Ok(url);
         }
 

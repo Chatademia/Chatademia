@@ -18,9 +18,7 @@ namespace chatademia.Services
         private string REQUEST_TOKEN_URL = "/services/oauth/request_token";
         private string ACCESS_TOKEN_URL = "/services/oauth/access_token";
         private string AUTHORIZE_URL = "/services/oauth/authorize";
-        private string CALLBACK_URL = "http://localhost:8080/api/Auth/pin";
         private string USER_URL = "/services/users/user";
-        //private string CALLBACK_URL = "https://www.google.com/";
 
         private string BuildOAuthHeaderAcces(string url, string method, string oauth_token,string oauth_verifier, string oauth_token_secret)
         {
@@ -56,14 +54,14 @@ namespace chatademia.Services
             return header;
         }
 
-        private string BuildOAuthHeaderRequest(string url, string method)
+        private string BuildOAuthHeaderRequest(string url, string method, string callbackURL)
         {
             string nonce = Guid.NewGuid().ToString("N");
             string timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
 
             var parameters = new SortedDictionary<string, string>
             {
-                { "oauth_callback", CALLBACK_URL },
+                { "oauth_callback", callbackURL },
                 { "oauth_consumer_key", _USOS_KEY },
                 { "oauth_nonce", nonce },
                 { "oauth_signature_method", "HMAC-SHA1" },
@@ -137,7 +135,7 @@ namespace chatademia.Services
             return accessSecret;
         }
 
-        public async Task<string> LoginUrl()
+        public async Task<string> LoginUrl(string callbackURL)
         {
             using var _context = _factory.CreateDbContext();
             string requestUrl = BASE_URL + REQUEST_TOKEN_URL;
@@ -147,7 +145,7 @@ namespace chatademia.Services
 
             using var client = new HttpClient();
 
-            string authHeader = BuildOAuthHeaderRequest(requestUrl, "POST");
+            string authHeader = BuildOAuthHeaderRequest(requestUrl, "POST", callbackURL);
             client.DefaultRequestHeaders.Add("Authorization", authHeader);
 
             var response = await client.PostAsync(requestUrl, null);
