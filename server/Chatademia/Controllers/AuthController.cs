@@ -16,7 +16,7 @@ namespace chatademia.Controllers
             _loginServices = loginServices;
         }
 
-        [HttpGet("pin")]
+        [HttpGet("session")]
         public async Task<IActionResult> Login([FromQuery] string oauth_token, [FromQuery] string oauth_verifier)
         {
             //Console.WriteLine("oauth_token: " + oauth_token);
@@ -38,12 +38,6 @@ namespace chatademia.Controllers
         {
             var userData = await _loginServices.GetUserData(session);
             return Ok(userData);
-        }
-
-        [HttpGet("terminate-session")]
-        public async Task TerminateSession([FromQuery] Guid session)
-        {
-            await _loginServices.TerminateSession(session);
         }
     }
 }

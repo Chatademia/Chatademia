@@ -1,4 +1,5 @@
 ﻿using chatademia.Data;
+using Chatademia.Data;
 using Chatademia.Data.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
@@ -100,17 +101,17 @@ namespace chatademia.Services
         public async Task<Guid> Login(string oauth_token,string oauth_verifier)
         {
             using var _context = _factory.CreateDbContext();
-            User user = await _context.Users.FirstOrDefaultAsync(u => u.OAuthToken == oauth_token);
+            TempUser tempUser = await _context.TempUsers.FirstOrDefaultAsync(u => u.OAuthToken == oauth_token);
 
             string requestUrl = BASE_URL + ACCESS_TOKEN_URL;
 
             Console.WriteLine("=== Step 1: ACCESS TOKEN ===");
             Console.WriteLine("Request URL: " + requestUrl);
-            Console.WriteLine("Request token secret : " + user.OAuthTokenSecret);
+            Console.WriteLine("Request token secret : " + tempUser.OAuthTokenSecret);
 
             using var client = new HttpClient();
 
-            string authHeader = BuildOAuthHeaderAcces(requestUrl, "POST", oauth_token, oauth_verifier, user.OAuthTokenSecret);
+            string authHeader = BuildOAuthHeaderAcces(requestUrl, "POST", oauth_token, oauth_verifier, tempUser.OAuthTokenSecret);
             client.DefaultRequestHeaders.Add("Authorization", authHeader);
 
             var response = await client.PostAsync(requestUrl, null);
@@ -126,16 +127,82 @@ namespace chatademia.Services
 
             Console.WriteLine("\n=== TOKENS RECEIVED ===");
             Console.WriteLine("oauth_token_acces = " + accessToken);
-            Console.WriteLine("oauth_token_secret_acces = " + accessSecret); 
+            Console.WriteLine("oauth_token_secret_acces = " + accessSecret);
 
 
-            user.PermaAccessToken = accessToken;
-            user.PermaAccessTokenSecret = accessSecret;
-            Guid session = Guid.NewGuid();
-            user.Session = session;
-            await _context.SaveChangesAsync();
+            // are access_tokens present in db?
+            var userTokens = await _context.UserTokens.FirstOrDefaultAsync(u => 
+            (u.PermaAccessToken == accessToken && u.PermaAccessTokenSecret == accessSecret));
 
-            return session;
+            // access_tokens present in db
+            if (userTokens != null)
+            {
+                Console.WriteLine("Tokens found in database");
+                if (userTokens.Session == null) // no session yet
+                {
+                    Console.WriteLine("No session found, creating new session");
+                    Guid new_session = Guid.NewGuid();
+                    userTokens.Session = new_session;
+                    await _context.SaveChangesAsync();
+                }
+
+                return userTokens.Session.Value; // retrun session
+            }
+            //rest yet to be implemented
+            else // access_tokens not in db
+            {
+                Console.WriteLine("Tokens not found in database, saving new tokens");
+                tempUser.PermaAccessToken = accessToken;
+                tempUser.PermaAccessTokenSecret = accessSecret;
+
+                Guid new_session = Guid.NewGuid();
+
+                Console.WriteLine("Querying user data from USOS");
+                UserVM user_data = await QueryUser(accessToken, accessSecret);
+
+                var old_user = await _context.Users.FirstOrDefaultAsync(u => u.Id == user_data.Id);
+
+                // found user in db
+                if (old_user != null)
+                {
+                    Console.WriteLine("Found user in db");
+                    // update user data
+                    old_user.FirstName = user_data.FirstName;
+                    old_user.LastName = user_data.LastName;
+                    old_user.UpdatedAt = DateTimeOffset.UtcNow;
+
+                    // update tokens
+                    old_user.UserTokens = new UserTokens
+                    {
+                        PermaAccessToken = accessToken,
+                        PermaAccessTokenSecret = accessSecret,
+                        Session = new_session
+                    };
+
+                    await _context.SaveChangesAsync();
+                    return old_user.UserTokens.Session.Value;
+                }
+                else // user not found in db
+                {
+                    Console.WriteLine("User not found in db, creating new user");
+                    User new_user = new User
+                    {
+                        Id = user_data.Id,
+                        FirstName = user_data.FirstName,
+                        LastName = user_data.LastName,
+                        UserTokens = new UserTokens
+                        {
+                            PermaAccessToken = accessToken,
+                            PermaAccessTokenSecret = accessSecret,
+                            Session = new_session
+                        }
+                    };
+                    _context.Users.Add(new_user);
+                    await _context.SaveChangesAsync();
+                    return new_user.UserTokens.Session.Value;
+
+                }
+            }
         }
 
         public async Task<string> LoginUrl(string callbackURL)
@@ -171,12 +238,10 @@ namespace chatademia.Services
             Console.WriteLine("\n=== AUTHORIZATION URL ===");
             Console.WriteLine(finalUrl);
 
-            User new_user = new User();
-            new_user.Id = Guid.NewGuid().ToString(); // will need to be made usos compatible
-            new_user.OAuthToken = requestToken;
-            new_user.OAuthTokenSecret = requestSecret;
-            new_user.PermaAccessToken = "test";
-            await _context.Users.AddAsync(new_user);
+            TempUser tempUser = new TempUser();
+            tempUser.OAuthToken = requestToken;
+            tempUser.OAuthTokenSecret = requestSecret;
+            await _context.TempUsers.AddAsync(tempUser);
             await _context.SaveChangesAsync();
 
 
@@ -206,7 +271,7 @@ namespace chatademia.Services
 
             string baseString = $"{method.ToUpper()}&{Uri.EscapeDataString(url)}&{Uri.EscapeDataString(parameterString)}";
 
-            string signingKey = $"{_USOS_SECRET}&{oauth_verifier}"; //FIXME: add to key
+            string signingKey = $"{_USOS_SECRET}&{oauth_verifier}";
 
             using var hasher = new HMACSHA1(Encoding.ASCII.GetBytes(signingKey));
             string signature = Convert.ToBase64String(hasher.ComputeHash(Encoding.ASCII.GetBytes(baseString)));
@@ -219,25 +284,14 @@ namespace chatademia.Services
             return header;
         }
 
-
-        public async Task<UserVM> GetUserData(Guid session)
-        {
-            using var _context = _factory.CreateDbContext();
-            
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Session == session);
-            
-            if(user == null)
-            throw new Exception($"Invalid session");
-
-            string access_token = user.PermaAccessToken;
-            string oauth_verifier = user.PermaAccessTokenSecret;
-
+        private async Task<UserVM> QueryUser(string access_token, string access_token_secret)
+        { 
 
             string requestUrl = BASE_URL + USER_URL;
 
             using var client = new HttpClient();
 
-            string authHeader = BuildOAuthHeaderUser(requestUrl, "GET", access_token, oauth_verifier);
+            string authHeader = BuildOAuthHeaderUser(requestUrl, "GET", access_token, access_token_secret);
             client.DefaultRequestHeaders.Add("Authorization", authHeader);
 
             var response = await client.GetAsync(requestUrl);
@@ -255,43 +309,47 @@ namespace chatademia.Services
 
             Console.WriteLine("user data: " + firstName + lastName);
 
-            user.FirstName = firstName;
-            user.LastName = lastName;
+            //user.FirstName = firstName; //crossed for now
+            //user.LastName = lastName; //crossed for now
 
             UserVM user_data = new UserVM();
             user_data.Id = id;
             user_data.FirstName = firstName;
             user_data.LastName = lastName;
 
-            /*
-            var old_user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
-
-            
-            if (old_user == null) // will need to be made db compatible, right now it's not compatible with login_url
-            {
-                User new_user = new User(); 
-                new_user.Id = id; 
-                new_user.FirstName = firstName;
-                new_user.LastName = lastName;
-                _context.Users.Add(new_user);
-                await _context.SaveChangesAsync();
-            }
-            */
-
             return user_data;
         }
-        
+
+        public async Task<UserVM> GetUserData(Guid session)
+        {
+            using var _context = _factory.CreateDbContext();
+
+            var user = await _context.Users
+                .Include(u => u.UserTokens)
+                .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
+
+            if (user == null)
+                throw new Exception($"Invalid session");
+
+            string access_token = user.UserTokens.PermaAccessToken;
+            string access_token_secret = user.UserTokens.PermaAccessTokenSecret;
+
+            return await QueryUser(access_token, access_token_secret);
+        }
+
+
+
         public async Task TerminateSession(Guid session)
         {
             using var _context = _factory.CreateDbContext();
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Session == session);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserTokens.Session == session);
             
             if(user == null)
             throw new Exception($"Invalid session");
 
             Console.WriteLine("Terminating session…\n");
-            user.Session = null;
+            user.UserTokens.Session = null;
 
             await _context.SaveChangesAsync();
         }

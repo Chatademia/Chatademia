@@ -21,6 +21,10 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 
 builder.Services.AddTransient<AuthServices>();
 
+builder.Services.AddRouting(options =>
+{
+    options.LowercaseUrls = true;
+});
 
 var app = builder.Build();
 // Configure the HTTP request pipeline.
