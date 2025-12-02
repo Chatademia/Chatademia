@@ -4,7 +4,7 @@ import plus from "../assets/plus.svg";
 import Lectures from "../components/Lectures.jsx";
 import dots from "../assets/dotsPrimary.svg";
 import Users from "../components/Users.jsx";
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import edit from "../assets/edit.svg";
 import invite from "../assets/users.svg";
@@ -15,6 +15,14 @@ function Chat() {
   const [groupBar, setGroupBar] = useState(false);
   const [logoutBar, setLogoutBar] = useState(false);
   const navigate = useNavigate();
+  const [userData, setUserData] = useState({
+    firstName: "",
+    lastName: "",
+  });
+
+  useEffect(() => {
+    getUserData();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -24,7 +32,7 @@ function Chat() {
         .find((row) => row.startsWith("session_token="))
         ?.split("=")[1];
 
-      // If session token doesn't exist, return
+      // If session token doesn't exist, redirect to home page
       if (!sessionToken) {
         console.error("Brak tokenu sesji");
         navigate("/");
@@ -67,6 +75,55 @@ function Chat() {
       document.cookie = "session_token=; path=/; max-age=0; SameSite=Strict";
       navigate("/");
     }
+  };
+
+  const getUserData = async () => {
+    // Get session token from cookies
+    const sessionToken = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("session_token="))
+      ?.split("=")[1];
+
+    // If session token doesn't exist, redirect to home page
+    if (!sessionToken) {
+      console.error("Brak tokenu sesji");
+      navigate("/");
+      return;
+    }
+
+    // Get user data
+    const response = await fetch(
+      `${process.env.REACT_APP_BACKEND_URL}/api/users/user?session=${sessionToken}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        //credentials: "include",
+      }
+    );
+
+    // Read response text
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      throw new Error(response.status);
+    }
+
+    // Parse response to JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
+      throw new Error("Serwer zwrócił nieprawidłowy format danych");
+    }
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
+    // Set user data
+    setUserData(data);
   };
 
   return (
@@ -121,7 +178,10 @@ function Chat() {
           <div
             className={`rounded-xl bg-orange-500 text-white  flex items-center justify-center w-10 h-10`}
           >
-            <h1 className="text-xl font-black">RM</h1>
+            <h1 className="text-xl font-black">
+              {userData.firstName[0]}
+              {userData.lastName[0]}
+            </h1>
             <button
               type="button"
               onClick={() => setLogoutBar((s) => !s)}
@@ -130,7 +190,9 @@ function Chat() {
               className="absolute inset-0 rounded-xl focus:outline-none"
             />
           </div>
-          <h1 className="font-semibold text-sm text-black">Robert Michalak</h1>
+          <h1 className="font-semibold text-sm text-black">
+            {userData.firstName} {userData.lastName}
+          </h1>
         </div>
 
         {logoutBar && (
