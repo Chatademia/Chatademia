@@ -1,11 +1,39 @@
 import "../App.css";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import appPreview from "../assets/app-preview.png";
 import appIcon from "../assets/icon.png";
 
 function Home() {
   const [transform, setTransform] = useState({ x: 0, y: 0 });
   const imageRef = useRef(null);
+  const loginPopupRef = useRef(null);
+
+  useEffect(() => {
+    const handleCallback = (event) => {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data.type === "LOGIN_SUCCESS") {
+        console.log("Logowanie zakończone sukcesem:", event.data);
+
+        if (loginPopupRef.current && !loginPopupRef.current.closed) {
+          loginPopupRef.current.close();
+        }
+
+        window.location.href = "/chats";
+      }
+
+      if (event.data.type === "LOGIN_ERROR") {
+        console.error("Błąd logowania:", event.data.error);
+        alert("Wystąpił błąd podczas logowania: " + event.data.error);
+      }
+    };
+
+    window.addEventListener("message", handleCallback);
+
+    return () => {
+      window.removeEventListener("message", handleCallback);
+    };
+  }, []);
 
   const handleMouseMove = (e) => {
     if (!imageRef.current) return;
@@ -30,14 +58,20 @@ function Home() {
   const handleLoginRedirect = async () => {
     try {
       const response = await fetch(
-        process.env.REACT_APP_BACKEND_URL + "/api/Auth/login-url"
+        `${process.env.REACT_APP_BACKEND_URL}/api/auth/login-url?callbackUrl=${process.env.REACT_APP_FRONTEND_URL}/auth/callback`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "text/plain",
+          },
+        }
       );
 
       if (!response.ok) {
         throw new Error("Nie udało się pobrać URL logowania");
       }
 
-      const data = await response.json();
+      const data = await response.text();
 
       console.log("Otrzymany URL logowania: ", data);
       if (!data) {
@@ -49,7 +83,7 @@ function Home() {
       const left = (window.screen.width - width) / 2;
       const top = (window.screen.height - height) / 2;
 
-      window.open(
+      loginPopupRef.current = window.open(
         data,
         "loginPopup",
         `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
@@ -58,7 +92,6 @@ function Home() {
       console.error("Wystąpił błąd podczas pobierania URL logowania: ", error);
     }
   };
-
   return (
     <div className="min-h-screen bg-white overflow-hidden">
       <header className="border-b border-gray-200 py-4">
