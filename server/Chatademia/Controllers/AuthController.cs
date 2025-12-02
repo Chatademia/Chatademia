@@ -1,4 +1,4 @@
-﻿using chatademia.Services;
+﻿using Chatademia.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +16,7 @@ namespace chatademia.Controllers
             _loginServices = loginServices;
         }
 
-        [HttpGet("session")]
+        [HttpPost("session")]
         public async Task<IActionResult> Login([FromQuery] string oauth_token, [FromQuery] string oauth_verifier)
         {
             //Console.WriteLine("oauth_token: " + oauth_token);
@@ -33,11 +33,11 @@ namespace chatademia.Controllers
             return Ok(url);
         }
 
-        [HttpGet("user")]
-        public async Task<IActionResult> UserData([FromQuery] Guid session)
+        [HttpDelete("session")]
+        public async Task<IActionResult> TerminateSession([FromQuery] Guid session)
         {
-            var userData = await _loginServices.GetUserData(session);
-            return Ok(userData);
+            await _loginServices.TerminateSession(session);
+            return Ok();
         }
     }
 }

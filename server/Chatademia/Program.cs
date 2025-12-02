@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using chatademia.Data;
-using chatademia.Services;
 using Scalar.AspNetCore;
+using Chatademia.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +20,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 });
 
 builder.Services.AddTransient<AuthServices>();
+builder.Services.AddTransient<UsersServices>();
 
 builder.Services.AddRouting(options =>
 {
