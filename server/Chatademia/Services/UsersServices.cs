@@ -113,5 +113,14 @@ namespace Chatademia.Services
 
             return await QueryUser(access_token, access_token_secret);
         }
+
+
+
+
+        public async Task<List<ChatVM>> GetUserChats(Guid session)
+        {
+            var chats = new List<ChatVM>();
+            return chats;
+        }
     }
 }

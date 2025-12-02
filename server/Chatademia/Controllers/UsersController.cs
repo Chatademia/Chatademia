@@ -21,5 +21,12 @@ namespace Chatademia.Controllers
             var userData = await _usersServices.GetUserData(session);
             return Ok(userData);
         }
+
+        [HttpGet("chats")]
+        public async Task<IActionResult> GetChats([FromQuery] Guid session)
+        {
+            var chats = await _usersServices.GetUserChats(session);
+            return Ok(chats);
+        }
     }
 }

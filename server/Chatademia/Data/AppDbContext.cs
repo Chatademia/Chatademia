@@ -14,5 +14,6 @@ namespace chatademia.Data
         public DbSet<UserTokens> UserTokens { get; set; }
         public DbSet<TempUser> TempUsers { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<Chat> Chats { get; set; }
     }
 }
