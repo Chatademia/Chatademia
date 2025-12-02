@@ -165,7 +165,7 @@ namespace Chatademia.Services
                 throw new ArgumentNullException("USOS_SECRET is missing from configuration");
         }
 
-        public async Task<Guid> Login(string oauth_token,string oauth_verifier)
+        public async Task<SessionVM> Login(string oauth_token,string oauth_verifier)
         {
             using var _context = _factory.CreateDbContext();
             TempUser tempUser = await _context.TempUsers.FirstOrDefaultAsync(u => u.OAuthToken == oauth_token);
@@ -213,7 +213,7 @@ namespace Chatademia.Services
                     await _context.SaveChangesAsync();
                 }
 
-                return userTokens.Session.Value; // retrun session
+                return new SessionVM { Session = userTokens.Session.Value }; // retrun session
             }
             else // access_tokens not in db
             {
@@ -226,7 +226,9 @@ namespace Chatademia.Services
                 Console.WriteLine("Querying user data from USOS");
                 UserVM user_data = await QueryUser(accessToken, accessSecret);
 
-                var old_user = await _context.Users.FirstOrDefaultAsync(u => u.Id == user_data.Id);
+                var old_user = await _context.Users
+                    .Include(u => u.UserTokens)
+                    .FirstOrDefaultAsync(u => u.Id == user_data.Id);
 
                 // found user in db
                 if (old_user != null)
@@ -238,15 +240,13 @@ namespace Chatademia.Services
                     old_user.UpdatedAt = DateTimeOffset.UtcNow;
 
                     // update tokens
-                    old_user.UserTokens = new UserTokens
-                    {
-                        PermaAccessToken = accessToken,
-                        PermaAccessTokenSecret = accessSecret,
-                        Session = new_session
-                    };
+                    old_user.UserTokens.PermaAccessToken = accessToken;
+                    old_user.UserTokens.PermaAccessTokenSecret = accessSecret;
+                    old_user.UserTokens.Session = new_session;
+                    
 
                     await _context.SaveChangesAsync();
-                    return old_user.UserTokens.Session.Value;
+                    return new SessionVM { Session = old_user.UserTokens.Session.Value };
                 }
                 else // user not found in db
                 {
@@ -265,8 +265,7 @@ namespace Chatademia.Services
                     };
                     _context.Users.Add(new_user);
                     await _context.SaveChangesAsync();
-                    return new_user.UserTokens.Session.Value;
-
+                    return new SessionVM { Session = new_user.UserTokens.Session.Value };
                 }
             }
         }
