@@ -1,4 +1,5 @@
-﻿using Chatademia.Services;
+﻿using Chatademia.Data.ViewModels;
+using Chatademia.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -17,12 +18,9 @@ namespace chatademia.Controllers
         }
 
         [HttpPost("session")]
-        public async Task<IActionResult> Login([FromQuery] string oauth_token, [FromQuery] string oauth_verifier)
+        public async Task<IActionResult> Login([FromBody] SessionRequestVM request)
         {
-            //Console.WriteLine("oauth_token: " + oauth_token);
-            //Console.WriteLine("oauth_verifier: " + oauth_verifier);
-
-            var session = await _loginServices.Login(oauth_token, oauth_verifier);
+            var session = await _loginServices.Login(request.OauthToken, request.OauthVerifier);
             return Ok(session);
         }
 
