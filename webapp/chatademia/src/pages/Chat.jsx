@@ -19,10 +19,40 @@ function Chat() {
     firstName: "",
     lastName: "",
   });
+  const [chats, setChats] = useState([
+    {
+      id: 1,
+      color: "red",
+      short_name: "IO",
+      name: "Inżynieria Oprogramowania (gr. 24)",
+    },
+    {
+      id: 2,
+      color: "blue",
+      short_name: "SI",
+      name: "Sztuczna Inteligencja (gr. 11)",
+    },
+    {
+      id: 3,
+      color: "green",
+      short_name: "AM",
+      name: "Analiza Matematyczna 1 (gr. 10)",
+    },
+    {
+      id: 4,
+      color: "yellow",
+      short_name: "PP",
+      name: "Podstawy programowania (gr. 14)",
+    },
+    {
+      id: 5,
+      color: "green",
+      short_name: "ZR",
+      name: "Zbiory Rozmyte (gr. 12)",
+    },
+  ]);
 
-  useEffect(() => {
-    getUserData();
-  }, []);
+  const [selectedChatId, setSelectedChatId] = useState(1);
 
   const handleLogout = async () => {
     try {
@@ -77,54 +107,62 @@ function Chat() {
     }
   };
 
-  const getUserData = async () => {
-    // Get session token from cookies
-    const sessionToken = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("session_token="))
-      ?.split("=")[1];
+  useEffect(() => {
+    const getUserData = async () => {
+      // Get session token from cookies
+      const sessionToken = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("session_token="))
+        ?.split("=")[1];
 
-    // If session token doesn't exist, redirect to home page
-    if (!sessionToken) {
-      console.error("Brak tokenu sesji");
-      navigate("/");
-      return;
-    }
-
-    // Get user data
-    const response = await fetch(
-      `${process.env.REACT_APP_BACKEND_URL}/api/users/user?session=${sessionToken}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        //credentials: "include",
+      // If session token doesn't exist, redirect to home page
+      if (!sessionToken) {
+        console.error("Brak tokenu sesji");
+        navigate("/");
+        return;
       }
-    );
 
-    // Read response text
-    const responseText = await response.text();
+      try {
+        // Get user data
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/users/user?session=${sessionToken}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            //credentials: "include",
+          }
+        );
 
-    if (!response.ok) {
-      throw new Error(response.status);
-    }
+        // Read response text
+        const responseText = await response.text();
 
-    // Parse response to JSON
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (e) {
-      console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
-      throw new Error("Serwer zwrócił nieprawidłowy format danych");
-    }
-    if (data.error) {
-      throw new Error(data.error);
-    }
+        if (!response.ok) {
+          throw new Error(response.status);
+        }
 
-    // Set user data
-    setUserData(data);
-  };
+        // Parse response to JSON
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
+          throw new Error("Serwer zwrócił nieprawidłowy format danych");
+        }
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        // Set user data
+        setUserData(data);
+      } catch (error) {
+        console.error("Błąd podczas pobierania danych użytkownika:", error);
+        navigate("/");
+      }
+    };
+    getUserData();
+  }, [navigate]);
 
   return (
     <div className="bg-white flex h-screen relative">
@@ -143,36 +181,16 @@ function Chat() {
           </div>
         </div>
         <div className="flex flex-col gap-4 p-5 border-b h-[76.77%] overflow-y-auto">
-          <Lectures
-            isActive={false}
-            color="red"
-            lectureAcronym="IO"
-            lectureName="Inżynieria Oprogramowania (gr. 24)"
-          />
-          <Lectures
-            isActive={true}
-            color="blue"
-            lectureAcronym="SI"
-            lectureName="Sztuczna Inteligencja (gr. 11)"
-          />
-          <Lectures
-            isActive={false}
-            color="green"
-            lectureAcronym="AM"
-            lectureName="Analiza Matematyczna 1 (gr. 10)"
-          />
-          <Lectures
-            isActive={false}
-            color="yellow"
-            lectureAcronym="PP"
-            lectureName="Podstawy programowania (gr. 14)"
-          />
-          <Lectures
-            isActive={false}
-            color="green"
-            lectureAcronym="ZR"
-            lectureName="Zbiory Rozmyte (gr. 12)"
-          />
+          {chats.map((chat) => (
+            <Lectures
+              key={chat.id}
+              isActive={chat.id === selectedChatId}
+              color={chat.color}
+              lectureAcronym={chat.short_name}
+              lectureName={chat.name}
+              onClick={() => setSelectedChatId(chat.id)}
+            />
+          ))}
         </div>
         <div className="h-[6.94%] flex p-5 gap-3 justify-left items-center ">
           <div
@@ -212,12 +230,18 @@ function Chat() {
       <div className="w-1/2 border">
         <div className=" flex gap-4  h-[7.74%] justify-center p-5 border-b items-center">
           <div
-            className={`rounded-xl bg-yellow-500 text-white  flex items-center justify-center w-12 h-12`}
+            className={`rounded-xl text-white  flex items-center justify-center w-12 h-12`}
+            style={{
+              backgroundColor: chats.find((chat) => chat.id === selectedChatId)
+                ?.color,
+            }}
           >
-            <h1 className="text-2xl font-black">IO</h1>
+            <h1 className="text-2xl font-black">
+              {chats.find((chat) => chat.id === selectedChatId)?.short_name}
+            </h1>
           </div>
           <h1 className="font-semibold text-xl text-black">
-            Inżynieria Oprogramowania (gr. 24)
+            {chats.find((chat) => chat.id === selectedChatId)?.name}
           </h1>
         </div>
         <div className="bg-white h-[82.885%] overflow-y-auto"></div>
