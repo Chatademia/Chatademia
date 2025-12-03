@@ -161,7 +161,64 @@ function Chat() {
         navigate("/");
       }
     };
+
     getUserData();
+
+    const getChatsData = async () => {
+      // Get session token from cookies
+      const sessionToken = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("session_token="))
+        ?.split("=")[1];
+
+      // If session token doesn't exist, redirect to home page
+      if (!sessionToken) {
+        console.error("Brak tokenu sesji");
+        navigate("/");
+        return;
+      }
+
+      try {
+        // Get chats data
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/users/chats?session=${sessionToken}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            //credentials: "include",
+          }
+        );
+
+        // Read response text
+        const responseText = await response.text();
+
+        if (!response.ok) {
+          throw new Error(response.status);
+        }
+
+        // Parse response to JSON
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
+          throw new Error("Serwer zwrócił nieprawidłowy format danych");
+        }
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        // Set chats data
+        // setChats(data); // Currently using dummy chats
+      } catch (error) {
+        console.error("Błąd podczas pobierania danych użytkownika:", error);
+        navigate("/");
+      }
+    };
+
+    getChatsData();
   }, [navigate]);
 
   return (
