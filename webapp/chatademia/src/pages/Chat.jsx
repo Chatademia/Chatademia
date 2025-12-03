@@ -20,10 +20,6 @@ function Chat() {
     lastName: "",
   });
 
-  useEffect(() => {
-    getUserData();
-  }, []);
-
   const handleLogout = async () => {
     try {
       // Get session token from cookies
@@ -77,54 +73,62 @@ function Chat() {
     }
   };
 
-  const getUserData = async () => {
-    // Get session token from cookies
-    const sessionToken = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("session_token="))
-      ?.split("=")[1];
+  useEffect(() => {
+    const getUserData = async () => {
+      // Get session token from cookies
+      const sessionToken = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("session_token="))
+        ?.split("=")[1];
 
-    // If session token doesn't exist, redirect to home page
-    if (!sessionToken) {
-      console.error("Brak tokenu sesji");
-      navigate("/");
-      return;
-    }
-
-    // Get user data
-    const response = await fetch(
-      `${process.env.REACT_APP_BACKEND_URL}/api/users/user?session=${sessionToken}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        //credentials: "include",
+      // If session token doesn't exist, redirect to home page
+      if (!sessionToken) {
+        console.error("Brak tokenu sesji");
+        navigate("/");
+        return;
       }
-    );
 
-    // Read response text
-    const responseText = await response.text();
+      try {
+        // Get user data
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/users/user?session=${sessionToken}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            //credentials: "include",
+          }
+        );
 
-    if (!response.ok) {
-      throw new Error(response.status);
-    }
+        // Read response text
+        const responseText = await response.text();
 
-    // Parse response to JSON
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (e) {
-      console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
-      throw new Error("Serwer zwrócił nieprawidłowy format danych");
-    }
-    if (data.error) {
-      throw new Error(data.error);
-    }
+        if (!response.ok) {
+          throw new Error(response.status);
+        }
 
-    // Set user data
-    setUserData(data);
-  };
+        // Parse response to JSON
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
+          throw new Error("Serwer zwrócił nieprawidłowy format danych");
+        }
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        // Set user data
+        setUserData(data);
+      } catch (error) {
+        console.error("Błąd podczas pobierania danych użytkownika:", error);
+        navigate("/");
+      }
+    };
+    getUserData();
+  }, [navigate]);
 
   return (
     <div className="bg-white flex h-screen relative">
