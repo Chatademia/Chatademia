@@ -42,7 +42,7 @@ namespace Chatademia.Services
 
             string baseString = $"{method.ToUpper()}&{Uri.EscapeDataString(url)}&{Uri.EscapeDataString(parameterString)}";
 
-            string signingKey = $"{_USOS_SECRET}&{oauth_token_secret}"; //FIXME: add to key
+            string signingKey = $"{_USOS_SECRET}&{oauth_token_secret}";
 
             using var hasher = new HMACSHA1(Encoding.ASCII.GetBytes(signingKey));
             string signature = Convert.ToBase64String(hasher.ComputeHash(Encoding.ASCII.GetBytes(baseString)));
@@ -68,7 +68,7 @@ namespace Chatademia.Services
                 { "oauth_signature_method", "HMAC-SHA1" },
                 { "oauth_timestamp", timestamp },
                 { "oauth_version", "1.0" },
-                { "scopes", "offline_access | studies" }
+                { "scopes", "offline_access|studies" }
             };
 
             string parameterString = string.Join("&",
@@ -283,7 +283,13 @@ namespace Chatademia.Services
             string authHeader = BuildOAuthHeaderRequest(requestUrl, "POST", callbackURL);
             client.DefaultRequestHeaders.Add("Authorization", authHeader);
 
-            var response = await client.PostAsync(requestUrl, null);
+            var bodyParams = new Dictionary<string,string>
+            {
+                { "scopes", "offline_access|studies" }
+            };
+
+            var body = new FormUrlEncodedContent(bodyParams);
+            var response = await client.PostAsync(requestUrl, body);
             string content = await response.Content.ReadAsStringAsync();
 
             Console.WriteLine("LoginUrl");
