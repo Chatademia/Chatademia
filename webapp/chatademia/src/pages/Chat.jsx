@@ -22,40 +22,37 @@ function Chat() {
   const [chats, setChats] = useState([
     {
       id: 1,
-      isActive: false,
       color: "red",
       short_name: "IO",
       name: "Inżynieria Oprogramowania (gr. 24)",
     },
     {
       id: 2,
-      isActive: true,
       color: "blue",
       short_name: "SI",
       name: "Sztuczna Inteligencja (gr. 11)",
     },
     {
       id: 3,
-      isActive: false,
       color: "green",
       short_name: "AM",
       name: "Analiza Matematyczna 1 (gr. 10)",
     },
     {
       id: 4,
-      isActive: false,
       color: "yellow",
       short_name: "PP",
       name: "Podstawy programowania (gr. 14)",
     },
     {
       id: 5,
-      isActive: false,
       color: "green",
       short_name: "ZR",
       name: "Zbiory Rozmyte (gr. 12)",
     },
   ]);
+
+  const [selectedChatId, setSelectedChatId] = useState(1);
 
   const handleLogout = async () => {
     try {
@@ -187,10 +184,11 @@ function Chat() {
           {chats.map((chat) => (
             <Lectures
               key={chat.id}
-              isActive={chat.isActive}
+              isActive={chat.id === selectedChatId}
               color={chat.color}
               lectureAcronym={chat.short_name}
               lectureName={chat.name}
+              onClick={() => setSelectedChatId(chat.id)}
             />
           ))}
         </div>
@@ -232,12 +230,18 @@ function Chat() {
       <div className="w-1/2 border">
         <div className=" flex gap-4  h-[7.74%] justify-center p-5 border-b items-center">
           <div
-            className={`rounded-xl bg-yellow-500 text-white  flex items-center justify-center w-12 h-12`}
+            className={`rounded-xl text-white  flex items-center justify-center w-12 h-12`}
+            style={{
+              backgroundColor: chats.find((chat) => chat.id === selectedChatId)
+                ?.color,
+            }}
           >
-            <h1 className="text-2xl font-black">IO</h1>
+            <h1 className="text-2xl font-black">
+              {chats.find((chat) => chat.id === selectedChatId)?.short_name}
+            </h1>
           </div>
           <h1 className="font-semibold text-xl text-black">
-            Inżynieria Oprogramowania (gr. 24)
+            {chats.find((chat) => chat.id === selectedChatId)?.name}
           </h1>
         </div>
         <div className="bg-white h-[82.885%] overflow-y-auto"></div>
