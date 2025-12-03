@@ -11,7 +11,7 @@ import invite from "../assets/users.svg";
 import leave from "../assets/logoutRed.svg";
 import { useNavigate } from "react-router-dom";
 
-function Chat() {
+function Chat({devMode = false}) {
   const [groupBar, setGroupBar] = useState(false);
   const [logoutBar, setLogoutBar] = useState(false);
   const navigate = useNavigate();
@@ -108,6 +108,12 @@ function Chat() {
   };
 
   useEffect(() => {
+
+    if (devMode) {
+      // w trybie deweloperskim pomijamy sprawdzanie sesji
+      return;
+    }
+
     const getUserData = async () => {
       // Get session token from cookies
       const sessionToken = document.cookie
@@ -219,7 +225,7 @@ function Chat() {
     };
 
     getChatsData();
-  }, [navigate]);
+  }, [navigate,devMode]);
 
   return (
     <div className="bg-white flex h-screen relative">
@@ -249,22 +255,20 @@ function Chat() {
             />
           ))}
         </div>
-        <div className="h-[6.94%] flex p-5 gap-3 justify-left items-center ">
-          <div
-            className={`rounded-xl bg-orange-500 text-white  flex items-center justify-center w-10 h-10`}
+        <div className="h-[6.94%] flex p-5 gap-3 justify-start items-center">
+          <button
+            type="button"
+            onClick={() => setLogoutBar((s) => !s)}
+            aria-expanded={logoutBar}
+            aria-label="Opcje użytkownika"
+            className="rounded-xl bg-orange-500 text-white flex items-center justify-center w-10 h-10 focus:outline-none"
           >
             <h1 className="text-xl font-black">
-              {userData.firstName[0]}
-              {userData.lastName[0]}
+              {(userData.firstName?.[0] || "").toUpperCase()}
+              {(userData.lastName?.[0] || "").toUpperCase()}
             </h1>
-            <button
-              type="button"
-              onClick={() => setLogoutBar((s) => !s)}
-              aria-expanded={logoutBar}
-              aria-label="Opcje użytkownika"
-              className="absolute inset-0 rounded-xl focus:outline-none"
-            />
-          </div>
+          </button>
+
           <h1 className="font-semibold text-sm text-black">
             {userData.firstName} {userData.lastName}
           </h1>
@@ -321,7 +325,7 @@ function Chat() {
           </button>
           <div className="relative w-full">
             <input
-              className="w-full rounded-lg border border-gray-200 py-3 text-gray-300 text-xs px-2"
+              className="w-full rounded-lg border border-gray-200 py-3 text-gray-700 text-xs px-2"
               placeholder="Wprowadź wiadomość"
             />
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
