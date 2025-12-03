@@ -89,7 +89,43 @@ function Chat({devMode = false}) {
         content: "Schemat bazy danych.png",
         timestamp: "10:04",
         type: "file",
+      },
+      {
+      id: 6,
+      sender: "AK",
+      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      timestamp: "10:00",
+      type: "message",
+    },
+    {
+        id: 7,
+        sender: "JN",
+        content: "snwdwd",
+        timestamp: "10:01",
+        type: "message",
+      },
+      {
+        id: 8,
+        sender: "me",
+        content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        timestamp: "10:02",
+        type: "message",
+      },
+      {
+        id: 9,
+        sender: "MW",
+        content: "Dokument wizji projektu.pdf",
+        timestamp: "10:03",
+        type: "file",
+      },
+      {
+        id: 10,
+        sender: "me",
+        content: "Schemat bazy danych.png",
+        timestamp: "10:04",
+        type: "file",
       }
+
       
   ]);
 
@@ -347,25 +383,31 @@ function Chat({devMode = false}) {
           </h1>
         </div>
         <div className="bg-white h-[82.885%] overflow-y-auto">
-            {/* Messages will go here */}
             <div className="p-5 flex flex-col gap-4">
                 {messages.map((message) => (
-                    <div key={message.id} className={`flex flex-col ${message.sender === "me" ? "items-end" : "items-start"}`}>
-                        
+                    <div key={message.id} className={`w-full flex ${message.sender === "me" ? "justify-end" : "justify-start"}`}>
+                        <div className="flex gap-3 w-[60%]">
+                            {message.sender !== "me" && (
+                                <div className="rounded-xl bg-gray-500 text-white flex items-center justify-center w-12 h-12 flex-shrink-0">
+                                    <span className="text-lg font-black">{message.sender}</span>
+                                </div>
+                            )}
+                            
                             {message.type === "message" ? (
-                                <div className={`${message.sender === "me" ? "bg-primary text-white" : "bg-white text-black "} rounded-xl border border-gray-200 p-3 max-w-[60%] min-w-[30%] pb-8 relative`}>
-                                    <p className="text-base font-medium">{message.content}</p>
+                                <div className={`${message.sender === "me" ? "bg-primary text-white" : "bg-white text-black "} rounded-xl border border-gray-200 p-3 w-full pb-8 relative`}>
+                                    <p className="text-base font-medium break-words">{message.content}</p>
                                     <span className={`text-xs ${message.sender === "me" ? "text-white" : "text-black"} mt-1 absolute bottom-2 right-2`}>{message.timestamp}</span>
                                 </div>
                             ) : (
-                                <div className={`${message.sender === "me" ? "bg-primary" : "bg-white"} rounded-lg p-0.5 max-w-[60%] border border-gray-200 pb-8 relative w-[60%]`}>
+                                <div className={`${message.sender === "me" ? "bg-primary" : "bg-white"} rounded-lg p-0.5 border border-gray-200 w-full pb-8 relative`}>
                                     <div className={`rounded-lg ${message.sender === "me" ? "bg-white" : "bg-gray-100"} p-3 flex items-center gap-3`}> 
-                                        <img src={docs} alt="file icon" className="h-6 w-6" />
-                                        <p className="font-semibold text-lg text-black">{message.content}</p>
+                                        <img src={docs} alt="file icon" className="h-6 w-6 flex-shrink-0" />
+                                        <p className="font-semibold text-lg text-black break-words">{message.content}</p>
                                     </div>
-                                    <span className="text-xs text-gray-500 mt-1 absolute bottom-2 right-2">{message.timestamp}</span>
+                                    <span className="text-xs text-gray-500 absolute bottom-2 right-2">{message.timestamp}</span>
                                 </div>
                             )}
+                        </div>
                     </div>
                 ))}
             </div>
