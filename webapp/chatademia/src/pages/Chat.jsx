@@ -19,6 +19,43 @@ function Chat() {
     firstName: "",
     lastName: "",
   });
+  const [chats, setChats] = useState([
+    {
+      id: 1,
+      isActive: false,
+      color: "red",
+      short_name: "IO",
+      name: "Inżynieria Oprogramowania (gr. 24)",
+    },
+    {
+      id: 2,
+      isActive: true,
+      color: "blue",
+      short_name: "SI",
+      name: "Sztuczna Inteligencja (gr. 11)",
+    },
+    {
+      id: 3,
+      isActive: false,
+      color: "green",
+      short_name: "AM",
+      name: "Analiza Matematyczna 1 (gr. 10)",
+    },
+    {
+      id: 4,
+      isActive: false,
+      color: "yellow",
+      short_name: "PP",
+      name: "Podstawy programowania (gr. 14)",
+    },
+    {
+      id: 5,
+      isActive: false,
+      color: "green",
+      short_name: "ZR",
+      name: "Zbiory Rozmyte (gr. 12)",
+    },
+  ]);
 
   const handleLogout = async () => {
     try {
@@ -147,36 +184,15 @@ function Chat() {
           </div>
         </div>
         <div className="flex flex-col gap-4 p-5 border-b h-[76.77%] overflow-y-auto">
-          <Lectures
-            isActive={false}
-            color="red"
-            lectureAcronym="IO"
-            lectureName="Inżynieria Oprogramowania (gr. 24)"
-          />
-          <Lectures
-            isActive={true}
-            color="blue"
-            lectureAcronym="SI"
-            lectureName="Sztuczna Inteligencja (gr. 11)"
-          />
-          <Lectures
-            isActive={false}
-            color="green"
-            lectureAcronym="AM"
-            lectureName="Analiza Matematyczna 1 (gr. 10)"
-          />
-          <Lectures
-            isActive={false}
-            color="yellow"
-            lectureAcronym="PP"
-            lectureName="Podstawy programowania (gr. 14)"
-          />
-          <Lectures
-            isActive={false}
-            color="green"
-            lectureAcronym="ZR"
-            lectureName="Zbiory Rozmyte (gr. 12)"
-          />
+          {chats.map((chat) => (
+            <Lectures
+              key={chat.id}
+              isActive={chat.isActive}
+              color={chat.color}
+              lectureAcronym={chat.short_name}
+              lectureName={chat.name}
+            />
+          ))}
         </div>
         <div className="h-[6.94%] flex p-5 gap-3 justify-left items-center ">
           <div
