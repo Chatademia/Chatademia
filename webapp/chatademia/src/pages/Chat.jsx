@@ -10,6 +10,7 @@ import edit from "../assets/edit.svg";
 import invite from "../assets/users.svg";
 import leave from "../assets/logoutRed.svg";
 import { useNavigate } from "react-router-dom";
+import docs from "../assets/docs.svg";
 
 function Chat({devMode = false}) {
   const [groupBar, setGroupBar] = useState(false);
@@ -50,6 +51,46 @@ function Chat({devMode = false}) {
       short_name: "ZR",
       name: "Zbiory Rozmyte (gr. 12)",
     },
+  ]);
+
+  const [messages, setMessages] = useState([
+    // Dummy messages
+    {
+      id: 1,
+      sender: "AK",
+      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      timestamp: "10:00",
+      type: "message",
+    },
+    {
+        id: 2,
+        sender: "JN",
+        content: "snwdwd",
+        timestamp: "10:01",
+        type: "message",
+      },
+      {
+        id: 3,
+        sender: "me",
+        content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        timestamp: "10:02",
+        type: "message",
+      },
+      {
+        id: 4,
+        sender: "MW",
+        content: "Dokument wizji projektu.pdf",
+        timestamp: "10:03",
+        type: "file",
+      },
+      {
+        id: 5,
+        sender: "me",
+        content: "Schemat bazy danych.png",
+        timestamp: "10:04",
+        type: "file",
+      }
+      
   ]);
 
   const [selectedChatId, setSelectedChatId] = useState(1);
@@ -305,7 +346,30 @@ function Chat({devMode = false}) {
             {chats.find((chat) => chat.id === selectedChatId)?.name}
           </h1>
         </div>
-        <div className="bg-white h-[82.885%] overflow-y-auto"></div>
+        <div className="bg-white h-[82.885%] overflow-y-auto">
+            {/* Messages will go here */}
+            <div className="p-5 flex flex-col gap-4">
+                {messages.map((message) => (
+                    <div key={message.id} className={`flex flex-col ${message.sender === "me" ? "items-end" : "items-start"}`}>
+                        
+                            {message.type === "message" ? (
+                                <div className={`${message.sender === "me" ? "bg-primary text-white" : "bg-white text-black "} rounded-xl border border-gray-200 p-3 max-w-[60%] min-w-[30%] pb-8 relative`}>
+                                    <p className="text-base font-medium">{message.content}</p>
+                                    <span className={`text-xs ${message.sender === "me" ? "text-white" : "text-black"} mt-1 absolute bottom-2 right-2`}>{message.timestamp}</span>
+                                </div>
+                            ) : (
+                                <div className={`${message.sender === "me" ? "bg-primary" : "bg-white"} rounded-lg p-0.5 max-w-[60%] border border-gray-200 pb-8 relative w-[60%]`}>
+                                    <div className={`rounded-lg ${message.sender === "me" ? "bg-white" : "bg-gray-100"} p-3 flex items-center gap-3`}> 
+                                        <img src={docs} alt="file icon" className="h-6 w-6" />
+                                        <p className="font-semibold text-lg text-black">{message.content}</p>
+                                    </div>
+                                    <span className="text-xs text-gray-500 mt-1 absolute bottom-2 right-2">{message.timestamp}</span>
+                                </div>
+                            )}
+                    </div>
+                ))}
+            </div>
+        </div>
         <div className="h-[9.375%] p-5 flex gap-5 items-center">
           <button>
             <svg
