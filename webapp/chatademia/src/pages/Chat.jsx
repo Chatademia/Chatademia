@@ -12,13 +12,14 @@ import leave from "../assets/logoutRed.svg";
 import { useNavigate } from "react-router-dom";
 import docs from "../assets/docs.svg";
 
-function Chat({devMode = false}) {
+function Chat({ devMode = false }) {
   const [groupBar, setGroupBar] = useState(false);
   const [logoutBar, setLogoutBar] = useState(false);
   const navigate = useNavigate();
   const [userData, setUserData] = useState({
     firstName: "",
     lastName: "",
+    id: "",
   });
   const [chats, setChats] = useState([
     {
@@ -63,34 +64,34 @@ function Chat({devMode = false}) {
       type: "message",
     },
     {
-        id: 2,
-        sender: "JN",
-        content: "snwdwd",
-        timestamp: "10:01",
-        type: "message",
-      },
-      {
-        id: 3,
-        sender: "me",
-        content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        timestamp: "10:02",
-        type: "message",
-      },
-      {
-        id: 4,
-        sender: "MW",
-        content: "Dokument wizji projektu.pdf",
-        timestamp: "10:03",
-        type: "file",
-      },
-      {
-        id: 5,
-        sender: "me",
-        content: "Schemat bazy danych.png",
-        timestamp: "10:04",
-        type: "file",
-      },
-      {
+      id: 2,
+      sender: "JN",
+      content: "snwdwd",
+      timestamp: "10:01",
+      type: "message",
+    },
+    {
+      id: 3,
+      sender: "me",
+      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      timestamp: "10:02",
+      type: "message",
+    },
+    {
+      id: 4,
+      sender: "MW",
+      content: "Dokument wizji projektu.pdf",
+      timestamp: "10:03",
+      type: "file",
+    },
+    {
+      id: 5,
+      sender: "me",
+      content: "Schemat bazy danych.png",
+      timestamp: "10:04",
+      type: "file",
+    },
+    {
       id: 6,
       sender: "AK",
       content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
@@ -98,35 +99,33 @@ function Chat({devMode = false}) {
       type: "message",
     },
     {
-        id: 7,
-        sender: "JN",
-        content: "snwdwd",
-        timestamp: "10:01",
-        type: "message",
-      },
-      {
-        id: 8,
-        sender: "me",
-        content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        timestamp: "10:02",
-        type: "message",
-      },
-      {
-        id: 9,
-        sender: "MW",
-        content: "Dokument wizji projektu.pdf",
-        timestamp: "10:03",
-        type: "file",
-      },
-      {
-        id: 10,
-        sender: "me",
-        content: "Schemat bazy danych.png",
-        timestamp: "10:04",
-        type: "file",
-      }
-
-      
+      id: 7,
+      sender: "JN",
+      content: "snwdwd",
+      timestamp: "10:01",
+      type: "message",
+    },
+    {
+      id: 8,
+      sender: "me",
+      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      timestamp: "10:02",
+      type: "message",
+    },
+    {
+      id: 9,
+      sender: "MW",
+      content: "Dokument wizji projektu.pdf",
+      timestamp: "10:03",
+      type: "file",
+    },
+    {
+      id: 10,
+      sender: "me",
+      content: "Schemat bazy danych.png",
+      timestamp: "10:04",
+      type: "file",
+    },
   ]);
 
   const [selectedChatId, setSelectedChatId] = useState(1);
@@ -185,7 +184,6 @@ function Chat({devMode = false}) {
   };
 
   useEffect(() => {
-
     if (devMode) {
       // w trybie deweloperskim pomijamy sprawdzanie sesji
       return;
@@ -302,7 +300,7 @@ function Chat({devMode = false}) {
     };
 
     getChatsData();
-  }, [navigate,devMode]);
+  }, [navigate, devMode]);
 
   return (
     <div className="bg-white flex h-screen relative">
@@ -383,34 +381,71 @@ function Chat({devMode = false}) {
           </h1>
         </div>
         <div className="bg-white h-[82.885%] overflow-y-auto">
-            <div className="p-5 flex flex-col gap-4">
-                {messages.map((message) => (
-                    <div key={message.id} className={`w-full flex ${message.sender === "me" ? "justify-end" : "justify-start"}`}>
-                        <div className="flex gap-3 w-[60%]">
-                            {message.sender !== "me" && (
-                                <div className="rounded-xl bg-gray-500 text-white flex items-center justify-center w-12 h-12 flex-shrink-0">
-                                    <span className="text-lg font-black">{message.sender}</span>
-                                </div>
-                            )}
-                            
-                            {message.type === "message" ? (
-                                <div className={`${message.sender === "me" ? "bg-primary text-white" : "bg-white text-black "} rounded-xl border border-gray-200 p-3 w-full pb-8 relative`}>
-                                    <p className="text-base font-medium break-words">{message.content}</p>
-                                    <span className={`text-xs ${message.sender === "me" ? "text-white" : "text-black"} mt-1 absolute bottom-2 right-2`}>{message.timestamp}</span>
-                                </div>
-                            ) : (
-                                <div className={`${message.sender === "me" ? "bg-primary" : "bg-white"} rounded-lg p-0.5 border border-gray-200 w-full pb-8 relative`}>
-                                    <div className={`rounded-lg ${message.sender === "me" ? "bg-white" : "bg-gray-100"} p-3 flex items-center gap-3`}> 
-                                        <img src={docs} alt="file icon" className="h-6 w-6 flex-shrink-0" />
-                                        <p className="font-semibold text-lg text-black break-words">{message.content}</p>
-                                    </div>
-                                    <span className="text-xs text-gray-500 absolute bottom-2 right-2">{message.timestamp}</span>
-                                </div>
-                            )}
-                        </div>
+          <div className="p-5 flex flex-col gap-4">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`w-full flex ${
+                  message.sender === "me" ? "justify-end" : "justify-start"
+                }`}
+              >
+                <div className="flex gap-3 w-[60%]">
+                  {message.sender !== "me" && (
+                    <div className="rounded-xl bg-gray-500 text-white flex items-center justify-center w-12 h-12 flex-shrink-0">
+                      <span className="text-lg font-black">
+                        {message.sender}
+                      </span>
                     </div>
-                ))}
-            </div>
+                  )}
+
+                  {message.type === "message" ? (
+                    <div
+                      className={`${
+                        message.sender === "me"
+                          ? "bg-primary text-white"
+                          : "bg-white text-black "
+                      } rounded-xl border border-gray-200 p-3 w-full pb-8 relative`}
+                    >
+                      <p className="text-base font-medium break-words">
+                        {message.content}
+                      </p>
+                      <span
+                        className={`text-xs ${
+                          message.sender === "me" ? "text-white" : "text-black"
+                        } mt-1 absolute bottom-2 right-2`}
+                      >
+                        {message.timestamp}
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      className={`${
+                        message.sender === "me" ? "bg-primary" : "bg-white"
+                      } rounded-lg p-0.5 border border-gray-200 w-full pb-8 relative`}
+                    >
+                      <div
+                        className={`rounded-lg ${
+                          message.sender === "me" ? "bg-white" : "bg-gray-100"
+                        } p-3 flex items-center gap-3`}
+                      >
+                        <img
+                          src={docs}
+                          alt="file icon"
+                          className="h-6 w-6 flex-shrink-0"
+                        />
+                        <p className="font-semibold text-lg text-black break-words">
+                          {message.content}
+                        </p>
+                      </div>
+                      <span className="text-xs text-gray-500 absolute bottom-2 right-2">
+                        {message.timestamp}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="h-[9.375%] p-5 flex gap-5 items-center">
           <button>
