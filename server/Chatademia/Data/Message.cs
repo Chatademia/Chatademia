@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace chatademia.Data
+namespace Chatademia.Data
 {
     public class Message
     {
@@ -9,7 +9,5 @@ namespace chatademia.Data
         public string Content { get; set; }
         public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
         public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
-
-        public required Guid UserId { get; init; }
     }
 }

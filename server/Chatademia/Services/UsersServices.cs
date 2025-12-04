@@ -225,10 +225,23 @@ namespace Chatademia.Services
             if (user == null)
                 throw new Exception($"Invalid session");
 
-            string access_token = user.UserTokens.PermaAccessToken;
-            string access_token_secret = user.UserTokens.PermaAccessTokenSecret;
 
-            return await QueryUser(access_token, access_token_secret);
+            if (user.UpdatedAt.AddHours(24) < DateTimeOffset.UtcNow) // data may need to be refreshed
+            {
+                string access_token = user.UserTokens.PermaAccessToken;
+                string access_token_secret = user.UserTokens.PermaAccessTokenSecret;  
+                user.UpdatedAt = DateTimeOffset.UtcNow;  
+                return await QueryUser(access_token, access_token_secret);
+            }
+            else 
+            {
+                UserVM user_data = new UserVM();
+                user_data.Id = user.Id;
+                user_data.FirstName = user.FirstName;
+                user_data.LastName = user.LastName;
+
+                return user_data;
+            }
         }
 
 
@@ -245,10 +258,24 @@ namespace Chatademia.Services
             if (user == null)
                 throw new Exception($"Invalid session");
 
-            string access_token = user.UserTokens.PermaAccessToken;
-            string access_token_secret = user.UserTokens.PermaAccessTokenSecret;
+            // data may need to be refreshed
+            if (!user.ChatsUpdatedAt.HasValue || user.ChatsUpdatedAt?.AddHours(24) < DateTimeOffset.UtcNow) 
+            {
+                string access_token = user.UserTokens.PermaAccessToken;
+                string access_token_secret = user.UserTokens.PermaAccessTokenSecret;
+                user.ChatsUpdatedAt = DateTimeOffset.UtcNow;
 
-            return await QueryChat(access_token, access_token_secret);
+                return await QueryChat(access_token, access_token_secret);
+            }
+            else
+            {
+                var chats = await _context.Chats.ToListAsync();
+                return chats.Select(c => new ChatVM
+                {
+                    CourseId = c.CourseId,
+                    Name = c.Name
+                }).ToList();
+            }
         }
     }
 }

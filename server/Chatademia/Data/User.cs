@@ -1,7 +1,7 @@
 ﻿using Chatademia.Data;
 using System.ComponentModel.DataAnnotations;
 
-namespace chatademia.Data
+namespace Chatademia.Data
 {
     public class User
     {
@@ -11,6 +11,7 @@ namespace chatademia.Data
         public string LastName { get; set; } = "";
         public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
         public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? ChatsUpdatedAt { get; set; }
 
         public List<Message> Messages { get; set; } = new List<Message>();
         public UserTokens UserTokens { get; set; } = new UserTokens();
