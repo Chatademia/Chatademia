@@ -10,8 +10,9 @@ import edit from "../assets/edit.svg";
 import invite from "../assets/users.svg";
 import leave from "../assets/logoutRed.svg";
 import { useNavigate } from "react-router-dom";
+import docs from "../assets/docs.svg";
 
-function Chat() {
+function Chat({devMode = false}) {
   const [groupBar, setGroupBar] = useState(false);
   const [logoutBar, setLogoutBar] = useState(false);
   const navigate = useNavigate();
@@ -50,6 +51,82 @@ function Chat() {
       short_name: "ZR",
       name: "Zbiory Rozmyte (gr. 12)",
     },
+  ]);
+
+  const [messages, setMessages] = useState([
+    // Dummy messages
+    {
+      id: 1,
+      sender: "AK",
+      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      timestamp: "10:00",
+      type: "message",
+    },
+    {
+        id: 2,
+        sender: "JN",
+        content: "snwdwd",
+        timestamp: "10:01",
+        type: "message",
+      },
+      {
+        id: 3,
+        sender: "me",
+        content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        timestamp: "10:02",
+        type: "message",
+      },
+      {
+        id: 4,
+        sender: "MW",
+        content: "Dokument wizji projektu.pdf",
+        timestamp: "10:03",
+        type: "file",
+      },
+      {
+        id: 5,
+        sender: "me",
+        content: "Schemat bazy danych.png",
+        timestamp: "10:04",
+        type: "file",
+      },
+      {
+      id: 6,
+      sender: "AK",
+      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      timestamp: "10:00",
+      type: "message",
+    },
+    {
+        id: 7,
+        sender: "JN",
+        content: "snwdwd",
+        timestamp: "10:01",
+        type: "message",
+      },
+      {
+        id: 8,
+        sender: "me",
+        content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        timestamp: "10:02",
+        type: "message",
+      },
+      {
+        id: 9,
+        sender: "MW",
+        content: "Dokument wizji projektu.pdf",
+        timestamp: "10:03",
+        type: "file",
+      },
+      {
+        id: 10,
+        sender: "me",
+        content: "Schemat bazy danych.png",
+        timestamp: "10:04",
+        type: "file",
+      }
+
+      
   ]);
 
   const [selectedChatId, setSelectedChatId] = useState(1);
@@ -108,6 +185,12 @@ function Chat() {
   };
 
   useEffect(() => {
+
+    if (devMode) {
+      // w trybie deweloperskim pomijamy sprawdzanie sesji
+      return;
+    }
+
     const getUserData = async () => {
       // Get session token from cookies
       const sessionToken = document.cookie
@@ -161,8 +244,65 @@ function Chat() {
         navigate("/");
       }
     };
+
     getUserData();
-  }, [navigate]);
+
+    const getChatsData = async () => {
+      // Get session token from cookies
+      const sessionToken = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("session_token="))
+        ?.split("=")[1];
+
+      // If session token doesn't exist, redirect to home page
+      if (!sessionToken) {
+        console.error("Brak tokenu sesji");
+        navigate("/");
+        return;
+      }
+
+      try {
+        // Get chats data
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/users/chats?session=${sessionToken}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            //credentials: "include",
+          }
+        );
+
+        // Read response text
+        const responseText = await response.text();
+
+        if (!response.ok) {
+          throw new Error(response.status);
+        }
+
+        // Parse response to JSON
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
+          throw new Error("Serwer zwrócił nieprawidłowy format danych");
+        }
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        // Set chats data
+        // setChats(data); // Currently using dummy chats
+      } catch (error) {
+        console.error("Błąd podczas pobierania danych użytkownika:", error);
+        navigate("/");
+      }
+    };
+
+    getChatsData();
+  }, [navigate,devMode]);
 
   return (
     <div className="bg-white flex h-screen relative">
@@ -192,22 +332,20 @@ function Chat() {
             />
           ))}
         </div>
-        <div className="h-[6.94%] flex p-5 gap-3 justify-left items-center ">
-          <div
-            className={`rounded-xl bg-orange-500 text-white  flex items-center justify-center w-10 h-10`}
+        <div className="h-[6.94%] flex p-5 gap-3 justify-start items-center">
+          <button
+            type="button"
+            onClick={() => setLogoutBar((s) => !s)}
+            aria-expanded={logoutBar}
+            aria-label="Opcje użytkownika"
+            className="rounded-xl bg-orange-500 text-white flex items-center justify-center w-10 h-10 focus:outline-none"
           >
             <h1 className="text-xl font-black">
-              {userData.firstName[0]}
-              {userData.lastName[0]}
+              {(userData.firstName?.[0] || "").toUpperCase()}
+              {(userData.lastName?.[0] || "").toUpperCase()}
             </h1>
-            <button
-              type="button"
-              onClick={() => setLogoutBar((s) => !s)}
-              aria-expanded={logoutBar}
-              aria-label="Opcje użytkownika"
-              className="absolute inset-0 rounded-xl focus:outline-none"
-            />
-          </div>
+          </button>
+
           <h1 className="font-semibold text-sm text-black">
             {userData.firstName} {userData.lastName}
           </h1>
@@ -244,7 +382,36 @@ function Chat() {
             {chats.find((chat) => chat.id === selectedChatId)?.name}
           </h1>
         </div>
-        <div className="bg-white h-[82.885%] overflow-y-auto"></div>
+        <div className="bg-white h-[82.885%] overflow-y-auto">
+            <div className="p-5 flex flex-col gap-4">
+                {messages.map((message) => (
+                    <div key={message.id} className={`w-full flex ${message.sender === "me" ? "justify-end" : "justify-start"}`}>
+                        <div className="flex gap-3 w-[60%]">
+                            {message.sender !== "me" && (
+                                <div className="rounded-xl bg-gray-500 text-white flex items-center justify-center w-12 h-12 flex-shrink-0">
+                                    <span className="text-lg font-black">{message.sender}</span>
+                                </div>
+                            )}
+                            
+                            {message.type === "message" ? (
+                                <div className={`${message.sender === "me" ? "bg-primary text-white" : "bg-white text-black "} rounded-xl border border-gray-200 p-3 w-full pb-8 relative`}>
+                                    <p className="text-base font-medium break-words">{message.content}</p>
+                                    <span className={`text-xs ${message.sender === "me" ? "text-white" : "text-black"} mt-1 absolute bottom-2 right-2`}>{message.timestamp}</span>
+                                </div>
+                            ) : (
+                                <div className={`${message.sender === "me" ? "bg-primary" : "bg-white"} rounded-lg p-0.5 border border-gray-200 w-full pb-8 relative`}>
+                                    <div className={`rounded-lg ${message.sender === "me" ? "bg-white" : "bg-gray-100"} p-3 flex items-center gap-3`}> 
+                                        <img src={docs} alt="file icon" className="h-6 w-6 flex-shrink-0" />
+                                        <p className="font-semibold text-lg text-black break-words">{message.content}</p>
+                                    </div>
+                                    <span className="text-xs text-gray-500 absolute bottom-2 right-2">{message.timestamp}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
         <div className="h-[9.375%] p-5 flex gap-5 items-center">
           <button>
             <svg
@@ -264,7 +431,7 @@ function Chat() {
           </button>
           <div className="relative w-full">
             <input
-              className="w-full rounded-lg border border-gray-200 py-3 text-gray-300 text-xs px-2"
+              className="w-full rounded-lg border border-gray-200 py-3 text-gray-700 text-xs px-2"
               placeholder="Wprowadź wiadomość"
             />
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">

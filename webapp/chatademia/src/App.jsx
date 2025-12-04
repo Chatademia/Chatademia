@@ -150,6 +150,7 @@ function App() {
             </PublicRoute>
           }
         />
+        <Route path="/dev/chats" element={<Chat devMode="true" />} />
         <Route
           path="/chats"
           element={
