@@ -1,4 +1,5 @@
 ﻿using chatademia.Data;
+using Chatademia.Data;
 using Chatademia.Data.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System.Buffers.Text;
@@ -170,6 +171,8 @@ namespace Chatademia.Services
 
         private async Task<List<ChatVM>> QueryChat(string access_token, string access_token_secret)
         {
+            using var _context = _factory.CreateDbContext();
+            
             string requestUrl = BASE_URL + CHAT_URL;
 
             using var client = new HttpClient();
@@ -198,6 +201,15 @@ namespace Chatademia.Services
                     Name = c.course_name.pl
                 })
                 .ToList();
+
+            var chats = chatVMs.Select(vm => new Chat
+            {
+                CourseId = vm.CourseId,
+                Name = vm.Name
+            }).ToList();
+
+            _context.Chats.AddRange(chats);
+            await _context.SaveChangesAsync();
 
             return chatVMs;
         }
