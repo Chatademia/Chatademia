@@ -33,6 +33,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 
 builder.Services.AddTransient<AuthServices>();
 builder.Services.AddTransient<UsersServices>();
+builder.Services.AddTransient<ChatServices>();
 
 builder.Services.AddRouting(options =>
 {
