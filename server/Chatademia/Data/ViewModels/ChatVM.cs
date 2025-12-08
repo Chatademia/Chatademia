@@ -2,7 +2,10 @@
 {
     public class ChatVM
     {
-        public string? CourseId { get; set; }
+        public Guid? Id { get; set; }
         public string? Name { get; set; }
+
+        public string? ShortName { get; set; }
+        public int? Color { get; set; }
     }
 }

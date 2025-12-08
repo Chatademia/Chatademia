@@ -26,8 +26,10 @@ namespace Chatademia.Services
                 .Where(c => c.Id == Id)
                 .Select(c => new ChatVM
                 {
-                    CourseId = c.CourseId,
-                    Name = c.Name
+                    Id = c.Id,
+                    Name = c.Name,
+                    ShortName = c.ShortName,
+                    Color = c.Color
                 })
             .FirstOrDefaultAsync();
 

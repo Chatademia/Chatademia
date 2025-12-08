@@ -169,7 +169,7 @@ namespace Chatademia.Services
             public List<Term> terms { get; set; }
         }
 
-        private async Task<List<ChatVM>> QueryChat(string access_token, string access_token_secret)
+        private async Task<List<Chat>> QueryChat(string access_token, string access_token_secret)
         {
             using var _context = _factory.CreateDbContext();
             
@@ -193,25 +193,19 @@ namespace Chatademia.Services
             var chatData = JsonSerializer.Deserialize<ChatResponse>(content);
 
             //FIXME: ENSURE ONLY THE GROUPS WITH VAILD DATE ARE ADDED
-            var chatVMs = chatData.groups
+            var chats = chatData.groups
                 .SelectMany(g => g.Value)
-                .Select(c => new ChatVM
+                .Select(c => new Chat
                 {
-                    CourseId = c.course_id,
-                    Name = c.course_name.pl
+                    Id = Guid.NewGuid(),
+                    UsosId = c.course_id,
+                    Name = c.course_name.pl,
+                    ShortName = new string(c.course_name.pl.Take(2).ToArray()),
+                    Color = Random.Shared.Next(0,10) // Assuming a default color value, update as needed
                 })
                 .ToList();
 
-            var chats = chatVMs.Select(vm => new Chat
-            {
-                CourseId = vm.CourseId,
-                Name = vm.Name
-            }).ToList();
-
-            _context.Chats.AddRange(chats);
-            await _context.SaveChangesAsync();
-
-            return chatVMs;
+            return chats;
         }
 
         public async Task<UserVM> GetUserData(Guid session)
@@ -265,15 +259,39 @@ namespace Chatademia.Services
                 string access_token_secret = user.UserTokens.PermaAccessTokenSecret;
                 user.ChatsUpdatedAt = DateTimeOffset.UtcNow;
 
-                return await QueryChat(access_token, access_token_secret);
+                await _context.SaveChangesAsync();
+
+                var chats = await QueryChat(access_token, access_token_secret);
+                
+                _context.UserChatMTMRelations.AddRange(chats.Select(chat => new UserChatMTMRelation
+                {
+                    UserId = user.Id,
+                    ChatId = chat.Id,
+                    User = user,
+                    Chat = chat
+                }).ToList());
+                
+                var chatVMs = chats.Select(c => new ChatVM
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    ShortName = c.ShortName,
+                    Color = c.Color
+                }).ToList();
+
+                await _context.SaveChangesAsync();
+                
+                return chatVMs;
             }
             else
             {
                 var chats = await _context.Chats.ToListAsync();
                 return chats.Select(c => new ChatVM
                 {
-                    CourseId = c.CourseId,
-                    Name = c.Name
+                    Id = c.Id,
+                    Name = c.Name,
+                    ShortName = c.ShortName,
+                    Color = c.Color
                 }).ToList();
             }
         }

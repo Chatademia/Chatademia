@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using chatademia.Data;
@@ -11,9 +12,11 @@ using chatademia.Data;
 namespace chatademia.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251208224121_modify_chat_structure")]
+    partial class modify_chat_structure
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -60,9 +63,6 @@ namespace chatademia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ChatId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
@@ -74,12 +74,9 @@ namespace chatademia.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ChatId");
 
                     b.HasIndex("UserId");
 
@@ -141,21 +138,6 @@ namespace chatademia.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Chatademia.Data.UserChatMTMRelation", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("ChatId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("UserId", "ChatId");
-
-                    b.HasIndex("ChatId");
-
-                    b.ToTable("UserChatMTMRelations");
-                });
-
             modelBuilder.Entity("Chatademia.Data.UserTokens", b =>
                 {
                     b.Property<Guid>("Id")
@@ -184,21 +166,9 @@ namespace chatademia.Migrations
 
             modelBuilder.Entity("Chatademia.Data.Message", b =>
                 {
-                    b.HasOne("Chatademia.Data.Chat", "Chat")
+                    b.HasOne("Chatademia.Data.User", null)
                         .WithMany("Messages")
-                        .HasForeignKey("ChatId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Chatademia.Data.User", "User")
-                        .WithMany("Messages")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Chat");
-
-                    b.Navigation("User");
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("Chatademia.Data.User", b =>
@@ -212,37 +182,9 @@ namespace chatademia.Migrations
                     b.Navigation("UserTokens");
                 });
 
-            modelBuilder.Entity("Chatademia.Data.UserChatMTMRelation", b =>
-                {
-                    b.HasOne("Chatademia.Data.Chat", "Chat")
-                        .WithMany("UserChatsMTMR")
-                        .HasForeignKey("ChatId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Chatademia.Data.User", "User")
-                        .WithMany("UserChatsMTMR")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Chat");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Chatademia.Data.Chat", b =>
-                {
-                    b.Navigation("Messages");
-
-                    b.Navigation("UserChatsMTMR");
-                });
-
             modelBuilder.Entity("Chatademia.Data.User", b =>
                 {
                     b.Navigation("Messages");
-
-                    b.Navigation("UserChatsMTMR");
                 });
 #pragma warning restore 612, 618
         }
