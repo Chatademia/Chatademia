@@ -1,21 +1,22 @@
+import MessageItem from "../components/Message.jsx";
 import icon from "../assets/icon.png";
 import arrowDown from "../assets/arrowDown.svg";
 import plus from "../assets/plus.svg";
-import Lectures from "../components/Lectures.jsx";
+import ChatItem from "../components/Chat.jsx";
 import dots from "../assets/dotsPrimary.svg";
-import Users from "../components/Users.jsx";
-import React, { useEffect } from "react";
-import { useState } from "react";
+import ParticipantItem from "../components/Participant.jsx";
+import React, { useEffect, useState, useRef } from "react";
 import edit from "../assets/edit.svg";
 import invite from "../assets/users.svg";
 import leave from "../assets/logoutRed.svg";
 import { useNavigate } from "react-router-dom";
-import docs from "../assets/docs.svg";
 
 function Chat({ devMode = false }) {
   const [groupBar, setGroupBar] = useState(false);
   const [logoutBar, setLogoutBar] = useState(false);
   const navigate = useNavigate();
+  const messagesEndRef = useRef(null);
+  const isFirstRender = useRef(true);
   const [userData, setUserData] = useState({
     firstName: "",
     lastName: "",
@@ -25,110 +26,175 @@ function Chat({ devMode = false }) {
     {
       id: 1,
       color: "red",
-      short_name: "IO",
+      shortName: "IO",
       name: "Inżynieria Oprogramowania (gr. 24)",
+      participants: [
+        {
+          id: 1,
+          firstName: "Anna",
+          lastName: "Kowalska",
+          shortName: "AK",
+          color: "A",
+        },
+        {
+          id: 2,
+          firstName: "Jan",
+          lastName: "Nowak",
+          shortName: "JN",
+          color: "B",
+        },
+        {
+          id: 3,
+          firstName: "Maria",
+          lastName: "Wiśniewska",
+          shortName: "MW",
+          color: "C",
+        },
+        {
+          id: 4,
+          firstName: "Piotr",
+          lastName: "Zieliński",
+          shortName: "PZ",
+          color: "D",
+        },
+      ],
     },
     {
       id: 2,
       color: "blue",
-      short_name: "SI",
+      shortName: "SI",
       name: "Sztuczna Inteligencja (gr. 11)",
+      participants: [],
     },
     {
       id: 3,
       color: "green",
-      short_name: "AM",
+      shortName: "AM",
       name: "Analiza Matematyczna 1 (gr. 10)",
+      participants: [],
     },
     {
       id: 4,
       color: "yellow",
-      short_name: "PP",
+      shortName: "PP",
       name: "Podstawy programowania (gr. 14)",
+      participants: [],
     },
     {
       id: 5,
       color: "green",
-      short_name: "ZR",
+      shortName: "ZR",
       name: "Zbiory Rozmyte (gr. 12)",
+      participants: [],
     },
   ]);
+
+  const colors = {
+    A: "red",
+    B: "blue",
+    C: "green",
+    D: "yellow",
+  };
 
   const [messages, setMessages] = useState([
     // Dummy messages
     {
       id: 1,
-      sender: "AK",
+      senderId: 1,
       content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      timestamp: "10:00",
+      timestamp: "1765215088",
       type: "message",
     },
     {
       id: 2,
-      sender: "JN",
+      senderId: 2,
       content: "snwdwd",
-      timestamp: "10:01",
+      timestamp: "1765215188",
       type: "message",
     },
     {
       id: 3,
-      sender: "me",
+      senderId: userData.id,
       content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      timestamp: "10:02",
+      timestamp: "1765215288",
       type: "message",
     },
     {
       id: 4,
-      sender: "MW",
+      senderId: 3,
       content: "Dokument wizji projektu.pdf",
-      timestamp: "10:03",
+      timestamp: "1765215388",
       type: "file",
     },
     {
       id: 5,
-      sender: "me",
+      senderId: userData.id,
       content: "Schemat bazy danych.png",
-      timestamp: "10:04",
+      timestamp: "1765215488",
       type: "file",
     },
     {
       id: 6,
-      sender: "AK",
+      senderId: 1,
       content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      timestamp: "10:00",
+      timestamp: "1765215088",
       type: "message",
     },
     {
       id: 7,
-      sender: "JN",
+      senderId: 2,
       content: "snwdwd",
-      timestamp: "10:01",
+      timestamp: "1765215188",
       type: "message",
     },
     {
       id: 8,
-      sender: "me",
+      senderId: userData.id,
       content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      timestamp: "10:02",
+      timestamp: "1765215288",
       type: "message",
     },
     {
       id: 9,
-      sender: "MW",
+      senderId: 3,
       content: "Dokument wizji projektu.pdf",
-      timestamp: "10:03",
+      timestamp: "1765215388",
       type: "file",
     },
     {
       id: 10,
-      sender: "me",
+      senderId: userData.id,
       content: "Schemat bazy danych.png",
-      timestamp: "10:04",
+      timestamp: "1765215488",
       type: "file",
     },
   ]);
 
   const [selectedChatId, setSelectedChatId] = useState(1);
+
+  const todaysDate = new Date();
+
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(Number(timestamp) * 1000);
+
+    const isToday =
+      date.getDate() === todaysDate.getDate() &&
+      date.getMonth() === todaysDate.getMonth() &&
+      date.getFullYear() === todaysDate.getFullYear();
+
+    const HH = String(date.getHours()).padStart(2, "0");
+    const MM = String(date.getMinutes()).padStart(2, "0");
+
+    if (isToday) {
+      return `${HH}:${MM}`;
+    } else {
+      const DD = String(date.getDate()).padStart(2, "0");
+      const MM2 = String(date.getMonth() + 1).padStart(2, "0");
+      const YYYY = date.getFullYear();
+
+      return `${HH}:${MM} ${DD}.${MM2}.${YYYY}`;
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -237,6 +303,7 @@ function Chat({ devMode = false }) {
 
         // Set user data
         setUserData(data);
+        console.log("User data:", data);
       } catch (error) {
         console.error("Błąd podczas pobierania danych użytkownika:", error);
         navigate("/");
@@ -293,6 +360,10 @@ function Chat({ devMode = false }) {
 
         // Set chats data
         // setChats(data); // Currently using dummy chats
+        //////////////// Debug ///////////////////
+        // if (process.env.REACT_APP_DEBUG_ALERTS === "true")
+        //   console.log("Odpowiedź z serwera (chats):" + JSON.stringify(data));
+        //////////////// Debug ///////////////////
       } catch (error) {
         console.error("Błąd podczas pobierania danych użytkownika:", error);
         navigate("/");
@@ -301,6 +372,15 @@ function Chat({ devMode = false }) {
 
     getChatsData();
   }, [navigate, devMode]);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+      isFirstRender.current = false;
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, selectedChatId]);
 
   return (
     <div className="bg-white flex h-screen relative">
@@ -320,12 +400,12 @@ function Chat({ devMode = false }) {
         </div>
         <div className="flex flex-col gap-4 p-5 border-b h-[76.77%] overflow-y-auto">
           {chats.map((chat) => (
-            <Lectures
+            <ChatItem
               key={chat.id}
               isActive={chat.id === selectedChatId}
               color={chat.color}
-              lectureAcronym={chat.short_name}
-              lectureName={chat.name}
+              chatShortName={chat.shortName}
+              chatName={chat.name}
               onClick={() => setSelectedChatId(chat.id)}
             />
           ))}
@@ -373,7 +453,7 @@ function Chat({ devMode = false }) {
             }}
           >
             <h1 className="text-2xl font-black">
-              {chats.find((chat) => chat.id === selectedChatId)?.short_name}
+              {chats.find((chat) => chat.id === selectedChatId)?.shortName}
             </h1>
           </div>
           <h1 className="font-semibold text-xl text-black">
@@ -382,69 +462,24 @@ function Chat({ devMode = false }) {
         </div>
         <div className="bg-white h-[82.885%] overflow-y-auto">
           <div className="p-5 flex flex-col gap-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`w-full flex ${
-                  message.sender === "me" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div className="flex gap-3 w-[60%]">
-                  {message.sender !== "me" && (
-                    <div className="rounded-xl bg-gray-500 text-white flex items-center justify-center w-12 h-12 flex-shrink-0">
-                      <span className="text-lg font-black">
-                        {message.sender}
-                      </span>
-                    </div>
-                  )}
+            {messages.map((message) => {
+              const isOwnMessage = message.senderId === userData.id;
+              const sender = chats
+                .find((chat) => chat.id === selectedChatId)
+                ?.participants?.find((p) => p.id === message.senderId);
 
-                  {message.type === "message" ? (
-                    <div
-                      className={`${
-                        message.sender === "me"
-                          ? "bg-primary text-white"
-                          : "bg-white text-black "
-                      } rounded-xl border border-gray-200 p-3 w-full pb-8 relative`}
-                    >
-                      <p className="text-base font-medium break-words">
-                        {message.content}
-                      </p>
-                      <span
-                        className={`text-xs ${
-                          message.sender === "me" ? "text-white" : "text-black"
-                        } mt-1 absolute bottom-2 right-2`}
-                      >
-                        {message.timestamp}
-                      </span>
-                    </div>
-                  ) : (
-                    <div
-                      className={`${
-                        message.sender === "me" ? "bg-primary" : "bg-white"
-                      } rounded-lg p-0.5 border border-gray-200 w-full pb-8 relative`}
-                    >
-                      <div
-                        className={`rounded-lg ${
-                          message.sender === "me" ? "bg-white" : "bg-gray-100"
-                        } p-3 flex items-center gap-3`}
-                      >
-                        <img
-                          src={docs}
-                          alt="file icon"
-                          className="h-6 w-6 flex-shrink-0"
-                        />
-                        <p className="font-semibold text-lg text-black break-words">
-                          {message.content}
-                        </p>
-                      </div>
-                      <span className="text-xs text-gray-500 absolute bottom-2 right-2">
-                        {message.timestamp}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+              return (
+                <MessageItem
+                  key={message.id}
+                  message={message}
+                  isOwnMessage={isOwnMessage}
+                  senderShortName={sender?.shortName}
+                  senderColor={colors[sender?.color]}
+                  formatTimestamp={formatTimestamp}
+                />
+              );
+            })}
+            <div ref={messagesEndRef} />
           </div>
         </div>
         <div className="h-[9.375%] p-5 flex gap-5 items-center">
@@ -532,33 +567,22 @@ function Chat({ devMode = false }) {
           <div className="flex gap-2 items-center">
             <h1 className="font-medium text-black text-lg">Uczestnicy</h1>
             <span className="bg-purple-50 text-primary text-xs font-bold px-2 py-1 rounded-full">
-              4
+              {chats.find((chat) => chat.id === selectedChatId)?.participants
+                ?.length || 0}
             </span>
           </div>
-          <Users
-            color="red"
-            userName="Anna Kowalska"
-            userAcronym="AK"
-            userStatus={true}
-          />
-          <Users
-            color="blue"
-            userName="Jan Nowak"
-            userAcronym="JN"
-            userStatus={false}
-          />
-          <Users
-            color="green"
-            userName="Maria Wiśniewska"
-            userAcronym="MW"
-            userStatus={false}
-          />
-          <Users
-            color="yellow"
-            userName="Piotr Zieliński"
-            userAcronym="PZ"
-            userStatus={false}
-          />
+          {chats
+            .find((chat) => chat.id === selectedChatId)
+            ?.participants?.map((participant) => (
+              <ParticipantItem
+                key={participant.id}
+                color={colors[participant.color]}
+                participantFirstName={participant.firstName}
+                participantLastName={participant.lastName}
+                participantShortName={participant.shortName}
+                participantStatus={false}
+              />
+            ))}
           <div className="w-full mt-2">
             <hr className="border-t-1 border-gray-300" />
           </div>

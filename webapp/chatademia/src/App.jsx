@@ -1,6 +1,6 @@
 import WelcomePage from "./pages/Home.js";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Chat from "./pages/Chat.jsx";
+import Chats from "./pages/Chats.jsx";
 import AuthCallback from "./AuthCallback.js";
 import { useEffect, useState } from "react";
 
@@ -150,12 +150,12 @@ function App() {
             </PublicRoute>
           }
         />
-        <Route path="/dev/chats" element={<Chat devMode="true" />} />
+        <Route path="/dev/chats" element={<Chats devMode="true" />} />
         <Route
           path="/chats"
           element={
             <ProtectedRoute>
-              <Chat />
+              <Chats />
             </ProtectedRoute>
           }
         />
