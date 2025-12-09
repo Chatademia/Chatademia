@@ -32,9 +32,9 @@ namespace chatademia.Controllers
         }
 
         [HttpDelete("session")]
-        public async Task<IActionResult> TerminateSession([FromQuery] Guid session)
+        public async Task<IActionResult> TerminateSession([FromBody] SessionVM request)
         {
-            await _loginServices.TerminateSession(session);
+            await _loginServices.TerminateSession(request.Session);
             return Ok();
         }
     }
