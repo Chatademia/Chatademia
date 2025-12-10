@@ -15,5 +15,6 @@ namespace Chatademia.Data
         public User User { get; set; }
         public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
         public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public bool IsDeleted { get; set; } = false;
     }
 }

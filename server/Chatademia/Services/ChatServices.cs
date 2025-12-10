@@ -4,6 +4,7 @@ using Chatademia.Data.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
+using System;
 using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Text;
@@ -49,43 +50,82 @@ namespace Chatademia.Services
 
         public async Task<List<MessageVM>> GetChatMessages(Guid session, Guid chatId)
         {
-            //FIXME: Dummy implementation
-            var msg1 = new MessageVM()
-            {
-                Id=Guid.NewGuid(),
-                Content="test message 1",
-                CreatedAt=DateTime.UtcNow
-            };
-            var msg2 = new MessageVM()
-            {
-                Id=Guid.NewGuid(),
-                Content="test message 2",
-                CreatedAt=DateTime.UtcNow
-            };
-            var msg3 = new MessageVM()
-            {
-                Id=Guid.NewGuid(),
-                Content="test message 3",
-                CreatedAt=DateTime.UtcNow
-            };
-            return new List<MessageVM>() { msg1, msg2, msg3 };
+            using var _context = _factory.CreateDbContext();
+            var user = await _context.Users
+                .Include(u => u.UserTokens)
+                .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
+
+            if (user == null)
+                throw new Exception($"Invalid session");
+
+            var messages = _context.Messages
+                .Where(m => m.ChatId == chatId && m.IsDeleted == false)            
+                .Select(m => new MessageVM
+                {
+                    Id = m.Id,
+                    Content = m.Content,
+                    CreatedAt = m.CreatedAt,
+                    UpdatedAt = m.UpdatedAt
+                }).ToList();
+
+            if (messages == null)
+                throw new Exception($"Chat not found");
+
+            return messages;
         }
 
         public async Task<MessageVM> CreateMessage(Guid session, Guid chatId, string content)
         {
-            //FIXME: Dummy implementation
+            using var _context = _factory.CreateDbContext();
+            var user = await _context.Users
+                .Include(u => u.UserTokens)
+                .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
+
+            if (user == null)
+                throw new Exception($"Invalid session");
+
+            var message = new Message
+            {
+                Id = Guid.NewGuid(),
+                Content = content,
+                ChatId = chatId,
+                UserId = user.Id,
+                CreatedAt = DateTime.UtcNow,
+                IsDeleted = false,
+            };
+
+            _context.Messages.Add(message);
+            await _context.SaveChangesAsync();
+
             var new_msg = new MessageVM()
             {
-                Id=Guid.NewGuid(),
-                Content=content,
-                CreatedAt=DateTime.UtcNow
+                Id = message.Id,
+                Content = message.Content,
+                CreatedAt = message.CreatedAt
             };
             return new_msg;
         }
 
         public async Task<IActionResult> DeleteMessage(Guid session, Guid chatId, Guid messageId)
         {
-            //FIXME: Dummy implementation
+            using var _context = _factory.CreateDbContext();
+            var user = await _context.Users
+                .Include(u => u.UserTokens)
+                .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
+
+            if (user == null)
+                throw new Exception($"Invalid session");
+
+            var message = await _context.Messages.FirstOrDefaultAsync(m => m.Id == messageId && m.ChatId == chatId);
+
+            if (message == null)
+                throw new Exception("Message not found");
+
+            message.IsDeleted = true;
+            message.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
             return null;
         }
     }
