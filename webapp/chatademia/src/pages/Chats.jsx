@@ -43,70 +43,70 @@ function Chat({ devMode = false }) {
       id: 1,
       senderId: 1,
       content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      timestamp: "1765215088",
+      timestamp: "2025-12-11T22:29:06.3840716+00:00",
       type: "message",
     },
     {
       id: 2,
       senderId: 2,
       content: "snwdwd",
-      timestamp: "1765215188",
+      timestamp: "2025-12-11T22:30:06.3840716+00:00",
       type: "message",
     },
     {
       id: 3,
       senderId: userData.id,
       content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      timestamp: "1765215288",
+      timestamp: "2025-12-11T22:31:06.3840716+00:00",
       type: "message",
     },
     {
       id: 4,
       senderId: 3,
       content: "Dokument wizji projektu.pdf",
-      timestamp: "1765215388",
+      timestamp: "2025-12-11T22:32:06.3840716+00:00",
       type: "file",
     },
     {
       id: 5,
       senderId: userData.id,
       content: "Schemat bazy danych.png",
-      timestamp: "1765215488",
+      timestamp: "2025-12-11T22:33:06.3840716+00:00",
       type: "file",
     },
     {
       id: 6,
       senderId: 1,
       content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      timestamp: "1765215088",
+      timestamp: "2025-12-11T22:34:06.3840716+00:00",
       type: "message",
     },
     {
       id: 7,
       senderId: 2,
       content: "snwdwd",
-      timestamp: "1765215188",
+      timestamp: "2025-12-11T22:35:06.3840716+00:00",
       type: "message",
     },
     {
       id: 8,
       senderId: userData.id,
       content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      timestamp: "1765215288",
+      timestamp: "2025-12-11T22:36:06.3840716+00:00",
       type: "message",
     },
     {
       id: 9,
       senderId: 3,
       content: "Dokument wizji projektu.pdf",
-      timestamp: "1765215388",
+      timestamp: "2025-12-11T22:37:06.3840716+00:00",
       type: "file",
     },
     {
       id: 10,
       senderId: userData.id,
       content: "Schemat bazy danych.png",
-      timestamp: "1765215488",
+      timestamp: "2025-12-11T22:38:06.3840716+00:00",
       type: "file",
     },
   ]);
@@ -116,7 +116,7 @@ function Chat({ devMode = false }) {
   const todaysDate = new Date();
 
   const formatTimestamp = (timestamp) => {
-    const date = new Date(Number(timestamp) * 1000);
+    const date = new Date(timestamp);
 
     const isToday =
       date.getDate() === todaysDate.getDate() &&
@@ -159,6 +159,123 @@ function Chat({ devMode = false }) {
     } finally {
       // Backend will clear the cookie, redirect to home page
       navigate("/");
+    }
+  };
+
+  const handleChatSwitch = async (chatId) => {
+    setSelectedChatId(chatId);
+    // Fetch messages for the selected chat from the backend
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/chat/chat-messages`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chatId: chatId,
+          }),
+          credentials: "include", // Send cookie with session token
+        }
+      );
+
+      // Read response text
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        throw new Error(response.status);
+      }
+
+      // Parse response to JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
+        throw new Error("Serwer zwrócił nieprawidłowy format danych");
+      }
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      console.log(data);
+      setMessages(data);
+    } catch (error) {
+      console.error("Błąd podczas pobierania wiadomości:", error);
+    }
+  };
+
+  const handleSendMessage = async (chatId, content) => {
+    // Send message to the backend
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/chat/message`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chatId: chatId,
+            content: content,
+          }),
+          credentials: "include", // Send cookie with session token
+        }
+      );
+
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        throw new Error(response.status);
+      }
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
+        throw new Error("Serwer zwrócił nieprawidłowy format danych");
+      }
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      console.log("Wysłano wiadomość:", data);
+      setMessages((prevMessages) => [...prevMessages, data]);
+    } catch (error) {
+      console.error("Błąd podczas wysyłania wiadomości:", error);
+    }
+  };
+
+  const handleDeleteMessage = async (chatId, messageId) => {
+    // Delete message on the backend
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/chat/message`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chatId: chatId,
+            messageId: messageId,
+          }),
+          credentials: "include", // Send cookie with session token
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(response.status);
+      } else {
+        setMessages((prevMessages) =>
+          prevMessages.filter((message) => message.id !== messageId)
+        );
+        console.log("Usunięto wiadomość o id:", messageId);
+      }
+    } catch (error) {
+      console.error("Błąd podczas usuwania wiadomości:", error);
     }
   };
 
@@ -293,7 +410,7 @@ function Chat({ devMode = false }) {
               color={colors[chat.color]}
               chatShortName={chat.shortName}
               chatName={chat.name}
-              onClick={() => setSelectedChatId(chat.id)}
+              onClick={() => handleChatSwitch(chat.id)}
             />
           ))}
         </div>
