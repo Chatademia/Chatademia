@@ -58,7 +58,7 @@ function AuthCallback() {
               OauthToken: oauthToken,
               OauthVerifier: oauthVerifier,
             }),
-            //credentials: "include",
+            credentials: "include", // Cookie is received from backend
           }
         );
 
@@ -99,11 +99,6 @@ function AuthCallback() {
         ) {
           throw new Error("Nieprawidłowy token sesji");
         }
-
-        // Save token in cookie
-        document.cookie = `session_token=${sessionToken}; path=/; max-age=86400; SameSite=Strict${
-          process.env.REACT_APP_IS_PRODUCTION === "true" ? "; Secure" : ""
-        }`;
 
         // Send message to the main window
         if (window.opener && !window.opener.closed) {

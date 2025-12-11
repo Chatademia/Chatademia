@@ -23,16 +23,17 @@ namespace chatademia.Controllers
         {
             var session = await _loginServices.Login(request.OauthToken, request.OauthVerifier);
             Response.Cookies.Append(
-            "AuthSessionId",
+            "session_token",
             session.Session.ToString(),
             new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,
+                Secure = false, // Change to true in production with HTTPS
                 SameSite = SameSiteMode.Lax,
-                Expires = DateTimeOffset.UtcNow.AddHours(1)
+                Path = "/",
+                Expires = DateTimeOffset.UtcNow.AddDays(1)
             });
-            return Ok(session);
+            return Ok(new { session = session.Session.ToString() });
         }
 
         [HttpGet("login-url")]
@@ -43,9 +44,28 @@ namespace chatademia.Controllers
         }
 
         [HttpDelete("session")]
-        public async Task<IActionResult> TerminateSession([FromBody] SessionVM request)
+        public async Task<IActionResult> TerminateSession()
         {
-            await _loginServices.TerminateSession(request.Session);
+            // Read session token from HttpOnly cookie
+            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
+            {
+                return Unauthorized(new { error = "Brak tokenu sesji" });
+            }
+
+            if (!Guid.TryParse(sessionToken, out var session))
+            {
+                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
+            }
+
+            await _loginServices.TerminateSession(session);
+            
+            // Clear the cookie
+            Response.Cookies.Delete("session_token", new CookieOptions
+            {
+                Path = "/",
+                SameSite = SameSiteMode.Lax
+            });
+            
             return Ok();
         }
     }

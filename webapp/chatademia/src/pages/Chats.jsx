@@ -198,44 +198,17 @@ function Chat({ devMode = false }) {
 
   const handleLogout = async () => {
     try {
-      // Get session token from cookies
-      const sessionToken = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("session_token="))
-        ?.split("=")[1];
-
-      // If session token doesn't exist, redirect to home page
-      if (!sessionToken) {
-        console.error("Brak tokenu sesji");
-        navigate("/");
-        return;
-      }
-
       // Terminate session on the backend
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/auth/session?session=${sessionToken}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          //credentials: "include",
-        }
-      );
-      /*
-      // Terminate session on the backend with session token in body
-            const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/auth/session`,
         {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ session: sessionToken }),
-          //credentials: "include",
+          credentials: "include", // Send cookie with session token
         }
       );
-      */
 
       if (!response.ok) {
         throw new Error(response.status);
@@ -243,8 +216,7 @@ function Chat({ devMode = false }) {
     } catch (error) {
       console.error("Błąd podczas wylogowywania:", error);
     } finally {
-      // Delete session cookie and redirect to home page
-      document.cookie = "session_token=; path=/; max-age=0; SameSite=Strict";
+      // Backend will clear the cookie, redirect to home page
       navigate("/");
     }
   };
@@ -256,29 +228,16 @@ function Chat({ devMode = false }) {
     }
 
     const getUserData = async () => {
-      // Get session token from cookies
-      const sessionToken = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("session_token="))
-        ?.split("=")[1];
-
-      // If session token doesn't exist, redirect to home page
-      if (!sessionToken) {
-        console.error("Brak tokenu sesji");
-        navigate("/");
-        return;
-      }
-
       try {
         // Get user data
         const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/users/user?session=${sessionToken}`,
+          `${process.env.REACT_APP_BACKEND_URL}/api/users/user`,
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
             },
-            //credentials: "include",
+            credentials: "include", // Send cookie with session token
           }
         );
 
@@ -313,29 +272,16 @@ function Chat({ devMode = false }) {
     getUserData();
 
     const getChatsData = async () => {
-      // Get session token from cookies
-      const sessionToken = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("session_token="))
-        ?.split("=")[1];
-
-      // If session token doesn't exist, redirect to home page
-      if (!sessionToken) {
-        console.error("Brak tokenu sesji");
-        navigate("/");
-        return;
-      }
-
       try {
         // Get chats data
         const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/users/chats?session=${sessionToken}`,
+          `${process.env.REACT_APP_BACKEND_URL}/api/users/chats`,
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
             },
-            //credentials: "include",
+            credentials: "include", // Send cookie with session token
           }
         );
 

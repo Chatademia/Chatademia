@@ -9,40 +9,28 @@ function App() {
     const [isChecking, setIsChecking] = useState(true);
     const [isSessionValid, setIsSessionValid] = useState(false);
 
-    // Get session token from cookies
+    // Check if session is valid
     useEffect(() => {
       const checkSession = async () => {
-        const sessionToken = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("session_token="))
-          ?.split("=")[1];
-
-        // If session token doesn't exist, set isSessionValid as false
-        if (!sessionToken) {
-          setIsSessionValid(false);
-          setIsChecking(false);
-          return;
-        }
-
-        // Check if session token is valid
+        // Check if session token is valid by sending request with cookie containing session token
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_BACKEND_URL}/api/users/user?session=${sessionToken}`,
+            `${process.env.REACT_APP_BACKEND_URL}/api/users/user`,
             {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",
               },
-              //credentials: "include",
+              credentials: "include", // Send cookie with session token
             }
           );
 
           // If response is ok, set isSessionValid as true
-          if (response.ok) setIsSessionValid(true);
-          // If session is invalid (expired), clear cookie and set isSessionValid as false
-          else if (response.status === 401) {
-            document.cookie =
-              "session_token=; path=/; max-age=0; SameSite=Strict";
+          if (response.ok) {
+            setIsSessionValid(true);
+          }
+          // If session is invalid, set isSessionValid as false
+          else if (response.status === 401 || response.status === 403) {
             setIsSessionValid(false);
           } else {
             throw new Error(response.status);
@@ -76,40 +64,28 @@ function App() {
     const [isChecking, setIsChecking] = useState(true);
     const [isSessionValid, setIsSessionValid] = useState(false);
 
-    // Get session token from cookies
+    // Check session validity using cookie with session token
     useEffect(() => {
       const checkSession = async () => {
-        const sessionToken = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("session_token="))
-          ?.split("=")[1];
-
-        // If session token doesn't exist, set isSessionValid as false
-        if (!sessionToken) {
-          setIsSessionValid(false);
-          setIsChecking(false);
-          return;
-        }
-
-        // Check if session token is valid
+        // Check if session token is valid by sending request with cookie containing session token
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_BACKEND_URL}/api/users/user?session=${sessionToken}`,
+            `${process.env.REACT_APP_BACKEND_URL}/api/users/user`,
             {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",
               },
-              //credentials: "include",
+              credentials: "include", // Send cookie with session token
             }
           );
 
           // If response is ok, set isSessionValid as true
-          if (response.ok) setIsSessionValid(true);
-          // If session is invalid (expired), clear cookie and set isSessionValid as false
-          else if (response.status === 401) {
-            document.cookie =
-              "session_token=; path=/; max-age=0; SameSite=Strict";
+          if (response.ok) {
+            setIsSessionValid(true);
+          }
+          // If session is invalid, set isSessionValid as false
+          else if (response.status === 401 || response.status === 403) {
             setIsSessionValid(false);
           } else {
             throw new Error(response.status);
