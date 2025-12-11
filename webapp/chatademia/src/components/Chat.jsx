@@ -1,15 +1,7 @@
 import React from "react";
 
 function Chat({ isActive, color, chatShortName, chatName, onClick }) {
-  const colorMap = {
-    red: "bg-red-500",
-    blue: "bg-blue-500",
-    green: "bg-green-500",
-    yellow: "bg-yellow-500",
-    // dodaj inne kolory w razie potrzeby spytac
-  };
-
-  const bgClass = colorMap[color] || "bg-gray-500";
+  const bgClass = color || "bg-gray-500";
 
   return (
     <button

@@ -9,15 +9,7 @@ function Message({
   formatTimestamp,
   senderColor,
 }) {
-  const colorMap = {
-    red: "bg-red-500",
-    blue: "bg-blue-500",
-    green: "bg-green-500",
-    yellow: "bg-yellow-500",
-    // dodaj inne kolory w razie potrzeby - spytac
-  };
-
-  const bgClass = colorMap[senderColor] || "bg-gray-500";
+  const bgClass = senderColor || "bg-gray-500";
 
   return (
     <div

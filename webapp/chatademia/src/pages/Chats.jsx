@@ -22,78 +22,19 @@ function Chat({ devMode = false }) {
     lastName: "",
     id: "",
   });
-  const [chats, setChats] = useState([
-    {
-      id: 1,
-      color: "red",
-      shortName: "IO",
-      name: "Inżynieria Oprogramowania (gr. 24)",
-      participants: [
-        {
-          id: 1,
-          firstName: "Anna",
-          lastName: "Kowalska",
-          shortName: "AK",
-          color: "A",
-        },
-        {
-          id: 2,
-          firstName: "Jan",
-          lastName: "Nowak",
-          shortName: "JN",
-          color: "B",
-        },
-        {
-          id: 3,
-          firstName: "Maria",
-          lastName: "Wiśniewska",
-          shortName: "MW",
-          color: "C",
-        },
-        {
-          id: 4,
-          firstName: "Piotr",
-          lastName: "Zieliński",
-          shortName: "PZ",
-          color: "D",
-        },
-      ],
-    },
-    {
-      id: 2,
-      color: "blue",
-      shortName: "SI",
-      name: "Sztuczna Inteligencja (gr. 11)",
-      participants: [],
-    },
-    {
-      id: 3,
-      color: "green",
-      shortName: "AM",
-      name: "Analiza Matematyczna 1 (gr. 10)",
-      participants: [],
-    },
-    {
-      id: 4,
-      color: "yellow",
-      shortName: "PP",
-      name: "Podstawy programowania (gr. 14)",
-      participants: [],
-    },
-    {
-      id: 5,
-      color: "green",
-      shortName: "ZR",
-      name: "Zbiory Rozmyte (gr. 12)",
-      participants: [],
-    },
-  ]);
+  const [chats, setChats] = useState([]);
 
   const colors = {
-    A: "red",
-    B: "blue",
-    C: "green",
-    D: "yellow",
+    0: "bg-red-500",
+    1: "bg-blue-500",
+    2: "bg-green-500",
+    3: "bg-yellow-500",
+    4: "bg-purple-500",
+    5: "bg-orange-500",
+    6: "bg-pink-500",
+    7: "bg-teal-500",
+    8: "bg-indigo-500",
+    9: "bg-cyan-500",
   };
 
   const [messages, setMessages] = useState([
@@ -305,10 +246,10 @@ function Chat({ devMode = false }) {
         }
 
         // Set chats data
-        // setChats(data); // Currently using dummy chats
+        setChats(data);
         //////////////// Debug ///////////////////
-        // if (process.env.REACT_APP_DEBUG_ALERTS === "true")
-        //   console.log("Odpowiedź z serwera (chats):" + JSON.stringify(data));
+        if (process.env.REACT_APP_DEBUG_ALERTS === "true")
+          console.log("Odpowiedź z serwera (chats):" + JSON.stringify(data));
         //////////////// Debug ///////////////////
       } catch (error) {
         console.error("Błąd podczas pobierania danych użytkownika:", error);
@@ -349,7 +290,7 @@ function Chat({ devMode = false }) {
             <ChatItem
               key={chat.id}
               isActive={chat.id === selectedChatId}
-              color={chat.color}
+              color={colors[chat.color]}
               chatShortName={chat.shortName}
               chatName={chat.name}
               onClick={() => setSelectedChatId(chat.id)}
@@ -392,11 +333,9 @@ function Chat({ devMode = false }) {
       <div className="w-1/2 border">
         <div className=" flex gap-4  h-[7.74%] justify-center p-5 border-b items-center">
           <div
-            className={`rounded-xl text-white  flex items-center justify-center w-12 h-12`}
-            style={{
-              backgroundColor: chats.find((chat) => chat.id === selectedChatId)
-                ?.color,
-            }}
+            className={`rounded-xl text-white ${
+              colors[chats.find((chat) => chat.id === selectedChatId)?.color]
+            }  flex items-center justify-center w-12 h-12`}
           >
             <h1 className="text-2xl font-black">
               {chats.find((chat) => chat.id === selectedChatId)?.shortName}

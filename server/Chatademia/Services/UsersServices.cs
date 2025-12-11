@@ -200,7 +200,7 @@ namespace Chatademia.Services
                     Id = Guid.NewGuid(),
                     UsosId = c.course_id,
                     Name = c.course_name.pl,
-                    ShortName = new string(c.course_name.pl.Take(2).ToArray()),
+                    ShortName = string.Concat(c.course_name.pl.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(word => char.ToUpper(word[0]))),
                     Color = Random.Shared.Next(0,10) // Assuming a default color value, update as needed
                 })
                 .ToList();
