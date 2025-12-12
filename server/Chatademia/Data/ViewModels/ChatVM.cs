@@ -7,5 +7,7 @@
 
         public string? ShortName { get; set; }
         public int? Color { get; set; }
+
+        public List<UserVM>? Participants { get; set; }
     }
 }

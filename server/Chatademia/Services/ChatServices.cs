@@ -45,6 +45,19 @@ namespace Chatademia.Services
             if (chat == null)
                 throw new Exception($"Chat not found");
 
+            var userChats = await _context.UserChatMTMRelations
+                .Where(uc => uc.ChatId == chat.Id)
+                .Include(uc => uc.User)
+                .ToListAsync();
+            chat.Participants = userChats.Select(uc => new UserVM
+            {
+                Id = uc.User.Id,
+                FirstName = uc.User.FirstName,
+                LastName = uc.User.LastName,
+                ShortName = uc.User.ShortName,
+                Color = uc.User.Color
+            }).ToList();
+
             return chat;
         }
 

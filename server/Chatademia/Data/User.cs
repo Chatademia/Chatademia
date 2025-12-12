@@ -8,7 +8,9 @@ namespace Chatademia.Data
         [Key]
         public string Id { get; set; }// = Guid.NewGuid();
         public string FirstName { get; set; } = "";
-        public string LastName { get; set; } = "";
+        public string LastName { get; set; } = "";        
+        public string ShortName { get; set; } = "";
+        public int Color { get; set; } = 0;
         public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
         public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset? ChatsUpdatedAt { get; set; }

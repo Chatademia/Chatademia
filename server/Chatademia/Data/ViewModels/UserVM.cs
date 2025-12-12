@@ -5,5 +5,8 @@
         public string? Id { get; set; }
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
+
+        public string? ShortName { get; set; }
+        public int? Color { get; set; }
     }
 }

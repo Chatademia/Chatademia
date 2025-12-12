@@ -131,6 +131,11 @@ namespace Chatademia.Services
             user_data.Id = id;
             user_data.FirstName = firstName;
             user_data.LastName = lastName;
+            if(firstName.Length > 0)
+                user_data.ShortName = firstName[0].ToString().ToUpper();
+            if (lastName.Length > 0)
+                user_data.ShortName += lastName[0].ToString().ToUpper();
+            user_data.Color = Random.Shared.Next(0,10);
 
             return user_data;
         }
@@ -233,6 +238,8 @@ namespace Chatademia.Services
                 user_data.Id = user.Id;
                 user_data.FirstName = user.FirstName;
                 user_data.LastName = user.LastName;
+                user_data.ShortName = user.ShortName;
+                user_data.Color = user.Color;
 
                 return user_data;
             }
@@ -270,6 +277,8 @@ namespace Chatademia.Services
                     User = user,
                     Chat = chat
                 }).ToList());
+
+                await _context.SaveChangesAsync();
                 
                 var chatVMs = chats.Select(c => new ChatVM
                 {
@@ -279,20 +288,54 @@ namespace Chatademia.Services
                     Color = c.Color
                 }).ToList();
 
-                await _context.SaveChangesAsync();
+                foreach (var chatVM in chatVMs)
+                {
+                    var userChats = await _context.UserChatMTMRelations
+                        .Where(uc => uc.ChatId == chatVM.Id)
+                        .Include(uc => uc.User)
+                        .ToListAsync();
+
+                    chatVM.Participants = userChats.Select(uc => new UserVM
+                    {
+                        Id = uc.User.Id,
+                        FirstName = uc.User.FirstName,
+                        LastName = uc.User.LastName,
+                        ShortName = uc.User.ShortName,
+                        Color = uc.User.Color
+                    }).ToList();
+                }
                 
                 return chatVMs;
             }
             else
             {
                 var chats = await _context.Chats.ToListAsync();
-                return chats.Select(c => new ChatVM
+                var chatVMs = chats.Select(c => new ChatVM
                 {
                     Id = c.Id,
                     Name = c.Name,
                     ShortName = c.ShortName,
                     Color = c.Color
                 }).ToList();
+
+                foreach (var chatVM in chatVMs)
+                {
+                    var userChats = await _context.UserChatMTMRelations
+                        .Where(uc => uc.ChatId == chatVM.Id)
+                        .Include(uc => uc.User)
+                        .ToListAsync();
+
+                    chatVM.Participants = userChats.Select(uc => new UserVM
+                    {
+                        Id = uc.User.Id,
+                        FirstName = uc.User.FirstName,
+                        LastName = uc.User.LastName,
+                        ShortName = uc.User.ShortName,
+                        Color = uc.User.Color
+                    }).ToList();
+                }
+
+                return chatVMs;
             }
         }
     }

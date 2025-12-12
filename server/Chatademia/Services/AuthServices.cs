@@ -152,6 +152,11 @@ namespace Chatademia.Services
             user_data.Id = id;
             user_data.FirstName = firstName;
             user_data.LastName = lastName;
+            if(firstName.Length > 0)
+                user_data.ShortName = firstName[0].ToString().ToUpper();
+            if (lastName.Length > 0)
+                user_data.ShortName += lastName[0].ToString().ToUpper();
+            user_data.Color = Random.Shared.Next(0,10);
 
             return user_data;
         }
@@ -233,10 +238,13 @@ namespace Chatademia.Services
                 // found user in db
                 if (old_user != null)
                 {
+                    //NOTE: if should we update the short name and color as well?
                     Console.WriteLine("Found user in db");
                     // update user data
                     old_user.FirstName = user_data.FirstName;
                     old_user.LastName = user_data.LastName;
+                    old_user.ShortName = user_data.ShortName;
+                    old_user.Color = user_data.Color.Value;
                     old_user.UpdatedAt = DateTimeOffset.UtcNow;
 
                     // update tokens
@@ -256,6 +264,8 @@ namespace Chatademia.Services
                         Id = user_data.Id,
                         FirstName = user_data.FirstName,
                         LastName = user_data.LastName,
+                        ShortName = user_data.ShortName,
+                        Color = user_data.Color.Value,
                         UserTokens = new UserTokens
                         {
                             PermaAccessToken = accessToken,
