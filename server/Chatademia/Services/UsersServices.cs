@@ -270,70 +270,102 @@ namespace Chatademia.Services
 
                 var chats = await QueryChat(access_token, access_token_secret);
                 
-                _context.UserChatMTMRelations.AddRange(chats.Select(chat => new UserChatMTMRelation
-                {
-                    UserId = user.Id,
-                    ChatId = chat.Id,
-                    User = user,
-                    Chat = chat
-                }).ToList());
+                //FIXME: MAke sure we check if the chat already exist in db then only create a new chta groupe if it doses not exitst
 
-                await _context.SaveChangesAsync();
+                var incomingChats = await QueryChat(access_token, access_token_secret);
+                var incomingChatUIds = incomingChats.Select(c => c.UsosId).ToList();
+                var incomingChatGIds = incomingChats.Select(c => c.Id).ToList();
+
+                // Load chats that already exist
+                var existingChats = await _context.Chats
+                    .Where(c => incomingChatUIds.Contains(c.UsosId))
+                    .ToListAsync();
+
+                // Find new chats that do NOT exist yet
+                var newChats = incomingChats
+                    .Where(inChat => existingChats.All(dbChat => dbChat.UsosId != inChat.UsosId))
+                    .ToList();
+
+                // Add new chats
+                if (newChats.Any())
+                {
+                    _context.Chats.AddRange(newChats);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Reload all chats from DB (now both old + newly inserted)
+                var allChats = await _context.Chats
+                    .Where(c => incomingChatUIds.Contains(c.UsosId))
+                    .ToListAsync();
+
+                // Load existing relations for this user
+                var existingRelations = await _context.UserChatMTMRelations
+                    .Where(rc => rc.UserId == user.Id && incomingChatGIds.Contains(rc.ChatId))
+                    .ToListAsync();
+
+                // Add missing relations
+                var newRelations = allChats
+                    .Where(chat => existingRelations.All(rel => rel.ChatId != chat.Id))
+                    .Select(chat => new UserChatMTMRelation
+                    {
+                        UserId = user.Id,
+                        ChatId = chat.Id
+                    })
+                    .ToList();
+
+                if (newRelations.Any())
+                {
+                    _context.UserChatMTMRelations.AddRange(newRelations);
+                    await _context.SaveChangesAsync();
+                }
                 
-                var chatVMs = chats.Select(c => new ChatVM
+                var chatVMs = await _context.Chats
+                .Select(c => new ChatVM
                 {
                     Id = c.Id,
                     Name = c.Name,
                     ShortName = c.ShortName,
-                    Color = c.Color
-                }).ToList();
-
-                foreach (var chatVM in chatVMs)
-                {
-                    var userChats = await _context.UserChatMTMRelations
-                        .Where(uc => uc.ChatId == chatVM.Id)
-                        .Include(uc => uc.User)
-                        .ToListAsync();
-
-                    chatVM.Participants = userChats.Select(uc => new UserVM
-                    {
-                        Id = uc.User.Id,
-                        FirstName = uc.User.FirstName,
-                        LastName = uc.User.LastName,
-                        ShortName = uc.User.ShortName,
-                        Color = uc.User.Color
-                    }).ToList();
-                }
+                    Color = c.Color,
+                    Participants = c.UserChatsMTMR
+                        .Select(uc => uc.User)
+                        .Distinct()
+                        .Select(u => new UserVM
+                        {
+                            Id = u.Id,
+                            FirstName = u.FirstName,
+                            LastName = u.LastName,
+                            ShortName = u.ShortName,
+                            Color = u.Color
+                        })
+                        .ToList()
+                })
+                .ToListAsync();
                 
                 return chatVMs;
             }
             else
             {
-                var chats = await _context.Chats.ToListAsync();
-                var chatVMs = chats.Select(c => new ChatVM
+                var chatVMs = await _context.Chats
+                .Select(c => new ChatVM
                 {
                     Id = c.Id,
                     Name = c.Name,
                     ShortName = c.ShortName,
-                    Color = c.Color
-                }).ToList();
-
-                foreach (var chatVM in chatVMs)
-                {
-                    var userChats = await _context.UserChatMTMRelations
-                        .Where(uc => uc.ChatId == chatVM.Id)
-                        .Include(uc => uc.User)
-                        .ToListAsync();
-
-                    chatVM.Participants = userChats.Select(uc => new UserVM
-                    {
-                        Id = uc.User.Id,
-                        FirstName = uc.User.FirstName,
-                        LastName = uc.User.LastName,
-                        ShortName = uc.User.ShortName,
-                        Color = uc.User.Color
-                    }).ToList();
-                }
+                    Color = c.Color,
+                    Participants = c.UserChatsMTMR
+                        .Select(uc => uc.User)
+                        .Distinct()
+                        .Select(u => new UserVM
+                        {
+                            Id = u.Id,
+                            FirstName = u.FirstName,
+                            LastName = u.LastName,
+                            ShortName = u.ShortName,
+                            Color = u.Color
+                        })
+                        .ToList()
+                })
+                .ToListAsync();
 
                 return chatVMs;
             }
