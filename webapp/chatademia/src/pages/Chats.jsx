@@ -18,6 +18,7 @@ function Chat({ devMode = false }) {
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const isFirstRender = useRef(true);
+  const [selectedMessageId, setSelectedMessageId] = useState(null);
   const [userData, setUserData] = useState({
     firstName: "",
     lastName: "",
@@ -291,6 +292,7 @@ function Chat({ devMode = false }) {
       );
 
       const responseText = await response.text();
+      setMessageSent("")
 
       if (!response.ok) {
         throw new Error(response.status);
@@ -535,16 +537,32 @@ function Chat({ devMode = false }) {
               const sender = chats
                 .find((chat) => chat.id === selectedChatId)
                 ?.participants?.find((p) => p.id === message.senderId);
+              const isMenuOpen = selectedMessageId === message.id;
 
               return (
-                <MessageItem
-                  key={message.id}
-                  message={message}
-                  isOwnMessage={isOwnMessage}
-                  senderShortName={sender?.shortName}
-                  senderColor={colors[sender?.color]}
-                  formatTimestamp={formatTimestamp}
-                />
+                <div key={message.id} className="relative">
+                  <MessageItem
+                    message={message}
+                    isOwnMessage={isOwnMessage}
+                    senderShortName={sender?.shortName}
+                    senderColor={colors[sender?.color]}
+                    formatTimestamp={formatTimestamp}
+                    onClick={() => isOwnMessage && setSelectedMessageId(isMenuOpen ? null : message.id)}
+                  />
+                  {isMenuOpen && isOwnMessage && (
+                    <div className="absolute bottom-10 right-10 bg-white border rounded-lg shadow-lg w-48 z-10">
+                      <button
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                        onClick={() => {
+                          handleDeleteMessage(selectedChatId, message.id);
+                          setSelectedMessageId(null);
+                        }}
+                      >
+                        <h1 className="font-semibold text-red-400 cursor-pointer">Usuń wiadomość</h1>
+                      </button>
+                    </div>
+                  )}
+                </div>
               );
             })}
             <div ref={messagesEndRef} />
@@ -574,7 +592,7 @@ function Chat({ devMode = false }) {
               value={messageSent}
               onChange={(e) => setMessageSent(e.target.value)}
             />
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2" onClick={handleMessageSend}>
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2" onClick={() => handleSendMessage(selectedChatId, messageSent)}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="purple"
