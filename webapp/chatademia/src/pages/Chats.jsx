@@ -12,6 +12,7 @@ import leave from "../assets/logoutRed.svg";
 import { useNavigate } from "react-router-dom";
 
 function Chat({ devMode = false }) {
+  const [messageSent, setMessageSent] = useState("")
   const [groupBar, setGroupBar] = useState(false);
   const [logoutBar, setLogoutBar] = useState(false);
   const navigate = useNavigate();
@@ -22,7 +23,72 @@ function Chat({ devMode = false }) {
     lastName: "",
     id: "",
   });
-  const [chats, setChats] = useState([]);
+  const [chats, setChats] = useState([
+    {
+      id: 1,
+      color: "red",
+      shortName: "IO",
+      name: "Inżynieria Oprogramowania (gr. 24)",
+      participants: [
+        {
+          id: 1,
+          firstName: "Anna",
+          lastName: "Kowalska",
+          shortName: "AK",
+          color: "A",
+        },
+        {
+          id: 2,
+          firstName: "Jan",
+          lastName: "Nowak",
+          shortName: "JN",
+          color: "B",
+        },
+        {
+          id: 3,
+          firstName: "Maria",
+          lastName: "Wiśniewska",
+          shortName: "MW",
+          color: "C",
+        },
+        {
+          id: 4,
+          firstName: "Piotr",
+          lastName: "Zieliński",
+          shortName: "PZ",
+          color: "D",
+        },
+      ],
+    },
+    {
+      id: 2,
+      color: "blue",
+      shortName: "SI",
+      name: "Sztuczna Inteligencja (gr. 11)",
+      participants: [],
+    },
+    {
+      id: 3,
+      color: "green",
+      shortName: "AM",
+      name: "Analiza Matematyczna 1 (gr. 10)",
+      participants: [],
+    },
+    {
+      id: 4,
+      color: "yellow",
+      shortName: "PP",
+      name: "Podstawy programowania (gr. 14)",
+      participants: [],
+    },
+    {
+      id: 5,
+      color: "green",
+      shortName: "ZR",
+      name: "Zbiory Rozmyte (gr. 12)",
+      participants: [],
+    },
+  ]);
 
   const colors = {
     0: "bg-red-500",
@@ -505,8 +571,10 @@ function Chat({ devMode = false }) {
             <input
               className="w-full rounded-lg border border-gray-200 py-3 text-gray-700 text-xs px-2"
               placeholder="Wprowadź wiadomość"
+              value={messageSent}
+              onChange={(e) => setMessageSent(e.target.value)}
             />
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2" onClick={handleMessageSend}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="purple"
