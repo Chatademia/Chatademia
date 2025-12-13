@@ -1,14 +1,8 @@
 import MessageItem from "../components/Message.jsx";
 import icon from "../assets/icon.png";
-import arrowDown from "../assets/arrowDown.svg";
-import plus from "../assets/plus.svg";
 import ChatItem from "../components/Chat.jsx";
-import dots from "../assets/dotsPrimary.svg";
 import ParticipantItem from "../components/Participant.jsx";
 import React, { useEffect, useState, useRef } from "react";
-import edit from "../assets/edit.svg";
-import invite from "../assets/users.svg";
-import leave from "../assets/logoutRed.svg";
 import { useNavigate } from "react-router-dom";
 
 function Chat({ devMode = false }) {
@@ -464,10 +458,17 @@ function Chat({ devMode = false }) {
         <div className=" flex gap-2 h-[8.63%] justify-between border-b items-center p-5">
           <div className="flex gap-2 items-center">
             <h1 className="font-semibold text-black text-xl">Czaty grupowe</h1>
-            <img src={arrowDown} alt="arrow down" className="h-5 w-5" />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+
+
           </div>
           <div className="rounded-full bg-primary text-white overflow-visible h-8 w-8 flex justify-center items-center cursor-pointer">
-            <img src={plus} alt="plus" className="h-6 w-6" />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+
           </div>
         </div>
         <div className="flex flex-col gap-4 p-5 border-b h-[76.77%] overflow-y-auto">
@@ -507,7 +508,9 @@ function Chat({ devMode = false }) {
               className="flex gap-2 items-center justify-left px-4"
               onClick={() => handleLogout()}
             >
-              <img src={leave} alt="leave" className="h-5 w-5" />
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#f87171" className="size-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m15 15 6-6m0 0-6-6m6 6H9a6 6 0 0 0 0 12h3" />
+              </svg>
               <h1 className="px-4 py-2 font-semibold text-red-400 cursor-pointer">
                 Wyloguj się
               </h1>
@@ -622,26 +625,37 @@ function Chat({ devMode = false }) {
               aria-expanded={groupBar}
               aria-label="Opcje grupy"
             >
-              <img src={dots} alt="dots" className="h-5 w-5" />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
+            </svg>
+
+
             </button>
 
             {groupBar && (
               <div className="absolute top-10 right-4 bg-white border rounded-lg shadow-lg w-72 z-10">
                 <div className="py-2">
                   <div className="flex gap-2 items-center justify-left px-4">
-                    <img src={edit} alt="edit" className="h-5 w-5" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                    </svg>
                     <h1 className="px-4 py-2 font-semibold hover:bg-gray-100 cursor-pointer">
                       Zmień nazwę grupy
                     </h1>
                   </div>
                   <div className="flex gap-2 items-center justify-left px-4">
-                    <img src={invite} alt="invite" className="h-5 w-5" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                    </svg>
                     <h1 className="px-4 py-2 font-semibold hover:bg-gray-100 cursor-pointer">
                       Zaproś inne osoby
                     </h1>
                   </div>
                   <div className="flex gap-2 items-center justify-left px-4">
-                    <img src={leave} alt="leave" className="h-5 w-5" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#f87171" className="size-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m15 15 6-6m0 0-6-6m6 6H9a6 6 0 0 0 0 12h3" />
+                    </svg>
+
                     <h1 className="px-4 py-2 font-semibold hover:bg-gray-100 text-red-400 cursor-pointer">
                       Opuść grupę
                     </h1>
