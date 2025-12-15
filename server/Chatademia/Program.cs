@@ -43,6 +43,9 @@ builder.Services.AddRouting(options =>
 });
 
 var app = builder.Build();
+
+app.MapHub<ChatHub>("/chatademia/chatHub");
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
