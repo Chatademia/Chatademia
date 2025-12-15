@@ -86,7 +86,23 @@ namespace Chatademia.Controllers
             var chat = await _chatServices.DeleteMessage(session, request.ChatId, request.MessageId);
             return Ok(chat);
         }
+
+        [HttpPost("create-chat")]
+        public async Task<IActionResult> CreateChat([FromBody] ChatCreateVM request)
+        {
+            // Read session token from HttpOnly cookie
+            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
+            {
+                return Unauthorized(new { error = "Brak tokenu sesji" });
+            }
+
+            if (!Guid.TryParse(sessionToken, out var session))
+            {
+                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
+            }
+
+            var chat = await _chatServices.CreateChat(session, request);
+            return Ok(chat);
+        }
     }
-
-
 }

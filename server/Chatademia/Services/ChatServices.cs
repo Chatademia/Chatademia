@@ -141,5 +141,59 @@ namespace Chatademia.Services
 
             return null;
         }
+
+        public async Task<ChatVM> CreateChat(Guid session, ChatCreateVM chatData)
+        {
+            using var _context = _factory.CreateDbContext();
+            var user = await _context.Users
+                .Include(u => u.UserTokens)
+                .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
+
+            if (user == null)
+                throw new Exception($"Invalid session");
+
+            Guid ID = Guid.NewGuid();
+            var chat = new Chat
+            {
+                Id = ID,
+                UsosId = ID.ToString(),
+                Name = chatData.Name,
+                ShortName = string.Concat(chatData.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(word => char.ToUpper(word[0]))),
+                Color = chatData.Color ?? 0
+            };
+
+            _context.Chats.Add(chat);
+
+            var userChatRelation = new UserChatMTMRelation
+            {
+                UserId = user.Id,
+                ChatId = chat.Id
+            };
+
+            _context.UserChatMTMRelations.Add(userChatRelation);
+
+            await _context.SaveChangesAsync();
+
+            var chatVM = new ChatVM
+            {
+                Id = chat.Id,
+                Name = chat.Name,
+                ShortName = chat.ShortName,
+                Color = chat.Color,
+                Participants = new List<UserVM>
+                {
+                    new UserVM
+                    {
+                        Id = user.Id,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        ShortName = user.ShortName,
+                        Color = user.Color
+                    }
+                }
+            };
+
+            return chatVM;
+        }
     }
 }

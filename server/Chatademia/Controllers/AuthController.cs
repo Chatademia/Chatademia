@@ -33,6 +33,7 @@ namespace chatademia.Controllers
                 Path = "/",
                 Expires = DateTimeOffset.UtcNow.AddDays(1)
             });
+
             return Ok(new { session = session.Session.ToString() });
         }
 
