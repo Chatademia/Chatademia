@@ -4,6 +4,7 @@ import ChatItem from "../components/Chat.jsx";
 import ParticipantItem from "../components/Participant.jsx";
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import * as signalR from "@microsoft/signalr";
 import {
   ChevronDownIcon,
   EllipsisVerticalIcon,
@@ -25,6 +26,7 @@ function Chat({ devMode = false }) {
   const isFirstRender = useRef(true);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const fileInputRef = useRef(null);
+  const hubConnectionRef = useRef(null);
   const [userData, setUserData] = useState({
     firstName: null,
     lastName: null,
@@ -194,7 +196,7 @@ function Chat({ devMode = false }) {
     },
   ]);
 
-  const [selectedChatId, setSelectedChatId] = useState(1);
+  const [selectedChatId, setSelectedChatId] = useState(null);
 
   const todaysDate = new Date();
 
@@ -277,8 +279,34 @@ function Chat({ devMode = false }) {
   };
 
   const handleChatSwitch = async (chatId) => {
+    // Leave previous chat subscription
+    if (hubConnectionRef.current && selectedChatId) {
+      try {
+        await hubConnectionRef.current.invoke(
+          "QuitChatSubscription",
+          selectedChatId
+        );
+      } catch (error) {
+        console.error("Błąd podczas opuszczania subskrypcji czatu:", error);
+      }
+    }
+
     setSelectedChatId(chatId);
+
+    // Join new chat subscription
+    if (hubConnectionRef.current) {
+      try {
+        await hubConnectionRef.current.invoke("JoinChatSubscription", chatId);
+      } catch (error) {
+        console.error("Błąd podczas dołączania do subskrypcji czatu:", error);
+      }
+    }
+
     // Fetch messages for the selected chat from the backend
+    await fetchMessages(chatId);
+  };
+
+  const fetchMessages = async (chatId) => {
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/chat/chat-messages`,
@@ -479,6 +507,12 @@ function Chat({ devMode = false }) {
 
         // Set chats data
         setChats(data);
+
+        // Set first chat as selected if available
+        if (data.length > 0) {
+          setSelectedChatId(data[0].id);
+        }
+
         //////////////// Debug ///////////////////
         if (process.env.REACT_APP_DEBUG_ALERTS === "true")
           console.log("Odpowiedź z serwera (chats):" + JSON.stringify(data));
@@ -491,6 +525,62 @@ function Chat({ devMode = false }) {
 
     getChatsData();
   }, [navigate, devMode]);
+
+  // SignalR connection setup
+  useEffect(() => {
+    const setupSignalR = async () => {
+      // Wait for userData and selectedChatId to be loaded
+      if (!userData.id || !selectedChatId) {
+        console.log("Czekanie na załadowanie danych użytkownika i czatu...");
+        return;
+      }
+
+      const connection = new signalR.HubConnectionBuilder()
+        .withUrl(`${process.env.REACT_APP_BACKEND_URL}/chatademia/chatHub`, {
+          withCredentials: true,
+        })
+        .withAutomaticReconnect()
+        .configureLogging(signalR.LogLevel.Information)
+        .build();
+
+      // Handle incoming messages
+      connection.on("NEW MSG", async () => {
+        console.log("Otrzymano nową wiadomość, odświeżanie...");
+        if (selectedChatId) {
+          await fetchMessages(selectedChatId);
+        }
+      });
+
+      try {
+        await connection.start();
+        console.log("SignalR połączony");
+        hubConnectionRef.current = connection;
+
+        // Join initial chat subscription
+        try {
+          await connection.invoke("JoinChatSubscription", selectedChatId);
+
+          // Load messages for the selected chat
+          await fetchMessages(selectedChatId);
+        } catch (error) {
+          console.error("Błąd podczas przełączania czatów:", error);
+        }
+      } catch (error) {
+        console.error("Błąd połączenia SignalR:", error);
+      }
+    };
+
+    if (userData.id && selectedChatId) {
+      setupSignalR();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (hubConnectionRef.current) {
+        hubConnectionRef.current.stop();
+      }
+    };
+  }, [selectedChatId, userData.id]);
 
   useEffect(() => {
     if (isFirstRender.current) {
