@@ -15,6 +15,7 @@ import {
   UserGroupIcon,
   ArrowRightStartOnRectangleIcon,
   ArrowRightIcon,
+  ArrowRightEndOnRectangleIcon,
 } from "@heroicons/react/24/solid";
 
 function Chat({ devMode = false }) {
@@ -27,6 +28,7 @@ function Chat({ devMode = false }) {
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const fileInputRef = useRef(null);
   const hubConnectionRef = useRef(null);
+  const [newGroupPopup, setNewGroupPopup] = useState(false);
   const [userData, setUserData] = useState({
     firstName: null,
     lastName: null,
@@ -603,9 +605,41 @@ function Chat({ devMode = false }) {
             <h1 className="font-semibold text-black text-xl">Czaty grupowe</h1>
             {/* <ChevronDownIcon className="size-6" color="currentColor" /> */}
           </div>
-          <div className="rounded-full bg-primary text-white overflow-visible h-8 w-8 flex justify-center items-center cursor-pointer">
+          <button
+            className="rounded-full bg-primary text-white overflow-visible h-8 w-8 flex justify-center items-center cursor-pointer"
+            type="button"
+            onClick={() => setNewGroupPopup((s) => !s)}
+          >
             <PlusIcon className="size-6" color="currentColor" />
-          </div>
+          </button>
+          {newGroupPopup && (
+            <div className="absolute top-36 left-16 bg-white border rounded-lg shadow-lg w-80 z-10">
+              <button
+                className="flex gap-1 items-center justify-left w-full px-4 hover:bg-gray-100 rounded-lg"
+                onClick={() => {
+                  setNewGroupPopup(false);
+                  alert("Utwórz nowy czat grupowy");
+                }}
+              >
+                <UserGroupIcon className="size-6" />
+                <h1 className="px-4 py-2 font-semibold hover:bg-gray-100 cursor-pointer line-clamp-1">
+                  Utwórz czat niestandardowy
+                </h1>
+              </button>
+              <button
+                className="flex gap-1 items-center justify-left w-full px-4 hover:bg-gray-100 rounded-lg"
+                onClick={() => {
+                  setNewGroupPopup(false);
+                  alert("Dołącz do nowego czatu grupowego");
+                }}
+              >
+                <ArrowRightEndOnRectangleIcon className="size-6" />
+                <h1 className="px-4 py-2 font-semibold cursor-pointer line-clamp-1">
+                  Dołącz do istniejącego czatu
+                </h1>
+              </button>
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-4 p-5 border-b h-[76.77%] overflow-y-auto">
           {chats.map((chat) => (
