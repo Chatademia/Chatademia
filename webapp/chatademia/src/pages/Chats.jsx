@@ -2,6 +2,8 @@ import MessageItem from "../components/Message.jsx";
 import icon from "../assets/icon.png";
 import ChatItem from "../components/Chat.jsx";
 import ParticipantItem from "../components/Participant.jsx";
+import CreateChatPopup from "../components/CreateChatPopup.jsx";
+import CreateChatSuccessPopup from "../components/CreateChatSuccessPopup.jsx";
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import * as signalR from "@microsoft/signalr";
@@ -29,6 +31,9 @@ function Chat({ devMode = false }) {
   const fileInputRef = useRef(null);
   const hubConnectionRef = useRef(null);
   const [newGroupPopup, setNewGroupPopup] = useState(false);
+  const [showCreateChatPopup, setShowCreateChatPopup] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
   const [userData, setUserData] = useState({
     firstName: null,
     lastName: null,
@@ -280,6 +285,59 @@ function Chat({ devMode = false }) {
     console.log("Wysłano załącznik:", file.name);
   };
 
+  const handleCreateChat = async (chatName) => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/chat/create-chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: chatName,
+            color: Math.floor(Math.random() * 10),
+          }),
+          credentials: "include",
+        }
+      );
+
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        throw new Error(response.status);
+      }
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
+        throw new Error("Serwer zwrócił nieprawidłowy format danych");
+      }
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      console.log("Utworzono czat, odpowiedź z serwera:", data);
+
+      // Add new chat to the list
+      setChats((prevChats) => [data, ...prevChats]);
+
+      // Set the new chat as selected
+      setSelectedChatId(data.id);
+
+      // Set invite link and show success popup
+      setInviteLink(
+        data.inviteLink || `${window.location.origin}/invite/${data.id}`
+      );
+      setShowSuccessPopup(true);
+    } catch (error) {
+      console.error("Błąd podczas tworzenia czatu:", error);
+      alert("Nie udało się utworzyć czatu. Spróbuj ponownie.");
+    }
+  };
+
   const handleChatSwitch = async (chatId) => {
     // Leave previous chat subscription
     if (hubConnectionRef.current && selectedChatId) {
@@ -351,6 +409,9 @@ function Chat({ devMode = false }) {
   };
 
   const handleSendMessage = async (chatId, content) => {
+    if (!content.trim()) {
+      return;
+    }
     // Send message to the backend
     try {
       const response = await fetch(
@@ -618,7 +679,7 @@ function Chat({ devMode = false }) {
                 className="flex gap-1 items-center justify-left w-full px-4 hover:bg-gray-100 rounded-lg"
                 onClick={() => {
                   setNewGroupPopup(false);
-                  alert("Utwórz nowy czat grupowy");
+                  setShowCreateChatPopup(true);
                 }}
               >
                 <UserGroupIcon className="size-6" />
@@ -768,10 +829,12 @@ function Chat({ devMode = false }) {
               placeholder="Wprowadź wiadomość"
               value={messageSent}
               onChange={(e) => setMessageSent(e.target.value)}
+              autoFocus
             />
             <button
               className="absolute right-3 top-1/2 transform -translate-y-1/2"
               onClick={() => handleSendMessage(selectedChatId, messageSent)}
+              disabled={!messageSent.trim()}
             >
               <PaperAirplaneIcon className="size-6" color="#5004e0" />
             </button>
@@ -847,6 +910,16 @@ function Chat({ devMode = false }) {
           </div>
         </div>
       </div>
+      <CreateChatPopup
+        isOpen={showCreateChatPopup}
+        onClose={() => setShowCreateChatPopup(false)}
+        onSubmit={handleCreateChat}
+      />
+      <CreateChatSuccessPopup
+        isOpen={showSuccessPopup}
+        onClose={() => setShowSuccessPopup(false)}
+        inviteLink={inviteLink}
+      />
     </div>
   );
 }
