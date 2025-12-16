@@ -8,8 +8,8 @@ function Chat({ isActive, color, chatShortName, chatName, onClick }) {
       type="button"
       onClick={onClick}
       className={`${
-        isActive ? "bg-violet-50" : "bg-white"
-      } flex p-4 rounded-xl pr-2 gap-2 place-items-center`}
+        isActive ? "bg-violet-50" : "bg-white hover:bg-gray-50"
+      } flex p-4 rounded-xl pr-2 gap-2 place-items-center transition-colors duration-200 cursor-pointer`}
     >
       <div
         className={`rounded-xl ${bgClass} text-white  flex items-center justify-center w-12 h-12`}

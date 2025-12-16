@@ -667,7 +667,7 @@ function Chat({ devMode = false }) {
             {/* <ChevronDownIcon className="size-6" color="currentColor" /> */}
           </div>
           <button
-            className="rounded-full bg-primary text-white overflow-visible h-8 w-8 flex justify-center items-center cursor-pointer"
+            className="rounded-full bg-primary text-white overflow-visible h-8 w-8 flex justify-center items-center cursor-pointer hover:scale-110 transition-all duration-200"
             type="button"
             onClick={() => setNewGroupPopup((s) => !s)}
           >
@@ -676,19 +676,19 @@ function Chat({ devMode = false }) {
           {newGroupPopup && (
             <div className="absolute top-36 left-16 bg-white border rounded-lg shadow-lg w-80 z-10">
               <button
-                className="flex gap-1 items-center justify-left w-full px-4 hover:bg-gray-100 rounded-lg"
+                className="flex gap-1 items-center justify-left w-full px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150"
                 onClick={() => {
                   setNewGroupPopup(false);
                   setShowCreateChatPopup(true);
                 }}
               >
                 <UserGroupIcon className="size-6" />
-                <h1 className="px-4 py-2 font-semibold hover:bg-gray-100 cursor-pointer line-clamp-1">
+                <h1 className="px-4 py-2 font-semibold cursor-pointer line-clamp-1">
                   Utwórz czat niestandardowy
                 </h1>
               </button>
               <button
-                className="flex gap-1 items-center justify-left w-full px-4 hover:bg-gray-100 rounded-lg"
+                className="flex gap-1 items-center justify-left w-full px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150"
                 onClick={() => {
                   setNewGroupPopup(false);
                   alert("Dołącz do nowego czatu grupowego");
@@ -715,7 +715,7 @@ function Chat({ devMode = false }) {
           ))}
         </div>
         <button
-          className="h-[6.94%] flex p-5 gap-3 justify-start items-center"
+          className="h-[6.94%] flex p-5 gap-3 justify-start items-center hover:bg-gray-100 transition-colors duration-150 rounded-lg"
           type="button"
           onClick={() => setLogoutBar((s) => !s)}
           aria-expanded={logoutBar}
@@ -740,7 +740,7 @@ function Chat({ devMode = false }) {
         {logoutBar && (
           <div className="absolute bottom-14 left-4 bg-white border rounded-lg shadow-lg w-72 z-10">
             <button
-              className="flex gap-2 items-center justify-left px-4"
+              className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150"
               onClick={() => handleLogout()}
             >
               <ArrowRightStartOnRectangleIcon
@@ -794,7 +794,7 @@ function Chat({ devMode = false }) {
                   {isMenuOpen && isOwnMessage && (
                     <div className="absolute bottom-10 right-10 bg-white border rounded-lg shadow-lg w-48 z-10">
                       <button
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                        className="w-full text-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150"
                         onClick={() => {
                           handleDeleteMessage(selectedChatId, message.id);
                           setSelectedMessageId(null);
@@ -820,7 +820,10 @@ function Chat({ devMode = false }) {
             style={{ display: "none" }}
             accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
           />
-          <button onClick={() => fileInputRef.current?.click()}>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="hover:scale-110 transition-transform duration-200 cursor-pointer"
+          >
             <PaperClipIcon className="size-6" color="currentColor" />
           </button>
           <div className="relative w-full">
@@ -832,7 +835,7 @@ function Chat({ devMode = false }) {
               autoFocus
             />
             <button
-              className="absolute right-3 top-1/2 transform -translate-y-1/2"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 hover:scale-110 disabled:scale-100 disabled:opacity-50 transition-all duration-200 cursor-pointer"
               onClick={() => handleSendMessage(selectedChatId, messageSent)}
               disabled={!messageSent.trim()}
             >
@@ -847,7 +850,7 @@ function Chat({ devMode = false }) {
           <div className="relative">
             <button
               onClick={() => setGroupBar((s) => !s)}
-              className="rounded-full h-8 w-8 bg-violet-50 flex items-center justify-center cursor-pointer"
+              className="rounded-full h-8 w-8 bg-violet-50 flex items-center justify-center cursor-pointer hover:scale-110 transition-all duration-200"
               aria-expanded={groupBar}
               aria-label="Opcje grupy"
             >
@@ -857,29 +860,27 @@ function Chat({ devMode = false }) {
             {groupBar && (
               <div className="absolute top-10 right-4 bg-white border rounded-lg shadow-lg w-72 z-10">
                 <div className="py-2">
-                  <div className="flex gap-2 items-center justify-left px-4">
+                  <button className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150">
                     <PencilSquareIcon className="size-6" color="currentColor" />
-
-                    <h1 className="px-4 py-2 font-semibold hover:bg-gray-100 cursor-pointer">
+                    <h1 className="px-4 py-2 font-semibold cursor-pointer">
                       Zmień nazwę grupy
                     </h1>
-                  </div>
-                  <div className="flex gap-2 items-center justify-left px-4">
+                  </button>
+                  <button className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150">
                     <UserGroupIcon className="size-6" color="currentColor" />
-                    <h1 className="px-4 py-2 font-semibold hover:bg-gray-100 cursor-pointer">
+                    <h1 className="px-4 py-2 font-semibold cursor-pointer">
                       Zaproś inne osoby
                     </h1>
-                  </div>
-                  <div className="flex gap-2 items-center justify-left px-4">
+                  </button>
+                  <button className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150">
                     <ArrowRightStartOnRectangleIcon
                       className="size-6"
                       color="#f87171"
                     />
-
-                    <h1 className="px-4 py-2 font-semibold hover:bg-gray-100 text-red-400 cursor-pointer">
+                    <h1 className="px-4 py-2 font-semibold text-red-400 cursor-pointer">
                       Opuść grupę
                     </h1>
-                  </div>
+                  </button>
                 </div>
               </div>
             )}
