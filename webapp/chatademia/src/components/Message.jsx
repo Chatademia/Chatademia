@@ -3,7 +3,7 @@ import { DocumentTextIcon } from "@heroicons/react/24/outline";
 
 function Message({
   message,
-  isMyMessage,
+  isOwnMessage,
   senderName,
   senderShortName,
   formatTimestamp,
@@ -13,10 +13,12 @@ function Message({
 
   return (
     <div
-      className={`w-full flex ${isMyMessage ? "justify-end" : "justify-start"}`}
+      className={`w-full flex ${
+        isOwnMessage ? "justify-end" : "justify-start"
+      }`}
     >
       <div className="flex gap-3 w-[60%]">
-        {!isMyMessage && (
+        {!isOwnMessage && (
           <div
             className={`rounded-xl ${bgClass} text-white flex items-center justify-center w-12 h-12 flex-shrink-0`}
           >
@@ -24,10 +26,10 @@ function Message({
           </div>
         )}
 
-        {message.type === "message" ? (
+        {message.type !== "file" || !message.type ? (
           <div
             className={`${
-              isMyMessage ? "bg-primary text-white" : "bg-white text-black "
+              isOwnMessage ? "bg-primary text-white" : "bg-white text-black "
             } rounded-xl border border-gray-200 p-3 w-full pb-8 relative`}
           >
             <p className="text-base font-medium break-words">
@@ -35,21 +37,21 @@ function Message({
             </p>
             <span
               className={`text-xs ${
-                isMyMessage ? "text-white" : "text-black"
+                isOwnMessage ? "text-white" : "text-black"
               } mt-1 absolute bottom-2 right-2`}
             >
-              {formatTimestamp(message.timestamp)}
+              {formatTimestamp(message.createdAt)}
             </span>
           </div>
         ) : (
           <div
             className={`${
-              isMyMessage ? "bg-primary" : "bg-white"
+              isOwnMessage ? "bg-primary" : "bg-white"
             } rounded-lg p-0.5 border border-gray-200 w-full pb-8 relative`}
           >
             <div
               className={`rounded-lg ${
-                isMyMessage ? "bg-white" : "bg-gray-100"
+                isOwnMessage ? "bg-white" : "bg-gray-100"
               } p-3 flex items-center gap-3`}
             >
               <DocumentTextIcon className="size-6" color="#5004E0" />
@@ -59,7 +61,7 @@ function Message({
               </p>
             </div>
             <span className="text-xs text-gray-500 absolute bottom-2 right-2">
-              {formatTimestamp(message.timestamp)}
+              {formatTimestamp(message.createdAt)}
             </span>
           </div>
         )}

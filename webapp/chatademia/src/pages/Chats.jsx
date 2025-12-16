@@ -24,10 +24,12 @@ function Chat({ devMode = false }) {
   const messagesEndRef = useRef(null);
   const isFirstRender = useRef(true);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
+  const fileInputRef = useRef(null);
   const [userData, setUserData] = useState({
-    firstName: "",
-    lastName: "",
-    id: "",
+    firstName: null,
+    lastName: null,
+    id: null,
+    color: null,
   });
   const [chats, setChats] = useState([
     {
@@ -95,7 +97,16 @@ function Chat({ devMode = false }) {
       participants: [],
     },
   ]);
-
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+  const allowedFileTypes = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/plain",
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+  ];
   const colors = {
     0: "bg-red-500",
     1: "bg-blue-500",
@@ -115,70 +126,70 @@ function Chat({ devMode = false }) {
       id: 1,
       senderId: 1,
       content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      timestamp: "2025-12-11T22:29:06.3840716+00:00",
+      createdAt: "2025-12-11T22:29:06.3840716+00:00",
       type: "message",
     },
     {
       id: 2,
       senderId: 2,
       content: "snwdwd",
-      timestamp: "2025-12-11T22:30:06.3840716+00:00",
+      createdAt: "2025-12-11T22:30:06.3840716+00:00",
       type: "message",
     },
     {
       id: 3,
       senderId: userData.id,
       content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      timestamp: "2025-12-11T22:31:06.3840716+00:00",
+      createdAt: "2025-12-11T22:31:06.3840716+00:00",
       type: "message",
     },
     {
       id: 4,
       senderId: 3,
       content: "Dokument wizji projektu.pdf",
-      timestamp: "2025-12-11T22:32:06.3840716+00:00",
+      createdAt: "2025-12-11T22:32:06.3840716+00:00",
       type: "file",
     },
     {
       id: 5,
       senderId: userData.id,
       content: "Schemat bazy danych.png",
-      timestamp: "2025-12-11T22:33:06.3840716+00:00",
+      createdAt: "2025-12-11T22:33:06.3840716+00:00",
       type: "file",
     },
     {
       id: 6,
       senderId: 1,
       content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      timestamp: "2025-12-11T22:34:06.3840716+00:00",
+      createdAt: "2025-12-11T22:34:06.3840716+00:00",
       type: "message",
     },
     {
       id: 7,
       senderId: 2,
       content: "snwdwd",
-      timestamp: "2025-12-11T22:35:06.3840716+00:00",
+      createdAt: "2025-12-11T22:35:06.3840716+00:00",
       type: "message",
     },
     {
       id: 8,
       senderId: userData.id,
       content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      timestamp: "2025-12-11T22:36:06.3840716+00:00",
+      createdAt: "2025-12-11T22:36:06.3840716+00:00",
       type: "message",
     },
     {
       id: 9,
       senderId: 3,
       content: "Dokument wizji projektu.pdf",
-      timestamp: "2025-12-11T22:37:06.3840716+00:00",
+      createdAt: "2025-12-11T22:37:06.3840716+00:00",
       type: "file",
     },
     {
       id: 10,
       senderId: userData.id,
       content: "Schemat bazy danych.png",
-      timestamp: "2025-12-11T22:38:06.3840716+00:00",
+      createdAt: "2025-12-11T22:38:06.3840716+00:00",
       type: "file",
     },
   ]);
@@ -234,6 +245,37 @@ function Chat({ devMode = false }) {
     }
   };
 
+  const handleFileSelect = (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        alert(
+          `Plik jest za duży. Maksymalny rozmiar to ${
+            MAX_FILE_SIZE / 1024 / 1024
+          }MB`
+        );
+
+        event.target.value = "";
+        return;
+      }
+
+      if (!allowedFileTypes.includes(file.type)) {
+        alert(
+          "Nieprawidłowy typ pliku. Dozwolone rozszerzenia: PDF, DOC, DOCX, TXT, JPG, PNG, GIF"
+        );
+        event.target.value = "";
+        return;
+      }
+
+      handleSendAttachment(selectedChatId, file);
+    }
+  };
+
+  const handleSendAttachment = async (chatId, file) => {
+    // TODO: Zaimplementować logikę wysyłania załączników
+    console.log("Wysłano załącznik:", file.name);
+  };
+
   const handleChatSwitch = async (chatId) => {
     setSelectedChatId(chatId);
     // Fetch messages for the selected chat from the backend
@@ -271,7 +313,7 @@ function Chat({ devMode = false }) {
         throw new Error(data.error);
       }
 
-      console.log(data);
+      console.log("Pobrano wiadomości:", data);
       setMessages(data);
     } catch (error) {
       console.error("Błąd podczas pobierania wiadomości:", error);
@@ -495,8 +537,9 @@ function Chat({ devMode = false }) {
           aria-label="Opcje użytkownika"
         >
           <div
-            className="rounded-xl text-white flex items-center justify-center w-10 h-10 focus:outline-none"
-            style={{ backgroundColor: userData.color }}
+            className={`rounded-xl text-white flex items-center justify-center w-10 h-10 focus:outline-none ${
+              colors[userData.color]
+            }`}
           >
             <h1 className="text-xl font-black">
               {(userData.firstName?.[0] || "").toUpperCase()}
@@ -585,7 +628,14 @@ function Chat({ devMode = false }) {
           </div>
         </div>
         <div className="h-[9.375%] p-5 flex gap-5 items-center">
-          <button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            style={{ display: "none" }}
+            accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+          />
+          <button onClick={() => fileInputRef.current?.click()}>
             <PaperClipIcon className="size-6" color="currentColor" />
           </button>
           <div className="relative w-full">
@@ -595,12 +645,12 @@ function Chat({ devMode = false }) {
               value={messageSent}
               onChange={(e) => setMessageSent(e.target.value)}
             />
-            <div
+            <button
               className="absolute right-3 top-1/2 transform -translate-y-1/2"
               onClick={() => handleSendMessage(selectedChatId, messageSent)}
             >
               <PaperAirplaneIcon className="size-6" color="#5004e0" />
-            </div>
+            </button>
           </div>
         </div>
       </div>
