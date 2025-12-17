@@ -156,7 +156,6 @@ namespace Chatademia.Services
                 user_data.ShortName = firstName[0].ToString().ToUpper();
             if (lastName.Length > 0)
                 user_data.ShortName += lastName[0].ToString().ToUpper();
-            user_data.Color = Random.Shared.Next(0,10);
 
             return user_data;
         }
@@ -244,7 +243,7 @@ namespace Chatademia.Services
                     old_user.FirstName = user_data.FirstName;
                     old_user.LastName = user_data.LastName;
                     old_user.ShortName = user_data.ShortName;
-                    old_user.Color = user_data.Color.Value;
+                    old_user.Color = old_user.Color;
                     old_user.UpdatedAt = DateTimeOffset.UtcNow;
 
                     // update tokens
@@ -265,7 +264,7 @@ namespace Chatademia.Services
                         FirstName = user_data.FirstName,
                         LastName = user_data.LastName,
                         ShortName = user_data.ShortName,
-                        Color = user_data.Color.Value,
+                        Color = Random.Shared.Next(0,10),
                         UserTokens = new UserTokens
                         {
                             PermaAccessToken = accessToken,
