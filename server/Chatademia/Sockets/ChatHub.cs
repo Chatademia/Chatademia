@@ -1,20 +1,23 @@
 using Microsoft.AspNetCore.SignalR;
 
-public class ChatHub : Hub
+namespace Chatademia.Sockets
 {
-    //TAKE THE GUID AND TURN IT INTO A STRING
-    public async Task JoinChatSubscription(Guid chatId)
+    public class ChatHub : Hub
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, chatId.ToString());
-    }
+        //TAKE THE GUID AND TURN IT INTO A STRING?
+        public async Task JoinChatSubscription(Guid chatId)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, chatId.ToString());
+        }
 
-    public async Task NotifyChatSubscriptionMessageWasSent(Guid chatId)
-    {
-        await Clients.Group(chatId.ToString()).SendAsync("NEW MSG");
-    }
+        public async Task NotifyChatSubscriptionMessageWasSent(Guid chatId)
+        {
+            await Clients.Group(chatId.ToString()).SendAsync("NEW MSG");
+        }
 
-    public async Task QuitChatSubscription(Guid chatId)
-    {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, chatId.ToString());
+        public async Task QuitChatSubscription(Guid chatId)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, chatId.ToString());
+        }
     }
 }

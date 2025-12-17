@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using chatademia.Data;
 using Scalar.AspNetCore;
 using Chatademia.Services;
+using Chatademia.Sockets;
 
 
 var builder = WebApplication.CreateBuilder(args);

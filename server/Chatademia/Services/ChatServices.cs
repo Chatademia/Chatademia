@@ -76,6 +76,8 @@ namespace Chatademia.Services
                 .Select(m => new MessageVM
                 {
                     Id = m.Id,
+                    SenderId = m.UserId,
+                    Type = "text",
                     Content = m.Content,
                     CreatedAt = m.CreatedAt,
                     UpdatedAt = m.UpdatedAt
@@ -113,6 +115,8 @@ namespace Chatademia.Services
             var new_msg = new MessageVM()
             {
                 Id = message.Id,
+                SenderId = message.UserId,
+                Type = "text",
                 Content = message.Content,
                 CreatedAt = message.CreatedAt
             };
