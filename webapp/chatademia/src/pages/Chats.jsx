@@ -7,6 +7,16 @@ import CreateChatSuccessPopup from "../components/CreateChatSuccessPopup.jsx";
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import * as signalR from "@microsoft/signalr";
+
+// Auth handlers
+import { handleLogout, getUserData, getChatsData } from "../utils/authHandlers.js";
+
+// Format utilities
+import { formatTimestamp } from "../utils/formatTimestamp.js";
+
+// File handlers
+import { handleFileSelect } from "../utils/handleFileSelect.js";
+
 import {
   ChevronDownIcon,
   EllipsisVerticalIcon,
@@ -205,81 +215,6 @@ function Chat({ devMode = false }) {
   ]);
 
   const [selectedChatId, setSelectedChatId] = useState(null);
-
-  const todaysDate = new Date();
-
-  const formatTimestamp = (timestamp) => {
-    const date = new Date(timestamp);
-
-    const isToday =
-      date.getDate() === todaysDate.getDate() &&
-      date.getMonth() === todaysDate.getMonth() &&
-      date.getFullYear() === todaysDate.getFullYear();
-
-    const HH = String(date.getHours()).padStart(2, "0");
-    const MM = String(date.getMinutes()).padStart(2, "0");
-
-    if (isToday) {
-      return `${HH}:${MM}`;
-    } else {
-      const DD = String(date.getDate()).padStart(2, "0");
-      const MM2 = String(date.getMonth() + 1).padStart(2, "0");
-      const YYYY = date.getFullYear();
-
-      return `${HH}:${MM} ${DD}.${MM2}.${YYYY}`;
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      // Terminate session on the backend
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/auth/session`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include", // Send cookie with session token
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(response.status);
-      }
-    } catch (error) {
-      console.error("Błąd podczas wylogowywania:", error);
-    } finally {
-      // Backend will clear the cookie, redirect to home page
-      navigate("/");
-    }
-  };
-
-  const handleFileSelect = (event) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > MAX_FILE_SIZE) {
-        alert(
-          `Plik jest za duży. Maksymalny rozmiar to ${
-            MAX_FILE_SIZE / 1024 / 1024
-          }MB`
-        );
-
-        event.target.value = "";
-        return;
-      }
-
-      if (!allowedFileTypes.includes(file.type)) {
-        alert(
-          "Nieprawidłowy typ pliku. Dozwolone rozszerzenia: PDF, DOC, DOCX, TXT, JPG, PNG, GIF"
-        );
-        event.target.value = "";
-        return;
-      }
-
-      handleSendAttachment(selectedChatId, file);
-    }
-  };
 
   const handleSendAttachment = async (chatId, file) => {
       if (!file || !chatId) {
@@ -529,106 +464,11 @@ function Chat({ devMode = false }) {
 
   useEffect(() => {
     if (devMode) {
-      // w trybie deweloperskim pomijamy sprawdzanie sesji
       return;
     }
 
-    const getUserData = async () => {
-      try {
-        // Get user data
-        const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/users/user`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include", // Send cookie with session token
-          }
-        );
-
-        // Read response text
-        const responseText = await response.text();
-
-        if (!response.ok) {
-          throw new Error(response.status);
-        }
-
-        // Parse response to JSON
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (e) {
-          console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
-          throw new Error("Serwer zwrócił nieprawidłowy format danych");
-        }
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        // Set user data
-        setUserData(data);
-        console.log("User data:", data);
-      } catch (error) {
-        console.error("Błąd podczas pobierania danych użytkownika:", error);
-        navigate("/");
-      }
-    };
-
-    getUserData();
-
-    const getChatsData = async () => {
-      try {
-        // Get chats data
-        const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/users/chats`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include", // Send cookie with session token
-          }
-        );
-
-        // Read response text
-        const responseText = await response.text();
-
-        if (!response.ok) {
-          throw new Error(response.status);
-        }
-
-        // Parse response to JSON
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (e) {
-          console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
-          throw new Error("Serwer zwrócił nieprawidłowy format danych");
-        }
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        // Set chats data
-        setChats(data);
-
-        // Set first chat as selected if available
-        if (data.length > 0) {
-          setSelectedChatId(data[0].id);
-        }
-
-        //////////////// Debug ///////////////////
-        if (process.env.REACT_APP_DEBUG_ALERTS === "true")
-          console.log("Odpowiedź z serwera (chats):" + JSON.stringify(data));
-        //////////////// Debug ///////////////////
-      } catch (error) {
-        console.error("Błąd podczas pobierania danych użytkownika:", error);
-        navigate("/");
-      }
-    };
-
-    getChatsData();
+    getUserData(setUserData, navigate);
+    getChatsData(setChats, setSelectedChatId, navigate);
   }, [navigate, devMode]);
 
   // SignalR connection setup
@@ -783,7 +623,7 @@ function Chat({ devMode = false }) {
           <div className="absolute bottom-14 left-4 bg-white border rounded-lg shadow-lg w-72 z-10">
             <button
               className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150"
-              onClick={() => handleLogout()}
+              onClick={() => handleLogout(navigate)}
             >
               <ArrowRightStartOnRectangleIcon
                 className="size-6"
@@ -860,7 +700,15 @@ function Chat({ devMode = false }) {
           <input
             type="file"
             ref={fileInputRef}
-            onChange={handleFileSelect}
+            onChange={(event) =>
+              handleFileSelect(
+                event,
+                MAX_FILE_SIZE,
+                allowedFileTypes,
+                selectedChatId,
+                handleSendAttachment
+              )
+            }
             style={{ display: "none" }}
             accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
           />
