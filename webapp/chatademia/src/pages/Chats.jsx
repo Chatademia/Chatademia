@@ -324,7 +324,6 @@ function Chat({ devMode = false }) {
         console.error("Błąd podczas wysyłania załącznika:", error);
         alert("Nie udało się wysłać załącznika. Spróbuj ponownie.");
       }
-    };
   };
 
   const handleCreateChat = async (chatName) => {
