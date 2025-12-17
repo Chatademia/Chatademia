@@ -18,6 +18,7 @@ import {
   ArrowRightStartOnRectangleIcon,
   ArrowRightIcon,
   ArrowRightEndOnRectangleIcon,
+  TrashIcon,
 } from "@heroicons/react/24/solid";
 
 function Chat({ devMode = false }) {
@@ -777,7 +778,6 @@ function Chat({ devMode = false }) {
                 .find((chat) => chat.id === selectedChatId)
                 ?.participants?.find((p) => p.id === message.senderId);
               const isMenuOpen = selectedMessageId === message.id;
-
               return (
                 <div key={message.id} className="relative">
                   <MessageItem
@@ -786,22 +786,25 @@ function Chat({ devMode = false }) {
                     senderShortName={sender?.shortName}
                     senderColor={colors[sender?.color]}
                     formatTimestamp={formatTimestamp}
-                    onClick={() =>
-                      isOwnMessage &&
-                      setSelectedMessageId(isMenuOpen ? null : message.id)
-                    }
+                    onClick={() => {
+                      if (isOwnMessage) {
+                        setSelectedMessageId(isMenuOpen ? null : message.id);
+                      }
+                    }}
                   />
                   {isMenuOpen && isOwnMessage && (
-                    <div className="absolute bottom-10 right-10 bg-white border rounded-lg shadow-lg w-48 z-10">
+                    <div className="absolute bottom-10 right-10 bg-white border rounded-lg shadow-lg z-10">
                       <button
-                        className="w-full text-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150"
-                        onClick={() => {
+                        className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleDeleteMessage(selectedChatId, message.id);
                           setSelectedMessageId(null);
                         }}
                       >
+                        <TrashIcon className="size-5 text-red-400" />
                         <h1 className="font-semibold text-red-400 cursor-pointer">
-                          Usuń wiadomość
+                          Usuń wiadomość u wszystkich
                         </h1>
                       </button>
                     </div>
@@ -832,6 +835,14 @@ function Chat({ devMode = false }) {
               placeholder="Wprowadź wiadomość"
               value={messageSent}
               onChange={(e) => setMessageSent(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (messageSent.trim()) {
+                    handleSendMessage(selectedChatId, messageSent);
+                  }
+                }
+              }}
               autoFocus
             />
             <button

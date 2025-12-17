@@ -8,6 +8,7 @@ function Message({
   senderShortName,
   formatTimestamp,
   senderColor,
+  onClick,
 }) {
   const bgClass = senderColor || "bg-gray-500";
 
@@ -17,7 +18,12 @@ function Message({
         isOwnMessage ? "justify-end" : "justify-start"
       }`}
     >
-      <div className="flex gap-3 w-[60%]">
+      <div
+        className={`flex gap-3 max-w-[60%] ${
+          isOwnMessage ? "cursor-pointer" : ""
+        }`}
+        onClick={onClick}
+      >
         {!isOwnMessage && (
           <div
             className={`rounded-xl ${bgClass} text-white flex items-center justify-center w-12 h-12 flex-shrink-0`}
@@ -30,7 +36,8 @@ function Message({
           <div
             className={`${
               isOwnMessage ? "bg-primary text-white" : "bg-white text-black "
-            } rounded-xl border border-gray-200 p-3 w-full pb-8 relative`}
+            } rounded-xl border border-gray-200 p-3 pb-8 relative min-w-[64px] max-w-[420px] w-fit break-words`}
+            style={{ wordBreak: "break-word" }}
           >
             <p className="text-base font-medium break-words">
               {message.content}
@@ -47,7 +54,7 @@ function Message({
           <div
             className={`${
               isOwnMessage ? "bg-primary" : "bg-white"
-            } rounded-lg p-0.5 border border-gray-200 w-full pb-8 relative`}
+            } rounded-lg p-0.5 border border-gray-200 pb-8 relative min-w-[120px] max-w-[420px] w-fit`}
           >
             <div
               className={`rounded-lg ${
