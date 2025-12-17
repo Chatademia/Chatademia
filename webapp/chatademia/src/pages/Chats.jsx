@@ -282,8 +282,49 @@ function Chat({ devMode = false }) {
   };
 
   const handleSendAttachment = async (chatId, file) => {
-    // TODO: Zaimplementować logikę wysyłania załączników
-    console.log("Wysłano załącznik:", file.name);
+      if (!file || !chatId) {
+        return;
+      }
+      // Send message with attachment to the backend
+      try {
+        const formData = new FormData();
+        formData.append("chatId", chatId);
+        formData.append("file", file);
+
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/chat/message`,
+          {
+            method: "POST",
+            body: formData, // Send file and chatId as FormData
+            credentials: "include", // Send cookie with session token
+          }
+        );
+
+        const responseText = await response.text();
+
+        if (!response.ok) {
+          throw new Error(response.status);
+        }
+
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
+          throw new Error("Serwer zwrócił nieprawidłowy format danych");
+        }
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        // Add new message to the list
+        setMessages((prevMessages) => [...prevMessages, data]);
+        console.log("Wysłano załącznik:", data);
+      } catch (error) {
+        console.error("Błąd podczas wysyłania załącznika:", error);
+        alert("Nie udało się wysłać załącznika. Spróbuj ponownie.");
+      }
+    };
   };
 
   const handleCreateChat = async (chatName) => {
@@ -410,7 +451,7 @@ function Chat({ devMode = false }) {
   };
 
   const handleSendMessage = async (chatId, content) => {
-    if (!content.trim()) {
+    if (!content.trim() || !chatId) {
       return;
     }
     // Send message to the backend
@@ -448,8 +489,9 @@ function Chat({ devMode = false }) {
         throw new Error(data.error);
       }
 
-      console.log("Wysłano wiadomość:", data);
+      // Add new message to the list
       setMessages((prevMessages) => [...prevMessages, data]);
+      console.log("Wysłano wiadomość:", data);
     } catch (error) {
       console.error("Błąd podczas wysyłania wiadomości:", error);
     }
