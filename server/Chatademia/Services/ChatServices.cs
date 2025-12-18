@@ -1,6 +1,7 @@
 ﻿using chatademia.Data;
 using Chatademia.Data;
 using Chatademia.Data.ViewModels;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
@@ -22,7 +23,7 @@ namespace Chatademia.Services
         }
 
 
-        public async Task<string> UploadFile(Guid session, IFormFile file)
+        private async Task<string> UploadFile(Guid session, IFormFile file)
         {
             using var _context = _factory.CreateDbContext();
             var user = await _context.Users
@@ -115,9 +116,12 @@ namespace Chatademia.Services
                     Id = m.Id,
                     SenderId = m.UserId,
                     Type = m.Type,
-                    Content = m.Content,
                     CreatedAt = m.CreatedAt,
-                    UpdatedAt = m.UpdatedAt
+                    UpdatedAt = m.UpdatedAt,
+
+                    Content = m.Type == "file" //is file?
+                        ? $"/api/files/{m.Id}" //yes
+                        : m.Content //no
                 }).ToList();
 
             if (messages == null)
@@ -193,6 +197,33 @@ namespace Chatademia.Services
             await _context.SaveChangesAsync();
 
             return null;
+        }
+
+        public async Task<PhysicalFileResult> DownloadFile(Guid session, Guid messageId)
+        {
+            using var _context = _factory.CreateDbContext();
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
+
+            var message = await _context.Messages
+                .FirstOrDefaultAsync(m => m.Id == messageId && m.Type == "file");
+
+            if (message == null || message.IsDeleted)
+                throw new Exception("File message not found");
+
+            var filePath = message.filePath;
+
+            if (!System.IO.File.Exists(filePath))
+                throw new Exception("File not found in db");
+
+            var fileName = filePath.Split(Path.DirectorySeparatorChar).Last(); // Get old file name
+
+
+            return new PhysicalFileResult(filePath, "application/octet-stream")
+            {
+                FileDownloadName = fileName
+            };
+
         }
 
         public async Task<ChatVM> CreateChat(Guid session, ChatCreateVM chatData)
