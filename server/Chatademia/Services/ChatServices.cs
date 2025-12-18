@@ -118,9 +118,12 @@ namespace Chatademia.Services
                     SenderId = m.UserId,
                     Content = m.Content,
                     Type = m.Type,
+                    FileName = m.Type == "file" ? m.oldFileName : null,
                     CreatedAt = m.CreatedAt,
                     UpdatedAt = m.UpdatedAt,
                 }).ToList();
+            
+
 
             if (messages == null)
                 throw new Exception($"Chat not found");
@@ -173,6 +176,9 @@ namespace Chatademia.Services
                 Content = message.Content,
                 CreatedAt = message.CreatedAt
             };
+
+            if (type == "file")
+                new_msg.fileName = message.oldFileName;
             return new_msg;
         }
 
