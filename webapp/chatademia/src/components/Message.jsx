@@ -60,11 +60,17 @@ function Message({
               className={`rounded-lg ${
                 isOwnMessage ? "bg-white" : "bg-gray-100"
               } p-3 flex items-center gap-3`}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (message.content) {
+                  window.open(message.content, "_blank");
+                }
+              }}
             >
               <DocumentTextIcon className="size-6" color="#5004E0" />
 
               <p className="font-semibold text-lg text-black break-words">
-                {message.content}
+                {message.fileName || "Plik"}
               </p>
             </div>
             <span className="text-xs text-gray-500 absolute bottom-2 right-2">
