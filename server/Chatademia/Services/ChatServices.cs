@@ -166,7 +166,7 @@ namespace Chatademia.Services
                 message.oldFileName = file.FileName;
                 message.Content = $"{BASE_URL}/api/chat/files/{message.Id}";
             }
-            
+
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
@@ -251,7 +251,7 @@ namespace Chatademia.Services
                 Color = chatData.Color ?? 0
             };
 
-            _context.Chats.Add(chat);
+            await _context.Chats.AddAsync(chat);
 
             var userChatRelation = new UserChatMTMRelation
             {
@@ -259,7 +259,7 @@ namespace Chatademia.Services
                 ChatId = chat.Id
             };
 
-            _context.UserChatMTMRelations.Add(userChatRelation);
+            _context.UserChatMTMRelations.AddAsync(userChatRelation);
 
             await _context.SaveChangesAsync();
 
