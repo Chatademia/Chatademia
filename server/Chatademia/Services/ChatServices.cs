@@ -161,10 +161,12 @@ namespace Chatademia.Services
             if (type == "text")
                 message.Content = content;
             else if (type == "file")
+            {
                 message.filePath = await UploadFile(session, file);
                 message.oldFileName = file.FileName;
                 message.Content = $"{BASE_URL}/api/chat/files/{message.Id}";
-
+            }
+            
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
