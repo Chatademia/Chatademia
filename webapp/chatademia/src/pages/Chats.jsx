@@ -9,7 +9,11 @@ import { useNavigate } from "react-router-dom";
 import * as signalR from "@microsoft/signalr";
 
 // Auth handlers
-import { handleLogout, getUserData, getChatsData } from "../utils/authHandlers.js";
+import {
+  handleLogout,
+  getUserData,
+  getChatsData,
+} from "../utils/authHandlers.js";
 
 // Format utilities
 import { formatTimestamp } from "../utils/formatTimestamp.js";
@@ -220,48 +224,48 @@ function Chat({ devMode = false }) {
   const [selectedChatId, setSelectedChatId] = useState(null);
 
   const handleSendAttachment = async (chatId, file) => {
-      if (!file || !chatId) {
-        return;
+    if (!file || !chatId) {
+      return;
+    }
+    // Send message with attachment to the backend
+    try {
+      const formData = new FormData();
+      formData.append("chatId", chatId);
+      formData.append("file", file);
+
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/chat/message`,
+        {
+          method: "POST",
+          body: formData, // Send file and chatId as FormData
+          credentials: "include", // Send cookie with session token
+        }
+      );
+
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        throw new Error(response.status);
       }
-      // Send message with attachment to the backend
+
+      let data;
       try {
-        const formData = new FormData();
-        formData.append("chatId", chatId);
-        formData.append("file", file);
-
-        const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/chat/message`,
-          {
-            method: "POST",
-            body: formData, // Send file and chatId as FormData
-            credentials: "include", // Send cookie with session token
-          }
-        );
-
-        const responseText = await response.text();
-
-        if (!response.ok) {
-          throw new Error(response.status);
-        }
-
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (e) {
-          console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
-          throw new Error("Serwer zwrócił nieprawidłowy format danych");
-        }
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        // Add new message to the list
-        setMessages((prevMessages) => [...prevMessages, data]);
-        console.log("Wysłano załącznik:", data);
-      } catch (error) {
-        console.error("Błąd podczas wysyłania załącznika:", error);
-        alert("Nie udało się wysłać załącznika. Spróbuj ponownie.");
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
+        throw new Error("Serwer zwrócił nieprawidłowy format danych");
       }
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Add new message to the list
+      setMessages((prevMessages) => [...prevMessages, data]);
+      console.log("Wysłano załącznik:", data);
+    } catch (error) {
+      console.error("Błąd podczas wysyłania załącznika:", error);
+      alert("Nie udało się wysłać załącznika. Spróbuj ponownie.");
+    }
   };
 
   const fetchMessages = async (chatId) => {
@@ -744,7 +748,15 @@ function Chat({ devMode = false }) {
       <CreateChatPopup
         isOpen={showCreateChatPopup}
         onClose={() => setShowCreateChatPopup(false)}
-        onSubmit={handleCreateChat}
+        onSubmit={(chatName) =>
+          handleCreateChat(
+            chatName,
+            setChats,
+            setSelectedChatId,
+            setInviteLink,
+            setShowSuccessPopup
+          )
+        }
       />
       <CreateChatSuccessPopup
         isOpen={showSuccessPopup}
