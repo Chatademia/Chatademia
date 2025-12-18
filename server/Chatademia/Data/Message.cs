@@ -8,6 +8,7 @@ namespace Chatademia.Data
         public Guid Id { get; init; } = Guid.NewGuid();
         public string? Content { get; set; }
         public string? filePath { get; set; }
+        public string? oldFileName { get; set; }
         public string Type { get; set; }
 
         public Guid ChatId { get; set; }

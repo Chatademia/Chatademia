@@ -16,6 +16,7 @@ namespace Chatademia.Services
     public class ChatServices
     {
         private readonly IDbContextFactory<AppDbContext> _factory;
+        private readonly string BASE_URL = "http://localhost:8080";
 
         public ChatServices(IDbContextFactory<AppDbContext> factory)
         {
@@ -115,13 +116,10 @@ namespace Chatademia.Services
                 {
                     Id = m.Id,
                     SenderId = m.UserId,
+                    Content = m.Content,
                     Type = m.Type,
                     CreatedAt = m.CreatedAt,
                     UpdatedAt = m.UpdatedAt,
-
-                    Content = m.Type == "file" //is file?
-                        ? $"/api/files/{m.Id}" //yes
-                        : m.Content //no
                 }).ToList();
 
             if (messages == null)
@@ -161,6 +159,8 @@ namespace Chatademia.Services
                 message.Content = content;
             else if (type == "file")
                 message.filePath = await UploadFile(session, file);
+                message.oldFileName = file.FileName;
+                message.Content = $"{BASE_URL}/api/chat/files/{message.Id}";
 
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
@@ -199,7 +199,7 @@ namespace Chatademia.Services
             return null;
         }
 
-        public async Task<PhysicalFileResult> DownloadFile(Guid session, Guid messageId)
+        public async Task<(string, string)> DownloadFile(Guid session, Guid messageId)
         {
             using var _context = _factory.CreateDbContext();
             var user = await _context.Users
@@ -216,13 +216,10 @@ namespace Chatademia.Services
             if (!System.IO.File.Exists(filePath))
                 throw new Exception("File not found in db");
 
-            var fileName = filePath.Split(Path.DirectorySeparatorChar).Last(); // Get old file name
+            var fileName = message.oldFileName;
 
 
-            return new PhysicalFileResult(filePath, "application/octet-stream")
-            {
-                FileDownloadName = fileName
-            };
+            return (filePath, fileName);
 
         }
 

@@ -101,8 +101,11 @@ namespace Chatademia.Controllers
                 return Unauthorized(new { error = "Nieprawidłowy token sesji" });
             }
 
-            var file = await _chatServices.DownloadFile(session, messageId);
-            return Ok(file);
+            var (filePath, fileName) = await _chatServices.DownloadFile(session, messageId);
+            return new PhysicalFileResult(filePath, "application/octet-stream")
+            {
+                FileDownloadName = fileName
+            };
 
         }
         
