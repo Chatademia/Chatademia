@@ -178,7 +178,7 @@ namespace Chatademia.Services
             };
 
             if (type == "file")
-                new_msg.fileName = message.oldFileName;
+                new_msg.FileName = message.oldFileName;
             return new_msg;
         }
 
