@@ -21,6 +21,43 @@ namespace Chatademia.Services
             _factory = factory;
         }
 
+
+        public async Task<string> UploadFile(Guid session, IFormFile file)
+        {
+            using var _context = _factory.CreateDbContext();
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
+            if (user == null)
+                throw new Exception($"Invalid session");
+
+            if (file == null || file.Length == 0)
+                throw new Exception("Empty file");
+
+            const long MaxFileSize = 10 * 1024 * 1024; // 10 MB
+
+            if (file.Length > MaxFileSize)
+                throw new Exception("File too large");
+
+            string path = Path.Combine(AppContext.BaseDirectory, "storage", user.Id);
+
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+
+            var extension = Path.GetExtension(file.FileName);
+            var safeFileName = $"{Guid.NewGuid()}{extension}";
+
+            var filePath = Path.Combine(path, safeFileName);
+
+            using var stream = new FileStream(filePath, FileMode.CreateNew);
+
+            await file.CopyToAsync(stream);
+
+            Console.WriteLine($"Saved file to: {filePath}");
+            return filePath;
+        }
+
         public async Task<ChatVM> GetChat(Guid session, Guid Id)
         {
             using var _context = _factory.CreateDbContext();
@@ -77,7 +114,7 @@ namespace Chatademia.Services
                 {
                     Id = m.Id,
                     SenderId = m.UserId,
-                    Type = "text",
+                    Type = m.Type,
                     Content = m.Content,
                     CreatedAt = m.CreatedAt,
                     UpdatedAt = m.UpdatedAt
@@ -89,25 +126,37 @@ namespace Chatademia.Services
             return messages;
         }
 
-        public async Task<MessageVM> CreateMessage(Guid session, Guid chatId, string content)
+        public async Task<MessageVM> CreateMessage(Guid session, Guid chatId, string content, IFormFile file)
         {
             using var _context = _factory.CreateDbContext();
             var user = await _context.Users
-                .Include(u => u.UserTokens)
                 .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
             if (user == null)
                 throw new Exception($"Invalid session");
 
+            string type;
+            if (string.IsNullOrWhiteSpace(content) && file != null)
+                type = "file";
+            else if (!string.IsNullOrWhiteSpace(content) && file == null)
+                type = "text";
+            else
+                throw new Exception("One and only one of content and file must be provided");
+
             var message = new Message
-            {
-                Id = Guid.NewGuid(),
-                Content = content,
-                ChatId = chatId,
-                UserId = user.Id,
-                CreatedAt = DateTime.UtcNow,
-                IsDeleted = false,
-            };
+                {
+                    Id = Guid.NewGuid(),
+                    Type = type,
+                    ChatId = chatId,
+                    UserId = user.Id,
+                    CreatedAt = DateTime.UtcNow,
+                    IsDeleted = false,
+                };
+
+            if (type == "text")
+                message.Content = content;
+            else if (type == "file")
+                message.filePath = await UploadFile(session, file);
 
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
@@ -116,7 +165,7 @@ namespace Chatademia.Services
             {
                 Id = message.Id,
                 SenderId = message.UserId,
-                Type = "text",
+                Type = type,
                 Content = message.Content,
                 CreatedAt = message.CreatedAt
             };

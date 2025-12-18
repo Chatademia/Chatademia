@@ -52,7 +52,8 @@ namespace Chatademia.Controllers
         }        
 
         [HttpPost("message")]
-        public async Task<IActionResult> CreateMessage([FromBody] MessageCreateVM request)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> CreateMessage([FromForm] MessageCreateVM request)
         {
             // Read session token from HttpOnly cookie
             if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
@@ -65,7 +66,7 @@ namespace Chatademia.Controllers
                 return Unauthorized(new { error = "Nieprawidłowy token sesji" });
             }
 
-            var chat = await _chatServices.CreateMessage(session, request.ChatId, request.Content);
+            var chat = await _chatServices.CreateMessage(session, request.ChatId, request.Content, request.File);
             return Ok(chat);
         }
 
@@ -104,5 +105,6 @@ namespace Chatademia.Controllers
             var chat = await _chatServices.CreateChat(session, request);
             return Ok(chat);
         }
+
     }
 }
