@@ -316,17 +316,15 @@ function Chat({ devMode = false }) {
     }
     // Send message to the backend
     try {
+      const formData = new FormData();
+      formData.append("chatId", chatId);
+      formData.append("content", content);
+
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/chat/message`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            chatId: chatId,
-            content: content,
-          }),
+          body: formData, // Send chatId and message as FormData
           credentials: "include", // Send cookie with session token
         }
       );
