@@ -62,7 +62,7 @@ function JoinChatPopup({ isOpen, onClose, onSubmit }) {
             id="code"
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-2xl tracking-widest font-bold text-center bg-gray-50 focus:outline-none focus:border-primary transition-all mb-4 shadow-lg placeholder-gray-400"
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-gray-900 text-2xl tracking-widest font-bold text-center bg-gray-50 focus:outline-none focus:border-primary transition-all mb-4 shadow-lg placeholder-gray-400"
             autoFocus
             maxLength={6}
             style={{ letterSpacing: "0.3em" }}
