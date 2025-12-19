@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Chats from "./pages/Chats.jsx";
 import AuthCallback from "./AuthCallback.js";
 import { useEffect, useState } from "react";
+import Onboarding from "./pages/Onboarding.jsx";
 
 function App() {
   const PublicRoute = ({ children }) => {
@@ -136,6 +137,7 @@ function App() {
           }
         />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/onboarding" element={<Onboarding />} />
       </Routes>
     </>
   );

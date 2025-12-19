@@ -1,3 +1,83 @@
+export const handleLoginRedirect = async (loginPopupRef) => {
+  try {
+    const response = await fetch(
+      `${process.env.REACT_APP_BACKEND_URL}/api/auth/login-url?callbackUrl=${process.env.REACT_APP_FRONTEND_URL}/auth/callback`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "text/plain",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Nie udało się pobrać URL logowania");
+    }
+
+    const data = await response.text();
+
+    console.log("Otrzymany URL logowania: ", data);
+    if (!data) {
+      throw new Error("Nieprawidłowa odpowiedź z serwera");
+    }
+
+    const width = 500;
+    const height = 600;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    loginPopupRef.current = window.open(
+      data,
+      "loginPopup",
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+    );
+  } catch (error) {
+    console.error("Wystąpił błąd podczas pobierania URL logowania: ", error);
+  }
+};
+
+export const handleGoogleLoginRedirect = async (loginPopupRef) => {
+  try {
+    const response = await fetch(
+      `${process.env.REACT_APP_BACKEND_URL}/api/auth/google-login-url?callbackUrl=${process.env.REACT_APP_FRONTEND_URL}/auth/callback`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "text/plain",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Nie udało się pobrać URL logowania Google");
+    }
+
+    const data = await response.text();
+
+    console.log("Otrzymany URL logowania Google: ", data);
+    if (!data) {
+      throw new Error("Nieprawidłowa odpowiedź z serwera");
+    }
+
+    const width = 500;
+    const height = 600;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    loginPopupRef.current = window.open(
+      data,
+      "googleLoginPopup",
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+    );
+  } catch (error) {
+    console.error(
+      "Wystąpił błąd podczas pobierania URL logowania Google: ",
+      error
+    );
+    alert("Błąd logowania: " + error.message);
+  }
+};
+
 export const handleLogout = async (navigate) => {
   try {
     const response = await fetch(

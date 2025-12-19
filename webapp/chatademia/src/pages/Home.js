@@ -2,11 +2,17 @@ import "../App.css";
 import { useState, useRef, useEffect } from "react";
 import appPreview from "../assets/app-preview.png";
 import appIcon from "../assets/icon.png";
+import { useNavigate } from "react-router-dom";
+import {
+  handleLoginRedirect,
+  handleGoogleLoginRedirect,
+} from "../utils/authHandlers";
 
 function Home() {
   const [transform, setTransform] = useState({ x: 0, y: 0 });
   const imageRef = useRef(null);
   const loginPopupRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleCallback = (event) => {
@@ -55,86 +61,7 @@ function Home() {
     setTransform({ x: 0, y: 0 });
   };
 
-  const handleLoginRedirect = async () => {
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/auth/login-url?callbackUrl=${process.env.REACT_APP_FRONTEND_URL}/auth/callback`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "text/plain",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Nie udało się pobrać URL logowania");
-      }
-
-      const data = await response.text();
-
-      console.log("Otrzymany URL logowania: ", data);
-      if (!data) {
-        throw new Error("Nieprawidłowa odpowiedź z serwera");
-      }
-
-      const width = 500;
-      const height = 600;
-      const left = (window.screen.width - width) / 2;
-      const top = (window.screen.height - height) / 2;
-
-      loginPopupRef.current = window.open(
-        data,
-        "loginPopup",
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
-      );
-    } catch (error) {
-      console.error("Wystąpił błąd podczas pobierania URL logowania: ", error);
-    }
-  };
-
-  const handleGoogleLoginRedirect = async () => {
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/auth/google-login-url?callbackUrl=${process.env.REACT_APP_FRONTEND_URL}/auth/callback`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "text/plain",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Nie udało się pobrać URL logowania Google");
-      }
-
-      const data = await response.text();
-
-      console.log("Otrzymany URL logowania Google: ", data);
-      if (!data) {
-        throw new Error("Nieprawidłowa odpowiedź z serwera");
-      }
-
-      const width = 500;
-      const height = 600;
-      const left = (window.screen.width - width) / 2;
-      const top = (window.screen.height - height) / 2;
-
-      loginPopupRef.current = window.open(
-        data,
-        "googleLoginPopup",
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
-      );
-    } catch (error) {
-      console.error(
-        "Wystąpił błąd podczas pobierania URL logowania Google: ",
-        error
-      );
-      alert("Błąd logowania: " + error.message);
-    }
-  };
-
+  /*
   useEffect(() => {
     if (window.google) {
       window.google.accounts.id.initialize({
@@ -143,6 +70,7 @@ function Home() {
       });
     }
   }, []);
+  */
   return (
     <div className="min-h-screen bg-white overflow-hidden">
       <header className="border-b border-gray-200 py-4">
@@ -185,7 +113,7 @@ function Home() {
             <div className="flex gap-4 flex-wrap items-center">
               <button
                 className="w-14 h-14 rounded-full border-2 border-gray-300 hover:border-gray-400 transition-colors flex items-center justify-center bg-white"
-                onClick={handleGoogleLoginRedirect}
+                onClick={handleGoogleLoginRedirect(loginPopupRef)}
                 title="Zaloguj się przez Google"
               >
                 <svg
@@ -231,6 +159,7 @@ function Home() {
                 onMouseLeave={(e) =>
                   (e.target.style.backgroundColor = "#5004E0")
                 }
+                onClick={() => navigate("/onboarding")}
               >
                 Zaczynamy!
               </button>
