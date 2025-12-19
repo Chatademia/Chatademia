@@ -22,7 +22,11 @@ import { formatTimestamp } from "../utils/formatTimestamp.js";
 import { handleFileSelect } from "../utils/handleFileSelect.js";
 
 // Chat handlers
-import { handleCreateChat, handleChatSwitch } from "../utils/chatHandlers.js";
+import {
+  handleCreateChat,
+  handleChatSwitch,
+  handleJoinChat,
+} from "../utils/chatHandlers.js";
 
 import {
   ChevronDownIcon,
@@ -37,6 +41,7 @@ import {
   ArrowRightEndOnRectangleIcon,
   TrashIcon,
 } from "@heroicons/react/24/solid";
+import JoinChatPopup from "../components/JoinChatPopup.jsx";
 
 function Chat({ devMode = false }) {
   const [messageSent, setMessageSent] = useState("");
@@ -50,8 +55,11 @@ function Chat({ devMode = false }) {
   const hubConnectionRef = useRef(null);
   const [newGroupPopup, setNewGroupPopup] = useState(false);
   const [showCreateChatPopup, setShowCreateChatPopup] = useState(false);
+  const [showJoinChatPopup, setShowJoinChatPopup] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
+
   const [userData, setUserData] = useState({
     firstName: null,
     lastName: null,
@@ -497,7 +505,7 @@ function Chat({ devMode = false }) {
                 className="flex gap-1 items-center justify-left w-full px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150"
                 onClick={() => {
                   setNewGroupPopup(false);
-                  alert("Dołącz do nowego czatu grupowego");
+                  setShowJoinChatPopup(true);
                 }}
               >
                 <ArrowRightEndOnRectangleIcon className="size-6" />
@@ -760,6 +768,13 @@ function Chat({ devMode = false }) {
         isOpen={showSuccessPopup}
         onClose={() => setShowSuccessPopup(false)}
         inviteLink={inviteLink}
+      />
+      <JoinChatPopup
+        isOpen={showJoinChatPopup}
+        onClose={() => setShowJoinChatPopup(false)}
+        onSubmit={(chatName) =>
+          handleJoinChat(setChats, setSelectedChatId, inviteCode)
+        }
       />
     </div>
   );

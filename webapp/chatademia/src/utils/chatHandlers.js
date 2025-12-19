@@ -1,4 +1,10 @@
-export const handleCreateChat = async (chatName, setChats, setSelectedChatId, setInviteLink, setShowSuccessPopup) => {
+export const handleCreateChat = async (
+  chatName,
+  setChats,
+  setSelectedChatId,
+  setInviteLink,
+  setShowSuccessPopup
+) => {
   try {
     const response = await fetch(
       `${process.env.REACT_APP_BACKEND_URL}/api/chat/create-chat`,
@@ -48,6 +54,56 @@ export const handleCreateChat = async (chatName, setChats, setSelectedChatId, se
   } catch (error) {
     console.error("Błąd podczas tworzenia czatu:", error);
     alert("Nie udało się utworzyć czatu. Spróbuj ponownie.");
+  }
+};
+
+export const handleJoinChat = async (
+  setChats,
+  setSelectedChatId,
+  inviteCode
+) => {
+  try {
+    const response = await fetch(
+      `${process.env.REACT_APP_BACKEND_URL}/api/chat/join-chat`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inviteCode: inviteCode,
+        }),
+        credentials: "include",
+      }
+    );
+
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      throw new Error(response.status);
+    }
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
+      throw new Error("Serwer zwrócił nieprawidłowy format danych");
+    }
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
+    console.log("Dołączono do czatu, odpowiedź z serwera:", data);
+
+    // Add new chat to the list
+    setChats((prevChats) => [data, ...prevChats]);
+
+    // Set the new chat as selected
+    setSelectedChatId(data.id);
+  } catch (error) {
+    console.error("Błąd podczas dołączania do czatu:", error);
+    alert("Nie udało się dołączyć do czatu. Spróbuj ponownie.");
   }
 };
 
