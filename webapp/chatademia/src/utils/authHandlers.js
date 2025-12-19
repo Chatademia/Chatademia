@@ -89,10 +89,15 @@ export const getChatsData = async (setChats, setSelectedChatId, navigate) => {
       throw new Error(data.error);
     }
 
-    setChats(data);
+    // Sort chats alphabetically by name
+    const sortedChats = [...data].sort((a, b) => {
+      if (!a.name || !b.name) return 0;
+      return a.name.localeCompare(b.name, { sensitivity: "base" });
+    });
+    setChats(sortedChats);
 
-    if (data.length > 0) {
-      setSelectedChatId(data[0].id);
+    if (sortedChats.length > 0) {
+      setSelectedChatId(sortedChats[0].id);
     }
 
     if (process.env.REACT_APP_DEBUG_ALERTS === "true")

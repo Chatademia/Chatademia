@@ -73,7 +73,7 @@ function Message({
                 {message.fileName || "Plik"}
               </p>
             </div>
-            <span className="text-xs text-gray-500 absolute bottom-2 right-2">
+            <span className="text-xs text-white absolute bottom-2 right-2">
               {formatTimestamp(message.createdAt)}
             </span>
           </div>
