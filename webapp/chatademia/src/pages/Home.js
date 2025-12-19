@@ -113,7 +113,7 @@ function Home() {
             <div className="flex gap-4 flex-wrap items-center">
               <button
                 className="w-14 h-14 rounded-full border-2 border-gray-300 hover:border-gray-400 transition-colors flex items-center justify-center bg-white"
-                onClick={handleGoogleLoginRedirect(loginPopupRef)}
+                onClick={() => handleGoogleLoginRedirect(loginPopupRef)}
                 title="Zaloguj się przez Google"
               >
                 <svg
