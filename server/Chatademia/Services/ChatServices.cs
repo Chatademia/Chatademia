@@ -314,5 +314,38 @@ namespace Chatademia.Services
 
             return chatVM;
         }
+
+        public async Task AddUserToChat(Guid session, string inviteCode)
+        {
+            using var _context = _factory.CreateDbContext();
+
+            var chat = await _context.Chats
+                .FirstOrDefaultAsync(c => c.InviteCode == inviteCode || c.OldInviteCode == inviteCode);
+
+            if (chat == null)
+                throw new Exception($"Invalid invite code");
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(c => c.UserTokens.Session == session);
+
+            if (user == null)
+                throw new Exception($"Invalid session");
+
+            var alreadyInChat = await _context.Set<UserChatMTMRelation>()
+                .AnyAsync(uc => uc.ChatId == chat.Id && uc.UserId == user.Id);
+
+            if (alreadyInChat)
+                throw new Exception($"User already in chat");
+
+            await _context.AddAsync(new UserChatMTMRelation
+            {
+                ChatId = chat.Id,
+                UserId = user.Id
+            });
+
+            await _context.SaveChangesAsync();
+
+            return;
+        }
     }
 }

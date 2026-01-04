@@ -126,5 +126,24 @@ namespace Chatademia.Controllers
             var chat = await _chatServices.CreateChat(session, request);
             return Ok(chat);
         }
+
+        [HttpPost("add-user")]
+        public async Task<IActionResult> AddUser([FromBody] InviteCodeVM request)
+        {
+            // Read session token from HttpOnly cookie
+            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
+            {
+                return Unauthorized(new { error = "Brak tokenu sesji" });
+            }
+
+            if (!Guid.TryParse(sessionToken, out var session))
+            {
+                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
+            }
+
+            await _chatServices.AddUserToChat(session, request.InviteCode);
+            return Ok();
+        }
+
     }
 }
