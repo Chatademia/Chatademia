@@ -337,7 +337,7 @@ namespace Chatademia.Services
                         FirstName = u.FirstName,
                         LastName = u.LastName,
                         ShortName = u.ShortName,
-                        Color = u.Color
+                        Color = u.Color,
                     })
                     .ToList()
             }).ToListAsync();
