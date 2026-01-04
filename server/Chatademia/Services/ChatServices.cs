@@ -77,7 +77,8 @@ namespace Chatademia.Services
                     Id = c.Id,
                     Name = c.Name,
                     ShortName = c.ShortName,
-                    Color = c.Color
+                    Color = c.Color,
+                    InviteCode = c.InviteCode
                 })
             .FirstOrDefaultAsync();
 
@@ -241,6 +242,13 @@ namespace Chatademia.Services
             if (user == null)
                 throw new Exception($"Invalid session");
 
+            const string chars = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
+            const int inviteCodeLength = 6;
+            string code = string.Concat(
+                Enumerable.Range(0, inviteCodeLength)
+                .Select(_ => chars[RandomNumberGenerator.GetInt32(chars.Length)])
+            );
+
             Guid ID = Guid.NewGuid();
             var chat = new Chat
             {
@@ -248,7 +256,8 @@ namespace Chatademia.Services
                 UsosId = ID.ToString(),
                 Name = chatData.Name,
                 ShortName = string.Concat(chatData.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(word => char.ToUpper(word[0]))),
-                Color = chatData.Color ?? 0
+                Color = chatData.Color ?? 0,
+                InviteCode = code
             };
 
             await _context.Chats.AddAsync(chat);
@@ -269,6 +278,7 @@ namespace Chatademia.Services
                 Name = chat.Name,
                 ShortName = chat.ShortName,
                 Color = chat.Color,
+                InviteCode = chat.InviteCode,
                 Participants = new List<UserVM>
                 {
                     new UserVM

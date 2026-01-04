@@ -126,6 +126,5 @@ namespace Chatademia.Controllers
             var chat = await _chatServices.CreateChat(session, request);
             return Ok(chat);
         }
-
     }
 }
