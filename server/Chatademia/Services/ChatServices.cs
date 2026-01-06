@@ -23,6 +23,17 @@ namespace Chatademia.Services
             _factory = factory;
         }
 
+        private async Task<string> CodeGenerator()
+        {
+            const string chars = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
+            const int inviteCodeLength = 6;
+            string code = string.Concat(
+                Enumerable.Range(0, inviteCodeLength)
+                .Select(_ => chars[RandomNumberGenerator.GetInt32(chars.Length)])
+            );
+
+            return code;
+        }
 
         private async Task<string> UploadFile(Guid session, IFormFile file)
         {
@@ -70,6 +81,7 @@ namespace Chatademia.Services
             if (user == null)
                 throw new Exception($"Invalid session");
 
+<<<<<<< HEAD
             var chat = await _context.Chats
                 .Where(c => c.Id == Id && c.UserChatsMTMR.Any(uc => uc.UserId == user.Id && uc.IsRelationActive == true))
                 .Select(c => new ChatVM
@@ -81,9 +93,34 @@ namespace Chatademia.Services
                     Color = c.Color
                 })
             .FirstOrDefaultAsync();
+=======
+            var dbchat = await _context.Chats
+                .Where(c => c.Id == Id && c.UserChatsMTMR.Any(uc => uc.UserId == user.Id))
+                .FirstOrDefaultAsync();
+>>>>>>> 5078dfd28612d297a3b685d2406b01e3994dfddd
 
-            if (chat == null)
+            if (dbchat == null)
                 throw new Exception($"Chat not found");
+
+            // Refresh code if older than 4 days
+            if (dbchat.LastInviteCodeRefresh?.AddDays(4) <= DateTimeOffset.UtcNow)
+            {
+                dbchat.OldInviteCode = dbchat.InviteCode;
+                dbchat.InviteCode = await CodeGenerator();
+                dbchat.LastInviteCodeRefresh = DateTimeOffset.UtcNow;
+            }
+            await _context.SaveChangesAsync();
+          
+            var chat = new ChatVM
+            {
+                Id = dbchat.Id,
+                Name = dbchat.Name,
+                ShortName = dbchat.ShortName,
+                Color = dbchat.Color,
+            };
+            if (dbchat.InviteCode != null)
+                chat.InviteCode = dbchat.InviteCode;
+
 
             var userChats = await _context.UserChatMTMRelations
                 .Where(uc => uc.ChatId == chat.Id && uc.IsRelationActive == true)
@@ -214,6 +251,9 @@ namespace Chatademia.Services
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
+            if (user == null)
+                throw new Exception($"Invalid session");
+
             var message = await _context.Messages
                 .FirstOrDefaultAsync(m => m.Id == messageId && m.Type == "file");
 
@@ -249,7 +289,9 @@ namespace Chatademia.Services
                 UsosId = ID.ToString(),
                 Name = chatData.Name,
                 ShortName = string.Concat(chatData.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(word => char.ToUpper(word[0]))),
-                Color = chatData.Color ?? 0
+                Color = chatData.Color ?? 0,
+                InviteCode = await CodeGenerator(),
+                LastInviteCodeRefresh = DateTimeOffset.UtcNow
             };
 
             await _context.Chats.AddAsync(chat);
@@ -270,6 +312,7 @@ namespace Chatademia.Services
                 Name = chat.Name,
                 ShortName = chat.ShortName,
                 Color = chat.Color,
+                InviteCode = chat.InviteCode,
                 Participants = new List<UserVM>
                 {
                     new UserVM
@@ -286,16 +329,32 @@ namespace Chatademia.Services
             return chatVM;
         }
 
+<<<<<<< HEAD
         public async Task<IActionResult> LeaveChat(Guid session, Guid? chatId)
         {
             using var _context = _factory.CreateDbContext();
             var user = await _context.Users
                 .Include(u => u.UserTokens)
                 .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
+=======
+        public async Task AddUserToChat(Guid session, string inviteCode)
+        {
+            using var _context = _factory.CreateDbContext();
+
+            var chat = await _context.Chats
+                .FirstOrDefaultAsync(c => c.InviteCode == inviteCode || c.OldInviteCode == inviteCode);
+
+            if (chat == null)
+                throw new Exception($"Invalid invite code");
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(c => c.UserTokens.Session == session);
+>>>>>>> 5078dfd28612d297a3b685d2406b01e3994dfddd
 
             if (user == null)
                 throw new Exception($"Invalid session");
 
+<<<<<<< HEAD
             var chatRelation = await _context.UserChatMTMRelations
                 .FirstOrDefaultAsync(uc => uc.ChatId == chatId && uc.UserId == user.Id && uc.IsRelationActive == true);
 
@@ -312,6 +371,23 @@ namespace Chatademia.Services
             await _context.SaveChangesAsync();
 
             return null;
+=======
+            var alreadyInChat = await _context.Set<UserChatMTMRelation>()
+                .AnyAsync(uc => uc.ChatId == chat.Id && uc.UserId == user.Id);
+
+            if (alreadyInChat)
+                throw new Exception($"User already in chat");
+
+            await _context.AddAsync(new UserChatMTMRelation
+            {
+                ChatId = chat.Id,
+                UserId = user.Id
+            });
+
+            await _context.SaveChangesAsync();
+
+            return;
+>>>>>>> 5078dfd28612d297a3b685d2406b01e3994dfddd
         }
     }
 }

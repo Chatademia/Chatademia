@@ -127,8 +127,13 @@ namespace Chatademia.Controllers
             return Ok(chat);
         }
 
+<<<<<<< HEAD
         [HttpDelete("leave-chat")]
         public async Task<IActionResult> LeaveChat([FromBody] ChatIdVM request)
+=======
+        [HttpPost("add-user")]
+        public async Task<IActionResult> AddUser([FromBody] InviteCodeVM request)
+>>>>>>> 5078dfd28612d297a3b685d2406b01e3994dfddd
         {
             // Read session token from HttpOnly cookie
             if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
@@ -141,8 +146,15 @@ namespace Chatademia.Controllers
                 return Unauthorized(new { error = "Nieprawidłowy token sesji" });
             }
 
+<<<<<<< HEAD
             var chat = await _chatServices.LeaveChat(session, request.ChatId);
             return Ok(chat);
         }
+=======
+            await _chatServices.AddUserToChat(session, request.InviteCode);
+            return Ok();
+        }
+
+>>>>>>> 5078dfd28612d297a3b685d2406b01e3994dfddd
     }
 }

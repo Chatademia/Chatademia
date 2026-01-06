@@ -280,7 +280,7 @@ namespace Chatademia.Services
                 throw new Exception($"Invalid session");
 
             // data may need to be refreshed
-            if (!user.ChatsUpdatedAt.HasValue || user.ChatsUpdatedAt?.AddHours(24) < DateTimeOffset.UtcNow) 
+            if (!user.ChatsUpdatedAt.HasValue || user.ChatsUpdatedAt?.AddHours(24) < DateTimeOffset.UtcNow)
             {
                 string access_token = user.UserTokens.PermaAccessToken;
                 string access_token_secret = user.UserTokens.PermaAccessTokenSecret;
@@ -289,7 +289,7 @@ namespace Chatademia.Services
                 await _context.SaveChangesAsync();
 
                 var chats = await QueryChat(access_token, access_token_secret);
-                
+
                 //FIXME: MAke sure we check if the chat already exist in db then only create a new chta groupe if it doses not exitst
 
                 var incomingChats = await QueryChat(access_token, access_token_secret);
@@ -338,6 +338,7 @@ namespace Chatademia.Services
                     _context.UserChatMTMRelations.AddRange(newRelations);
                     await _context.SaveChangesAsync();
                 }
+<<<<<<< HEAD
                 
                 var chatVMs = await _context.Chats
                 .Select(c => new ChatVM
@@ -388,9 +389,33 @@ namespace Chatademia.Services
                         .ToList()
                 })
                 .ToListAsync();
+=======
+>>>>>>> 5078dfd28612d297a3b685d2406b01e3994dfddd
 
-                return chatVMs;
             }
+            var chatVMs = await _context.Chats
+            .Select(c => new ChatVM
+            {
+                Id = c.Id,
+                Name = c.Name,
+                ShortName = c.ShortName,
+                Color = c.Color,
+                InviteCode = c.InviteCode,
+                Participants = c.UserChatsMTMR
+                    .Select(uc => uc.User)
+                    .Distinct()
+                    .Select(u => new UserVM
+                    {
+                        Id = u.Id,
+                        FirstName = u.FirstName,
+                        LastName = u.LastName,
+                        ShortName = u.ShortName,
+                        Color = u.Color,
+                    })
+                    .ToList()
+            }).ToListAsync();
+
+            return chatVMs;
         }
     }
 }
