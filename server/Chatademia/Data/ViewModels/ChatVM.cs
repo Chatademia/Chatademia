@@ -3,6 +3,8 @@
     public class ChatVM
     {
         public Guid? Id { get; set; }
+
+        public int? Semester { get; set; }
         public string? Name { get; set; }
 
         public string? ShortName { get; set; }

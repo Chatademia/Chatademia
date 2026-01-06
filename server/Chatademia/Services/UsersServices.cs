@@ -174,6 +174,25 @@ namespace Chatademia.Services
             public List<Term> terms { get; set; }
         }
 
+        private int? ParseSemester(string courseId)
+        {
+            if (string.IsNullOrEmpty(courseId))
+                return null;
+
+            int index = courseId.IndexOf("IN", StringComparison.OrdinalIgnoreCase);
+            if (index < 0)
+                return null;
+
+            string semStr = courseId.Length >= index + 3
+                ? courseId.Substring(courseId.IndexOf("IN") + 2, 2)
+                : null;
+
+            if (int.TryParse(semStr, out int semester))
+                return semester;
+            else
+                return semester;
+        }
+
         private async Task<List<Chat>> QueryChat(string access_token, string access_token_secret)
         {
             using var _context = _factory.CreateDbContext();
@@ -204,6 +223,7 @@ namespace Chatademia.Services
                 {
                     Id = Guid.NewGuid(),
                     UsosId = c.course_id,
+                    Semester = ParseSemester(c.course_id),
                     Name = c.course_name.pl,
                     ShortName = string.Concat(c.course_name.pl.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(word => char.ToUpper(word[0]))),
                     Color = Random.Shared.Next(0,10) // Assuming a default color value, update as needed
@@ -300,7 +320,7 @@ namespace Chatademia.Services
 
                 // Load existing relations for this user
                 var existingRelations = await _context.UserChatMTMRelations
-                    .Where(rc => rc.UserId == user.Id && incomingChatGIds.Contains(rc.ChatId))
+                    .Where(rc => rc.UserId == user.Id && incomingChatGIds.Contains(rc.ChatId) && rc.IsRelationActive == true)
                     .ToListAsync();
 
                 // Add missing relations
@@ -323,6 +343,7 @@ namespace Chatademia.Services
                 .Select(c => new ChatVM
                 {
                     Id = c.Id,
+                    Semester = c.Semester,
                     Name = c.Name,
                     ShortName = c.ShortName,
                     Color = c.Color,
@@ -349,6 +370,7 @@ namespace Chatademia.Services
                 .Select(c => new ChatVM
                 {
                     Id = c.Id,
+                    Semester = c.Semester,
                     Name = c.Name,
                     ShortName = c.ShortName,
                     Color = c.Color,

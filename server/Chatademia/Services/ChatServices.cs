@@ -71,10 +71,11 @@ namespace Chatademia.Services
                 throw new Exception($"Invalid session");
 
             var chat = await _context.Chats
-                .Where(c => c.Id == Id && c.UserChatsMTMR.Any(uc => uc.UserId == user.Id))
+                .Where(c => c.Id == Id && c.UserChatsMTMR.Any(uc => uc.UserId == user.Id && uc.IsRelationActive == true))
                 .Select(c => new ChatVM
                 {
                     Id = c.Id,
+                    Semester = c.Semester,
                     Name = c.Name,
                     ShortName = c.ShortName,
                     Color = c.Color
@@ -85,7 +86,7 @@ namespace Chatademia.Services
                 throw new Exception($"Chat not found");
 
             var userChats = await _context.UserChatMTMRelations
-                .Where(uc => uc.ChatId == chat.Id)
+                .Where(uc => uc.ChatId == chat.Id && uc.IsRelationActive == true)
                 .Include(uc => uc.User)
                 .ToListAsync();
                 chat.Participants = userChats.Select(uc => new UserVM
@@ -283,6 +284,34 @@ namespace Chatademia.Services
             };
 
             return chatVM;
+        }
+
+        public async Task<IActionResult> LeaveChat(Guid session, Guid? chatId)
+        {
+            using var _context = _factory.CreateDbContext();
+            var user = await _context.Users
+                .Include(u => u.UserTokens)
+                .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
+
+            if (user == null)
+                throw new Exception($"Invalid session");
+
+            var chatRelation = await _context.UserChatMTMRelations
+                .FirstOrDefaultAsync(uc => uc.ChatId == chatId && uc.UserId == user.Id && uc.IsRelationActive == true);
+
+            if (chatRelation == null)
+                throw new Exception("Relation not found");
+
+            chatRelation.IsRelationActive = false;
+
+            var chat = await _context.Chats
+                .FirstOrDefaultAsync(c => c.Id == chatId);
+            
+            chat.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return null;
         }
     }
 }

@@ -4,6 +4,7 @@
     {
         public Guid Id { get; init; } = Guid.NewGuid();
         public string UsosId { get; set; }
+        public int? Semester { get; set; }
         public string Name { get; set; }
         public string ShortName { get; set; }
         public int Color { get; set; }

@@ -13,5 +13,7 @@ namespace Chatademia.Data
 
         public string UserId { get; set; }
         public User User { get; set; }
+
+        public bool IsRelationActive { get; set; } = true;
     }
 }

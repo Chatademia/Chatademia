@@ -127,5 +127,22 @@ namespace Chatademia.Controllers
             return Ok(chat);
         }
 
+        [HttpDelete("leave-chat")]
+        public async Task<IActionResult> LeaveChat([FromBody] ChatIdVM request)
+        {
+            // Read session token from HttpOnly cookie
+            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
+            {
+                return Unauthorized(new { error = "Brak tokenu sesji" });
+            }
+
+            if (!Guid.TryParse(sessionToken, out var session))
+            {
+                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
+            }
+
+            var chat = await _chatServices.LeaveChat(session, request.ChatId);
+            return Ok(chat);
+        }
     }
 }
