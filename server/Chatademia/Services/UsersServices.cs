@@ -338,59 +338,6 @@ namespace Chatademia.Services
                     _context.UserChatMTMRelations.AddRange(newRelations);
                     await _context.SaveChangesAsync();
                 }
-<<<<<<< HEAD
-                
-                var chatVMs = await _context.Chats
-                .Select(c => new ChatVM
-                {
-                    Id = c.Id,
-                    Semester = c.Semester,
-                    Name = c.Name,
-                    ShortName = c.ShortName,
-                    Color = c.Color,
-                    Participants = c.UserChatsMTMR
-                        .Select(uc => uc.User)
-                        .Distinct()
-                        .Select(u => new UserVM
-                        {
-                            Id = u.Id,
-                            FirstName = u.FirstName,
-                            LastName = u.LastName,
-                            ShortName = u.ShortName,
-                            Color = u.Color
-                        })
-                        .ToList()
-                })
-                .ToListAsync();
-                
-                return chatVMs;
-            }
-            else
-            {
-                var chatVMs = await _context.Chats
-                .Select(c => new ChatVM
-                {
-                    Id = c.Id,
-                    Semester = c.Semester,
-                    Name = c.Name,
-                    ShortName = c.ShortName,
-                    Color = c.Color,
-                    Participants = c.UserChatsMTMR
-                        .Select(uc => uc.User)
-                        .Distinct()
-                        .Select(u => new UserVM
-                        {
-                            Id = u.Id,
-                            FirstName = u.FirstName,
-                            LastName = u.LastName,
-                            ShortName = u.ShortName,
-                            Color = u.Color
-                        })
-                        .ToList()
-                })
-                .ToListAsync();
-=======
->>>>>>> 5078dfd28612d297a3b685d2406b01e3994dfddd
 
             }
             var chatVMs = await _context.Chats
@@ -398,6 +345,7 @@ namespace Chatademia.Services
             {
                 Id = c.Id,
                 Name = c.Name,
+                Semester = c.Semester,
                 ShortName = c.ShortName,
                 Color = c.Color,
                 InviteCode = c.InviteCode,

@@ -44,13 +44,11 @@ namespace chatademia.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-<<<<<<< HEAD
                     b.Property<int?>("Semester")
                         .HasColumnType("integer");
-=======
+
                     b.Property<string>("OldInviteCode")
                         .HasColumnType("text");
->>>>>>> 5078dfd28612d297a3b685d2406b01e3994dfddd
 
                     b.Property<string>("ShortName")
                         .IsRequired()
