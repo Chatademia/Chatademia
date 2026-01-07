@@ -40,6 +40,7 @@ import {
   ArrowRightIcon,
   ArrowRightEndOnRectangleIcon,
   TrashIcon,
+  UserMinusIcon,
 } from "@heroicons/react/24/solid";
 import JoinChatPopup from "../components/JoinChatPopup.jsx";
 
@@ -48,6 +49,8 @@ function Chat({ devMode = false }) {
   const [groupBar, setGroupBar] = useState(false);
   const [logoutBar, setLogoutBar] = useState(false);
   const [leaveChatConfirm, setLeaveChatConfirm] = useState(false);
+  const [removeParticipantId, setRemoveParticipantId] = useState(null);
+  const [removeParticipantConfirm, setRemoveParticipantConfirm] = useState(false);
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const isFirstRender = useRef(true);
@@ -441,6 +444,50 @@ function Chat({ devMode = false }) {
     setLeaveChatConfirm(false);
   };
 
+  const handleRemoveParticipantClick = (participantId) => {
+    setRemoveParticipantId(participantId);
+    setRemoveParticipantConfirm(false);
+  };
+
+  const handleConfirmRemoveParticipant = async (participantId) => {
+    if (!removeParticipantConfirm) {
+      setRemoveParticipantConfirm(true);
+      return;
+    }
+
+    // TODO: Dodać endpoint do usuwania uczestnika
+    // Na razie tylko aktualizujemy UI
+    try {
+      setChats((prevChats) =>
+        prevChats.map((chat) => {
+          if (chat.id === selectedChatId) {
+            return {
+              ...chat,
+              participants: chat.participants.filter(
+                (p) => p.id !== participantId
+              ),
+            };
+          }
+          return chat;
+        })
+      );
+
+      setRemoveParticipantId(null);
+      setRemoveParticipantConfirm(false);
+      console.log("Usunięto uczestnika o id:", participantId);
+    } catch (error) {
+      console.error("Błąd podczas usuwania uczestnika:", error);
+      alert("Nie udało się usunąć uczestnika. Spróbuj ponownie.");
+      setRemoveParticipantId(null);
+      setRemoveParticipantConfirm(false);
+    }
+  };
+
+  const handleCancelRemoveParticipant = () => {
+    setRemoveParticipantId(null);
+    setRemoveParticipantConfirm(false);
+  };
+
   useEffect(() => {
     if (devMode) {
       return;
@@ -809,14 +856,51 @@ function Chat({ devMode = false }) {
           {chats
             .find((chat) => chat.id === selectedChatId)
             ?.participants?.map((participant) => (
-              <ParticipantItem
+              <div
                 key={participant.id}
-                color={colors[participant.color]}
-                participantFirstName={participant.firstName}
-                participantLastName={participant.lastName}
-                participantShortName={participant.shortName}
-                participantStatus={false}
-              />
+                className="relative"
+                onClick={() =>
+                  removeParticipantId === participant.id
+                    ? handleCancelRemoveParticipant()
+                    : null
+                }
+              >
+                {removeParticipantId === participant.id ? (
+                  <div
+                    className="w-full flex gap-2 items-center px-3 py-2 bg-red-50 rounded-lg cursor-pointer hover:bg-red-100 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleConfirmRemoveParticipant(participant.id);
+                    }}
+                  >
+                    <UserMinusIcon className="size-5 text-red-400" />
+                    <h1 className="text-xs font-semibold text-red-400">
+                      {removeParticipantConfirm
+                        ? "Czy na pewno?"
+                        : "Wyrzuć uczestnika"}
+                    </h1>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`rounded-xl ${
+                        colors[participant.color]
+                      } text-white flex items-center justify-center w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveParticipantClick(participant.id);
+                      }}
+                    >
+                      <h1 className="text-2xl font-black">
+                        {participant.shortName}
+                      </h1>
+                    </div>
+                    <h1 className="font-semibold text-sm text-black mr-6">
+                      {participant.firstName} {participant.lastName}
+                    </h1>
+                  </div>
+                )}
+              </div>
             ))}
           <div className="w-full mt-2">
             <hr className="border-t-1 border-gray-300" />
