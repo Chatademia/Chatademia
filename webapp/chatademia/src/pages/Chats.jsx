@@ -47,6 +47,7 @@ function Chat({ devMode = false }) {
   const [messageSent, setMessageSent] = useState("");
   const [groupBar, setGroupBar] = useState(false);
   const [logoutBar, setLogoutBar] = useState(false);
+  const [leaveChatConfirm, setLeaveChatConfirm] = useState(false);
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const isFirstRender = useRef(true);
@@ -394,6 +395,52 @@ function Chat({ devMode = false }) {
     }
   };
 
+  const handleLeaveChatClick = () => {
+    setLeaveChatConfirm(true);
+  };
+
+  const handleConfirmLeaveChat = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/chat/leave-chat`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chatId: selectedChatId,
+          }),
+          credentials: "include", 
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(response.status);
+      }
+
+      // Remove chat from the list
+      setChats((prevChats) =>
+        prevChats.filter((chat) => chat.id !== selectedChatId)
+      );
+      
+      // Reset states
+      setLeaveChatConfirm(false);
+      setGroupBar(false);
+      setSelectedChatId(null);
+
+      console.log("Opuszczono grupę o id:", selectedChatId);
+    } catch (error) {
+      console.error("Błąd podczas opuszczania grupy:", error);
+      alert("Nie udało się opuścić grupy. Spróbuj ponownie.");
+      setLeaveChatConfirm(false);
+    }
+  };
+
+  const handleCancelLeaveChat = () => {
+    setLeaveChatConfirm(false);
+  };
+
   useEffect(() => {
     if (devMode) {
       return;
@@ -712,15 +759,40 @@ function Chat({ devMode = false }) {
                       Zaproś inne osoby
                     </h1>
                   </button>
-                  <button className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150">
-                    <ArrowRightStartOnRectangleIcon
-                      className="size-6"
-                      color="#f87171"
-                    />
-                    <h1 className="px-4 py-2 font-semibold text-red-400 cursor-pointer">
-                      Opuść grupę
-                    </h1>
-                  </button>
+                  {!leaveChatConfirm ? (
+                    <button
+                      className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150"
+                      onClick={handleLeaveChatClick}
+                    >
+                      <ArrowRightStartOnRectangleIcon
+                        className="size-6"
+                        color="#f87171"
+                      />
+                      <h1 className="px-4 py-2 font-semibold text-red-400 cursor-pointer">
+                        Opuść grupę
+                      </h1>
+                    </button>
+                  ) : (
+                    <div className="px-4 py-2 flex flex-col gap-2">
+                      <h1 className="font-semibold text-red-400">
+                        Czy na pewno chcesz opuścić grupę?
+                      </h1>
+                      <div className="flex gap-2">
+                        <button
+                          className="flex-1 px-3 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors duration-150 font-semibold text-sm"
+                          onClick={handleConfirmLeaveChat}
+                        >
+                          Tak
+                        </button>
+                        <button
+                          className="flex-1 px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-150 font-semibold text-sm"
+                          onClick={handleCancelLeaveChat}
+                        >
+                          Nie
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
