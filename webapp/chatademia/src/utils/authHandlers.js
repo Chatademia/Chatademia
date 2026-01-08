@@ -74,7 +74,7 @@ export const handleGoogleLoginRedirect = async (loginPopupRef) => {
       "Wystąpił błąd podczas pobierania URL logowania Google: ",
       error
     );
-    alert("Błąd logowania: " + error.message);
+    alert("Wystąpił błąd podczas logowania. Spróbuj ponownie.");
   }
 };
 

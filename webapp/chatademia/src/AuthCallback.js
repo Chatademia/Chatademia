@@ -39,13 +39,6 @@ function AuthCallback() {
           throw new Error("Nieprawidłowe wartości parametrów OAuth");
         }
 
-        //////////////// Debug ///////////////////
-        if (process.env.REACT_APP_DEBUG_ALERTS === "true")
-          alert("OAuth Token:" + oauthToken);
-        if (process.env.REACT_APP_DEBUG_ALERTS === "true")
-          alert("OAuth Verifier:" + oauthVerifier);
-        //////////////// Debug ///////////////////
-
         // Send POST request with OAuth parameters to create session
         const response = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/auth/session`,
@@ -77,11 +70,6 @@ function AuthCallback() {
           console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
           throw new Error("Serwer zwrócił nieprawidłowy format danych");
         }
-
-        //////////////// Debug ///////////////////
-        if (process.env.REACT_APP_DEBUG_ALERTS === "true")
-          alert("Odpowiedź z serwera (session):" + JSON.stringify(data));
-        //////////////// Debug ///////////////////
 
         // Extract session token from response
         const sessionToken = data.session;

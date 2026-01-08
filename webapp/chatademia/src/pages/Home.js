@@ -30,7 +30,7 @@ function Home() {
 
       if (event.data.type === "LOGIN_ERROR") {
         console.error("Błąd logowania:", event.data.error);
-        alert("Wystąpił błąd podczas logowania: " + event.data.error);
+        alert("Wystąpił błąd podczas logowania. Spróbuj ponownie.");
       }
     };
 
