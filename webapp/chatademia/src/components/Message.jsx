@@ -93,7 +93,7 @@ function Message({
                   }}
                 >
                   <DocumentTextIcon className="size-6" color="#5004E0" />
-                  <p className="font-semibold text-lg text-black break-words">
+                  <p className="font-semibold text-lg text-black break-words overflow-hidden whitespace-nowrap text-ellipsis">
                     {message.fileName || "Plik"}
                   </p>
                 </div>
@@ -111,7 +111,7 @@ function Message({
                 }}
               >
                 <DocumentTextIcon className="size-6" color="#5004E0" />
-                <p className="font-semibold text-lg text-black break-words">
+                <p className="font-semibold text-lg text-black break-words overflow-hidden whitespace-nowrap text-ellipsis">
                   {message.fileName || "Plik"}
                 </p>
               </div>
