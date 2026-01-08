@@ -11,6 +11,7 @@ namespace Chatademia.Data
         public string LastName { get; set; } = "";        
         public string ShortName { get; set; } = "";
         public int Color { get; set; } = 0;
+        public bool IsUsosAccount { get; set; }
         public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
         public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset? ChatsUpdatedAt { get; set; }

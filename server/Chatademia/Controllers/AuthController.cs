@@ -38,7 +38,7 @@ namespace chatademia.Controllers
         }
 
         [HttpGet("login-url")]
-        public async Task<IActionResult> LoginUrl([FromQuery] string callbackUrl)
+        public async Task<IActionResult> LoginUrl([FromQuery] string callbackUrl) // REMOVE FULL CUSTOMIZATION OF CALLBACK
         {
             var url = await _loginServices.LoginUrl(callbackUrl);
             return Ok(url);
@@ -59,15 +59,41 @@ namespace chatademia.Controllers
             }
 
             await _loginServices.TerminateSession(session);
-            
+
             // Clear the cookie
             Response.Cookies.Delete("session_token", new CookieOptions
             {
                 Path = "/",
                 SameSite = SameSiteMode.Lax
             });
-            
+
             return Ok();
+        }
+
+        [HttpGet("google/login-url")]
+        public async Task<IActionResult> GoogleLoginUrl([FromQuery] string callbackUrl) // REMOVE FULL CUSTOMIZATION OF CALLBACK
+        {
+            var url = await _loginServices.GoogleLoginUrl(callbackUrl);
+            return Ok(url);
+        }
+
+        [HttpGet("google/callback")]
+        public async Task<IActionResult> GoogleCallback([FromQuery] string code, [FromQuery] string state)
+        {
+            var response = await _loginServices.GoogleCallback(code, state);
+            Response.Cookies.Append(
+            "session_token",
+            response.Item2.Session.ToString(),
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false, // Change to true in production with HTTPS
+                SameSite = SameSiteMode.Lax,
+                Path = "/",
+                Expires = DateTimeOffset.UtcNow.AddDays(1)
+            });
+
+            return Redirect(response.Item1);
         }
     }
 }

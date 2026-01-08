@@ -245,7 +245,7 @@ namespace Chatademia.Services
                 throw new Exception($"Invalid session");
 
 
-            if (user.UpdatedAt.AddHours(24) < DateTimeOffset.UtcNow) // data may need to be refreshed
+            if (user.UpdatedAt.AddHours(24) < DateTimeOffset.UtcNow && user.IsUsosAccount) // data may need to be refreshed
             {
                 string access_token = user.UserTokens.PermaAccessToken;
                 string access_token_secret = user.UserTokens.PermaAccessTokenSecret;  
@@ -265,9 +265,6 @@ namespace Chatademia.Services
             }
         }
 
-
-
-
         public async Task<List<ChatVM>> GetUserChats(Guid session)
         {
             using var _context = _factory.CreateDbContext();
@@ -280,7 +277,7 @@ namespace Chatademia.Services
                 throw new Exception($"Invalid session");
 
             // data may need to be refreshed
-            if (!user.ChatsUpdatedAt.HasValue || user.ChatsUpdatedAt?.AddHours(24) < DateTimeOffset.UtcNow)
+            if (user.IsUsosAccount && (!user.ChatsUpdatedAt.HasValue || user.ChatsUpdatedAt?.AddHours(24) < DateTimeOffset.UtcNow))
             {
                 string access_token = user.UserTokens.PermaAccessToken;
                 string access_token_secret = user.UserTokens.PermaAccessTokenSecret;
@@ -350,6 +347,7 @@ namespace Chatademia.Services
                 Color = c.Color,
                 InviteCode = c.InviteCode,
                 Participants = c.UserChatsMTMR
+                    .Where(uc => uc.IsRelationActive)
                     .Select(uc => uc.User)
                     .Distinct()
                     .Select(u => new UserVM

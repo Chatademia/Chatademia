@@ -1,9 +1,11 @@
 ﻿using chatademia.Data;
 using Chatademia.Data;
 using Chatademia.Data.ViewModels;
+using Google.Apis.Auth;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Web;
@@ -15,6 +17,8 @@ namespace Chatademia.Services
         private readonly IDbContextFactory<AppDbContext> _factory;
         private readonly string _USOS_KEY;
         private readonly string _USOS_SECRET;
+        private readonly string _CLIENT_ID;
+        private readonly string _CLIENT_SECRET;
         private string BASE_URL = "https://usosapps.amu.edu.pl";
         private string REQUEST_TOKEN_URL = "/services/oauth/request_token";
         private string ACCESS_TOKEN_URL = "/services/oauth/access_token";
@@ -167,6 +171,10 @@ namespace Chatademia.Services
                 throw new ArgumentNullException("USOS_KEY is missing from configuration");
             _USOS_SECRET = config["USOS_SECRET"] ?? 
                 throw new ArgumentNullException("USOS_SECRET is missing from configuration");
+            _CLIENT_ID = config["CLIENT_ID"] ??
+                throw new ArgumentNullException("CLIENT_ID is missing from configuration");
+            _CLIENT_SECRET = config["CLIENT_SECRET"] ??
+                throw new ArgumentNullException("CLIENT_SECRET is missing from configuration");
         }
 
         public async Task<SessionVM> Login(string oauth_token,string oauth_verifier)
@@ -265,6 +273,7 @@ namespace Chatademia.Services
                         LastName = user_data.LastName,
                         ShortName = user_data.ShortName,
                         Color = Random.Shared.Next(0,10),
+                        IsUsosAccount = true,
                         UserTokens = new UserTokens
                         {
                             PermaAccessToken = accessToken,
@@ -279,7 +288,7 @@ namespace Chatademia.Services
             }
         }
 
-        public async Task<string> LoginUrl(string callbackURL)
+        public async Task<string> LoginUrl(string callbackURL) // REMOVE FULL CUSTOMIZATION OF CALLBACK
         {
             using var _context = _factory.CreateDbContext();
             string requestUrl = BASE_URL + REQUEST_TOKEN_URL;
@@ -345,5 +354,138 @@ namespace Chatademia.Services
             await _context.SaveChangesAsync();
             return;
         }
+
+        public async Task<string> GoogleLoginUrl(string callbackURL) // REMOVE FULL CUSTOMIZATION OF CALLBACK
+        {
+            using var _context = _factory.CreateDbContext();
+
+            var state = Guid.NewGuid().ToString("N");
+
+
+            var url =
+            "https://accounts.google.com/o/oauth2/v2/auth" +
+            "?response_type=code" +
+            "&client_id=" + Uri.EscapeDataString(_CLIENT_ID) +
+            "&redirect_uri=" + Uri.EscapeDataString("http://localhost:8080/api/auth/google/callback") +
+            //"&scope=" + Uri.EscapeDataString("openid email profile") +
+            "&scope=" + Uri.EscapeDataString("openid profile") +
+            "&state=" + state;
+
+            var tempUser = new GoogleTempUser();
+            tempUser.State = state;
+            tempUser.Callback = callbackURL;
+            await _context.GoogleTempUsers.AddAsync(tempUser);
+            await _context.SaveChangesAsync();
+
+            return url;
+        }
+
+
+        public class GoogleTokenResponse
+        {
+            public string access_token { get; set; } = string.Empty;
+            public string id_token { get; set; } = string.Empty;
+            public int expires_in { get; set; }
+            public string token_type { get; set; } = string.Empty;
+        }
+
+        private async Task<GoogleJsonWebSignature.Payload> ValidateIdToken(string idToken)
+        {
+            return await GoogleJsonWebSignature.ValidateAsync(
+                idToken,
+                new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { _CLIENT_ID }
+                });
+        }
+
+        public async Task<(string, SessionVM)> GoogleCallback(string code, string state)
+        {
+            using var _context = _factory.CreateDbContext();
+
+            var tempUser = _context.GoogleTempUsers.FirstOrDefault(u => u.State == state);
+
+            if (tempUser == null)
+            {
+                throw new Exception("Invalid state");
+            }
+
+            var callback = tempUser.Callback;
+
+            var http = new HttpClient();
+
+            var response = await http.PostAsync(
+                "https://oauth2.googleapis.com/token",
+                new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["code"] = code,
+                    ["client_id"] = _CLIENT_ID,
+                    ["client_secret"] = _CLIENT_SECRET,
+                    ["redirect_uri"] = "http://localhost:8080/api/auth/google/callback",
+                    ["grant_type"] = "authorization_code"
+                })
+            );
+
+            //Console.WriteLine(await response.Content.ReadFromJsonAsync());
+
+            response.EnsureSuccessStatusCode(); 
+
+            var content = await response.Content.ReadFromJsonAsync<GoogleTokenResponse>();
+
+            var payload = await ValidateIdToken(content.id_token);
+            Console.WriteLine("=== Google ID Token Payload ===");
+            Console.WriteLine($"Subject (sub): {payload.Subject}"); //primary key
+            //Console.WriteLine($"Email: {payload.Email}");
+            //Console.WriteLine($"Email verified: {payload.EmailVerified}");
+            //Console.WriteLine($"Name: {payload.Name}");
+            Console.WriteLine($"Given name: {payload.GivenName}");
+            Console.WriteLine($"Family name: {payload.FamilyName}");
+            //Console.WriteLine($"Picture: {payload.Picture}");
+            //Console.WriteLine($"Issuer: {payload.Issuer}");
+            //Console.WriteLine($"Audience: {string.Join(",", payload.Audience)}");
+            Console.WriteLine($"Issued at: {payload.IssuedAtTimeSeconds}");
+            Console.WriteLine($"Expiration: {payload.ExpirationTimeSeconds}");
+            //Console.WriteLine($"Hosted domain (hd): {payload.HostedDomain}");
+
+            var oldUser = _context.Users.FirstOrDefault(u => u.Id == payload.Subject);
+
+            if (oldUser == null) // if new user
+            {
+                var newUser = new User
+                {
+                    Id = payload.Subject,
+                    FirstName = payload.GivenName,
+                    LastName = payload.FamilyName,
+                    ShortName = (payload.GivenName.Length > 0 ? payload.GivenName[0].ToString().ToUpper() : "") +
+                            (payload.FamilyName.Length > 0 ? payload.FamilyName[0].ToString().ToUpper() : ""),
+                    Color = Random.Shared.Next(0, 10),
+                    IsUsosAccount = false,
+                    UserTokens = new UserTokens
+                    {
+                        Session = Guid.NewGuid()
+                    }
+                };
+
+                _context.Remove(tempUser);          
+                await _context.AddAsync(newUser);
+                await _context.SaveChangesAsync();
+
+                return (callback, new SessionVM { Session = newUser.UserTokens.Session.Value });
+            }
+            else // refresh data
+            {
+                oldUser.FirstName = payload.GivenName;
+                oldUser.LastName = payload.FamilyName;
+                oldUser.ShortName = (payload.GivenName.Length > 0 ? payload.GivenName[0].ToString().ToUpper() : "") +
+                        (payload.FamilyName.Length > 0 ? payload.FamilyName[0].ToString().ToUpper() : "");
+                oldUser.UserTokens.Session = Guid.NewGuid();
+                _context.Remove(tempUser);
+                await _context.SaveChangesAsync();
+
+                return (callback, new SessionVM { Session = oldUser.UserTokens.Session.Value });
+            }           
+        }
+
+
     }
 }
