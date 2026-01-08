@@ -143,8 +143,8 @@ namespace Chatademia.Controllers
             return Ok(chat);
         }
 
-        [HttpPost("add-user")]
-        public async Task<IActionResult> AddUser([FromBody] InviteCodeVM request)
+        [HttpPost("join-chat")]
+        public async Task<IActionResult> JoinChat([FromBody] InviteCodeVM request)
         {
             // Read session token from HttpOnly cookie
             if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
@@ -156,7 +156,7 @@ namespace Chatademia.Controllers
             {
                 return Unauthorized(new { error = "Nieprawidłowy token sesji" });
             }
-            await _chatServices.AddUserToChat(session, request.InviteCode);
+            await _chatServices.JoinChat(session, request.InviteCode);
             return Ok();
         }
     }
