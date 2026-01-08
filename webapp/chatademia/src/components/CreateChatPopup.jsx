@@ -61,7 +61,10 @@ function CreateChatPopup({ isOpen, onClose, onSubmit }) {
             type="text"
             id="chatName"
             value={chatName}
-            onChange={(e) => setChatName(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value.replace(/[^\p{L}\p{N} ]/gu, "");
+              setChatName(value);
+            }}
             placeholder="Wprowadź nazwę czatu"
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-base focus:outline-none focus:border-primary transition-colors mb-4"
             autoFocus
