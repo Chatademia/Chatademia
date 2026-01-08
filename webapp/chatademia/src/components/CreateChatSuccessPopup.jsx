@@ -5,22 +5,13 @@ import {
 } from "@heroicons/react/24/outline";
 import { CheckIcon } from "@heroicons/react/24/solid";
 
-function CreateChatSuccessPopup({ isOpen, onClose, inviteLink }) {
-  const [copiedLink, setCopiedLink] = useState(false);
+function CreateChatSuccessPopup({ isOpen, onClose, inviteCode }) {
   const [copiedCode, setCopiedCode] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(inviteLink);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
-
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(
-      inviteLink.substring(inviteLink.lastIndexOf("/") + 1)
-    );
+    navigator.clipboard.writeText(inviteCode);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
   };
@@ -51,31 +42,6 @@ function CreateChatSuccessPopup({ isOpen, onClose, inviteLink }) {
           Zaproś innych do dołączenia do tego czatu
         </p>
 
-        <div className="mb-4">
-          <label className="block text-gray-700 font-medium mb-2 text-sm">
-            Link do dołączenia
-          </label>
-
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={inviteLink}
-              readOnly
-              className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg text-base bg-gray-50 text-gray-700"
-            />
-            <button
-              onClick={handleCopyLink}
-              className="px-4 py-3 border-2 border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              title="Kopiuj link"
-            >
-              {copiedLink ? (
-                <CheckIcon className="w-5 h-5 text-green-600" />
-              ) : (
-                <ClipboardDocumentIcon className="w-5 h-5 text-gray-600" />
-              )}
-            </button>
-          </div>
-        </div>
         <div className="mb-6">
           <label className="block text-gray-700 font-medium mb-2 text-sm">
             Kod zaproszenia
@@ -84,7 +50,7 @@ function CreateChatSuccessPopup({ isOpen, onClose, inviteLink }) {
           <div className="flex gap-2">
             <input
               type="text"
-              value={inviteLink.substring(inviteLink.lastIndexOf("/") + 1)}
+              value={inviteCode}
               readOnly
               className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg text-base bg-gray-50 text-gray-700"
             />

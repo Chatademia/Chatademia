@@ -63,7 +63,6 @@ function Chat({ devMode = false }) {
   const [showCreateChatPopup, setShowCreateChatPopup] = useState(false);
   const [showJoinChatPopup, setShowJoinChatPopup] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [inviteLink, setInviteLink] = useState("");
   const [inviteCode, setInviteCode] = useState("");
 
   const [userData, setUserData] = useState({
@@ -936,7 +935,7 @@ function Chat({ devMode = false }) {
             chatName,
             setChats,
             setSelectedChatId,
-            setInviteLink,
+            setInviteCode,
             setShowSuccessPopup
           )
         }
@@ -944,7 +943,7 @@ function Chat({ devMode = false }) {
       <CreateChatSuccessPopup
         isOpen={showSuccessPopup}
         onClose={() => setShowSuccessPopup(false)}
-        inviteLink={inviteLink}
+        inviteCode={inviteCode}
       />
       <JoinChatPopup
         isOpen={showJoinChatPopup}
