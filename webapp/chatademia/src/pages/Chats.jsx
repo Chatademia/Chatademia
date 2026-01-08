@@ -561,24 +561,39 @@ function Chat({ devMode = false }) {
           )}
         </div>
         <div className="flex flex-col gap-2 p-5 border-b h-[76.77%] overflow-y-auto">
-          {chats.map((chat) => (
-            <ChatItem
-              key={chat.id}
-              isActive={chat.id === selectedChatId}
-              color={colors[chat.color]}
-              chatShortName={chat.shortName}
-              chatName={chat.name}
-              onClick={() =>
-                handleChatSwitch(
-                  chat.id,
-                  selectedChatId,
-                  hubConnectionRef,
-                  setSelectedChatId,
-                  fetchMessages
-                )
-              }
-            />
-          ))}
+          {chats.map((chat, index) => {
+            const showSemesterHeader =
+              index === 0 || chat.semester !== chats[index - 1]?.semester;
+
+            return (
+              <React.Fragment key={chat.id}>
+                {showSemesterHeader && (
+                  <div className="flex items-center gap-3 my-2">
+                    <div className="flex-1 h-px bg-gray-300"></div>
+                    <h2 className="text-sm font-semibold text-gray-500 px-2">
+                      {chat.semester ? `Semestr ${chat.semester}` : "Pozostałe"}
+                    </h2>
+                    <div className="flex-1 h-px bg-gray-300"></div>
+                  </div>
+                )}
+                <ChatItem
+                  isActive={chat.id === selectedChatId}
+                  color={colors[chat.color]}
+                  chatShortName={chat.shortName}
+                  chatName={chat.name}
+                  onClick={() =>
+                    handleChatSwitch(
+                      chat.id,
+                      selectedChatId,
+                      hubConnectionRef,
+                      setSelectedChatId,
+                      fetchMessages
+                    )
+                  }
+                />
+              </React.Fragment>
+            );
+          })}
         </div>
         <button
           className="h-[6.94%] flex p-5 gap-3 justify-start items-center hover:bg-gray-100 transition-colors duration-150 rounded-lg"

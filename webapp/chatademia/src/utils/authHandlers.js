@@ -169,8 +169,12 @@ export const getChatsData = async (setChats, setSelectedChatId, navigate) => {
       throw new Error(data.error);
     }
 
-    // Sort chats alphabetically by name
+    // Sort chats by semester (descending), then alphabetically by name
     const sortedChats = [...data].sort((a, b) => {
+      // First sort by semester (descending)
+      const semesterDiff = (b.semester || 0) - (a.semester || 0);
+      if (semesterDiff !== 0) return semesterDiff;
+      // Then sort alphabetically by name
       if (!a.name || !b.name) return 0;
       return a.name.localeCompare(b.name, { sensitivity: "base" });
     });
