@@ -1,0 +1,24 @@
+name: Docker Compose CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fail if .env file exists
+        run: |
+          if find . -name ".env" | grep -q .; then
+            echo "❌ .env file detected. Secrets must not be committed."
+            exit 1
+          fi
+
+      - name: Build and start containers
+        run: docker-compose up --build --abort-on-container-exit
+
