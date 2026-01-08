@@ -341,7 +341,7 @@ namespace Chatademia.Services
 
             return null;
         }
-        public async Task AddUserToChat(Guid session, string inviteCode)
+        public async Task JoinChat(Guid session, string inviteCode)
         {
             using var _context = _factory.CreateDbContext();
 
