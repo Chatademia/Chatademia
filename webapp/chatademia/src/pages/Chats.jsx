@@ -838,18 +838,21 @@ function Chat({ devMode = false }) {
                           Zmień nazwę grupy
                         </h1>
                       </button>
-                      <button
-                        className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150"
-                        onClick={handleShowInviteCodePopup}
-                      >
-                        <UserGroupIcon
-                          className="size-6"
-                          color="currentColor"
-                        />
-                        <h1 className="px-4 py-2 font-semibold cursor-pointer">
-                          Zaproś inne osoby
-                        </h1>
-                      </button>
+                      {chats.find((chat) => chat.id === selectedChatId)
+                        ?.inviteCode && (
+                        <button
+                          className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150"
+                          onClick={handleShowInviteCodePopup}
+                        >
+                          <UserGroupIcon
+                            className="size-6"
+                            color="currentColor"
+                          />
+                          <h1 className="px-4 py-2 font-semibold cursor-pointer">
+                            Zaproś inne osoby
+                          </h1>
+                        </button>
+                      )}
                       {!leaveChatConfirm ? (
                         <button
                           className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150"
