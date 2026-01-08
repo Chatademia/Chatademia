@@ -2,8 +2,7 @@ export const handleFileSelect = (
   event,
   MAX_FILE_SIZE,
   allowedFileTypes,
-  selectedChatId,
-  handleSendAttachment
+  setSelectedFile
 ) => {
   const file = event.target.files?.[0];
   if (file) {
@@ -26,6 +25,7 @@ export const handleFileSelect = (
       return;
     }
 
-    handleSendAttachment(selectedChatId, file);
+    setSelectedFile(file);
+    event.target.value = "";
   }
 };

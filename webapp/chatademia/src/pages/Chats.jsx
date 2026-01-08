@@ -44,6 +44,7 @@ import {
 } from "@heroicons/react/24/solid";
 import JoinChatPopup from "../components/JoinChatPopup.jsx";
 import InviteCodePopup from "../components/InviteCodePopup.jsx";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 function Chat({ devMode = false }) {
   const [messageSent, setMessageSent] = useState("");
@@ -68,6 +69,7 @@ function Chat({ devMode = false }) {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showInviteCodePopup, setShowInviteCodePopup] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const [userData, setUserData] = useState({
     firstName: null,
@@ -713,40 +715,69 @@ function Chat({ devMode = false }) {
                     event,
                     MAX_FILE_SIZE,
                     allowedFileTypes,
-                    selectedChatId,
-                    handleSendAttachment
+                    setSelectedFile
                   )
                 }
                 style={{ display: "none" }}
                 accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
               />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="hover:scale-110 transition-transform duration-200 cursor-pointer flex items-center justify-center w-fit h-fit"
-              >
-                <PaperClipIcon className="size-6" color="currentColor" />
-              </button>
+              {selectedFile ? (
+                <button
+                  onClick={() => {
+                    setSelectedFile(null);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = "";
+                    }
+                  }}
+                  className="hover:scale-110 transition-transform duration-200 cursor-pointer flex items-center justify-center w-fit h-fit text-red-400"
+                  title="Usuń załącznik"
+                >
+                  <XMarkIcon className="size-6" color="currentColor" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="hover:scale-110 transition-transform duration-200 cursor-pointer flex items-center justify-center w-fit h-fit"
+                >
+                  <PaperClipIcon className="size-6" color="currentColor" />
+                </button>
+              )}
               <div className="flex gap-3 w-full items-center">
                 <textarea
-                  className="flex-1 rounded-lg border border-gray-200 py-3 text-gray-700 text-xs px-2 resize-none"
-                  placeholder="Wprowadź wiadomość"
-                  value={messageSent}
+                  className="flex-1 rounded-lg border border-gray-200 py-3 text-gray-700 text-xs px-2 resize-none disabled:bg-gray-50 disabled:text-gray-500"
+                  placeholder={
+                    selectedFile
+                      ? `Wyślij załącznik: ${selectedFile.name}`
+                      : "Wprowadź wiadomość"
+                  }
+                  value={selectedFile ? "" : messageSent}
                   onChange={(e) => setMessageSent(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
-                      if (messageSent.trim()) {
+                      if (selectedFile) {
+                        handleSendAttachment(selectedChatId, selectedFile);
+                        setSelectedFile(null);
+                      } else if (messageSent.trim()) {
                         handleSendMessage(selectedChatId, messageSent);
                       }
                     }
                   }}
                   rows={1}
                   autoFocus
+                  disabled={!!selectedFile}
                 />
                 <button
                   className="hover:scale-110 disabled:scale-100 disabled:opacity-50 transition-all duration-200 cursor-pointer flex-shrink-0"
-                  onClick={() => handleSendMessage(selectedChatId, messageSent)}
-                  disabled={!messageSent.trim()}
+                  onClick={() => {
+                    if (selectedFile) {
+                      handleSendAttachment(selectedChatId, selectedFile);
+                      setSelectedFile(null);
+                    } else {
+                      handleSendMessage(selectedChatId, messageSent);
+                    }
+                  }}
+                  disabled={!selectedFile && !messageSent.trim()}
                 >
                   <PaperAirplaneIcon className="size-6" color="#5004e0" />
                 </button>
