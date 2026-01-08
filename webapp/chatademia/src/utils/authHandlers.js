@@ -39,7 +39,7 @@ export const handleLoginRedirect = async (loginPopupRef) => {
 export const handleGoogleLoginRedirect = async (loginPopupRef) => {
   try {
     const response = await fetch(
-      `${process.env.REACT_APP_BACKEND_URL}/api/auth/google-login-url?callbackUrl=${process.env.REACT_APP_FRONTEND_URL}/auth/callback`,
+      `${process.env.REACT_APP_BACKEND_URL}/api/auth/google/login-url?callbackUrl=${process.env.REACT_APP_FRONTEND_URL}/auth/google/callback`,
       {
         method: "GET",
         headers: {

@@ -47,9 +47,7 @@ export const handleCreateChat = async (
     setSelectedChatId(data.id);
 
     // Set invite link and show success popup
-    setInviteLink(
-      data.inviteLink || `${window.location.origin}/invite/${data.id}`
-    );
+    setInviteLink(`${window.location.origin}/invite/${data.inviteCode}`);
     setShowSuccessPopup(true);
   } catch (error) {
     console.error("Błąd podczas tworzenia czatu:", error);
