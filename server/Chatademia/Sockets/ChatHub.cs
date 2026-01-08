@@ -15,7 +15,7 @@ namespace Chatademia.Sockets
             await Clients.Group(chatId.ToString()).SendAsync("NEW MSG");
         }
 
-        public async Task QuitChatSubscription(Guid chatId)agfagsdf
+        public async Task QuitChatSubscription(Guid chatId)
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, chatId.ToString());
         }
