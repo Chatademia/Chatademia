@@ -511,15 +511,18 @@ function Chat({ devMode = false }) {
           onClick={() => setSelectedChatId(null)}
         >
           <img src={icon} alt="Logo" className="h-12 w-12" />
-          <h1 className="text-4xl font-bold text-primary">Chatademia</h1>
+          <h1 className="text-4xl font-bold text-primary overflow-hidden">
+            Chatademia
+          </h1>
         </div>
         <div className=" flex gap-2 h-[8.63%] justify-between border-b items-center p-5">
-          <div className="flex gap-2 items-center">
-            <h1 className="font-semibold text-black text-xl">Czaty grupowe</h1>
-            {/* <ChevronDownIcon className="size-6" color="currentColor" /> */}
+          <div className="flex gap-2 items-center overflow-hidden">
+            <h1 className="font-semibold text-black text-xl overflow-hidden whitespace-nowrap text-ellipsis">
+              Czaty grupowe
+            </h1>
           </div>
           <button
-            className="rounded-full bg-primary text-white overflow-visible h-8 w-8 flex justify-center items-center cursor-pointer hover:scale-110 transition-all duration-200"
+            className="rounded-full bg-primary text-white overflow-hidden h-8 w-8 flex justify-center items-center cursor-pointer hover:scale-110 transition-all duration-200"
             type="button"
             onClick={() => setNewGroupPopup((s) => !s)}
           >
@@ -557,7 +560,7 @@ function Chat({ devMode = false }) {
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-4 p-5 border-b h-[76.77%] overflow-y-auto">
+        <div className="flex flex-col gap-2 p-5 border-b h-[76.77%] overflow-y-auto">
           {chats.map((chat) => (
             <ChatItem
               key={chat.id}
@@ -585,7 +588,7 @@ function Chat({ devMode = false }) {
           aria-label="Opcje użytkownika"
         >
           <div
-            className={`rounded-xl text-white flex items-center justify-center w-10 h-10 focus:outline-none ${
+            className={`rounded-xl text-white flex items-center justify-center w-10 h-10 aspect-square focus:outline-none ${
               colors[userData.color]
             }`}
           >
@@ -595,7 +598,7 @@ function Chat({ devMode = false }) {
             </h1>
           </div>
 
-          <h1 className="font-semibold text-sm text-black">
+          <h1 className="font-semibold text-sm text-black overflow-hidden whitespace-nowrap text-ellipsis">
             {userData.firstName} {userData.lastName}
           </h1>
         </button>
@@ -625,7 +628,7 @@ function Chat({ devMode = false }) {
           <div className="w-1/2 border">
             <div className=" flex gap-4  h-[7.74%] justify-center p-5 border-b items-center">
               <div
-                className={`rounded-xl text-white ${
+                className={`rounded-xl text-white aspect-square ${
                   colors[
                     chats.find((chat) => chat.id === selectedChatId)?.color
                   ]
@@ -635,7 +638,7 @@ function Chat({ devMode = false }) {
                   {chats.find((chat) => chat.id === selectedChatId)?.shortName}
                 </h1>
               </div>
-              <h1 className="font-semibold text-xl text-black">
+              <h1 className="font-semibold text-xl text-black overflow-hidden whitespace-nowrap text-ellipsis">
                 {chats.find((chat) => chat.id === selectedChatId)?.name}
               </h1>
             </div>
@@ -852,7 +855,7 @@ function Chat({ devMode = false }) {
                     ) : (
                       <div className="flex items-center gap-4">
                         <div
-                          className={`rounded-xl ${
+                          className={`rounded-xl aspect-square focus:outline-none ${
                             colors[participant.color]
                           } text-white flex items-center justify-center w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity`}
                           onClick={(e) => {
@@ -864,7 +867,7 @@ function Chat({ devMode = false }) {
                             {participant.shortName}
                           </h1>
                         </div>
-                        <h1 className="font-semibold text-sm text-black mr-6">
+                        <h1 className="font-semibold text-sm text-black mr-6 overflow-hidden whitespace-nowrap text-ellipsis">
                           {participant.firstName} {participant.lastName}
                         </h1>
                       </div>
@@ -879,7 +882,7 @@ function Chat({ devMode = false }) {
         </>
       ) : (
         <div className="w-3/4 border flex items-center justify-center bg-gray-50">
-          <h1 className="text-gray-400 text-xl">
+          <h1 className="text-gray-400 text-xl overflow-hidden whitespace-nowrap text-ellipsis">
             Wybierz czat, aby rozpocząć konwersację
           </h1>
         </div>

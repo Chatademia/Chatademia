@@ -14,7 +14,7 @@ function Participant({
       className={`bg-white flex p-4 rounded-xl pr-2 gap-4 place-items-center`}
     >
       <div
-        className={`rounded-xl ${bgClass} text-white  flex items-center justify-center w-12 h-12`}
+        className={`rounded-xl ${bgClass} text-white aspect-square flex items-center justify-center w-12 h-12`}
       >
         <h1 className="text-2xl font-black">{participantShortName}</h1>
       </div>
