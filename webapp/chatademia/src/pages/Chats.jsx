@@ -43,6 +43,7 @@ import {
   UserMinusIcon,
 } from "@heroicons/react/24/solid";
 import JoinChatPopup from "../components/JoinChatPopup.jsx";
+import InviteCodePopup from "../components/InviteCodePopup.jsx";
 
 function Chat({ devMode = false }) {
   const [messageSent, setMessageSent] = useState("");
@@ -63,6 +64,7 @@ function Chat({ devMode = false }) {
   const [showCreateChatPopup, setShowCreateChatPopup] = useState(false);
   const [showJoinChatPopup, setShowJoinChatPopup] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showInviteCodePopup, setShowInviteCodePopup] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
 
   const [userData, setUserData] = useState({
@@ -278,6 +280,20 @@ function Chat({ devMode = false }) {
     } catch (error) {
       console.error("Błąd podczas wysyłania załącznika:", error);
       alert("Nie udało się wysłać załącznika. Spróbuj ponownie.");
+    }
+  };
+
+  const handleShowInviteCodePopup = () => {
+    if (
+      !selectedChatId ||
+      !chats.find((chat) => chat.id === selectedChatId).inviteCode?.length > 0
+    )
+      return;
+    else {
+      setInviteCode(
+        chats.find((chat) => chat.id === selectedChatId).inviteCode
+      );
+      setShowInviteCodePopup(true);
     }
   };
 
@@ -820,7 +836,10 @@ function Chat({ devMode = false }) {
                       Zmień nazwę grupy
                     </h1>
                   </button>
-                  <button className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150">
+                  <button
+                    className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150"
+                    onClick={handleShowInviteCodePopup}
+                  >
                     <UserGroupIcon className="size-6" color="currentColor" />
                     <h1 className="px-4 py-2 font-semibold cursor-pointer">
                       Zaproś inne osoby
@@ -951,6 +970,11 @@ function Chat({ devMode = false }) {
         onSubmit={(chatName) =>
           handleJoinChat(setChats, setSelectedChatId, inviteCode)
         }
+      />
+      <InviteCodePopup
+        isOpen={showInviteCodePopup}
+        onClose={() => setShowInviteCodePopup(false)}
+        inviteCode={inviteCode}
       />
     </div>
   );
