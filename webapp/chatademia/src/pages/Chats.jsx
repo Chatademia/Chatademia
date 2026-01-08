@@ -50,13 +50,15 @@ function Chat({ devMode = false }) {
   const [logoutBar, setLogoutBar] = useState(false);
   const [leaveChatConfirm, setLeaveChatConfirm] = useState(false);
   const [removeParticipantId, setRemoveParticipantId] = useState(null);
-  const [removeParticipantConfirm, setRemoveParticipantConfirm] = useState(false);
+  const [removeParticipantConfirm, setRemoveParticipantConfirm] =
+    useState(false);
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const isFirstRender = useRef(true);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const fileInputRef = useRef(null);
   const hubConnectionRef = useRef(null);
+  const groupBarRef = useRef(null);
   const [newGroupPopup, setNewGroupPopup] = useState(false);
   const [showCreateChatPopup, setShowCreateChatPopup] = useState(false);
   const [showJoinChatPopup, setShowJoinChatPopup] = useState(false);
@@ -414,7 +416,7 @@ function Chat({ devMode = false }) {
           body: JSON.stringify({
             chatId: selectedChatId,
           }),
-          credentials: "include", 
+          credentials: "include",
         }
       );
 
@@ -426,7 +428,7 @@ function Chat({ devMode = false }) {
       setChats((prevChats) =>
         prevChats.filter((chat) => chat.id !== selectedChatId)
       );
-      
+
       // Reset states
       setLeaveChatConfirm(false);
       setGroupBar(false);
@@ -445,8 +447,10 @@ function Chat({ devMode = false }) {
   };
 
   const handleRemoveParticipantClick = (participantId) => {
+    // if (userData.id !== participantId) {
     setRemoveParticipantId(participantId);
     setRemoveParticipantConfirm(false);
+    // }
   };
 
   const handleConfirmRemoveParticipant = async (participantId) => {
@@ -496,6 +500,23 @@ function Chat({ devMode = false }) {
     getUserData(setUserData, navigate);
     getChatsData(setChats, setSelectedChatId, navigate);
   }, [navigate, devMode]);
+
+  // Close groupBar when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (groupBarRef.current && !groupBarRef.current.contains(event.target)) {
+        setGroupBar(false);
+      }
+    };
+
+    if (groupBar) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [groupBar]);
 
   // SignalR connection setup
   useEffect(() => {
@@ -781,7 +802,7 @@ function Chat({ devMode = false }) {
       <div className="w-1/4 border relative">
         <div className=" flex gap-2 pr-4 h-[7.74%] justify-between p-5 border-b items-center relative">
           <h1 className="font-semibold text-black text-xl">Grupa</h1>
-          <div className="relative">
+          <div className="relative" ref={groupBarRef}>
             <button
               onClick={() => setGroupBar((s) => !s)}
               className="rounded-full h-8 w-8 bg-violet-50 flex items-center justify-center cursor-pointer hover:scale-110 transition-all duration-200"
