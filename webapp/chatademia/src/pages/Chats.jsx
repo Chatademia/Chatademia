@@ -60,6 +60,8 @@ function Chat({ devMode = false }) {
   const fileInputRef = useRef(null);
   const hubConnectionRef = useRef(null);
   const groupBarRef = useRef(null);
+  const newGroupPopupRef = useRef(null);
+  const logoutBarRef = useRef(null);
   const [newGroupPopup, setNewGroupPopup] = useState(false);
   const [showCreateChatPopup, setShowCreateChatPopup] = useState(false);
   const [showJoinChatPopup, setShowJoinChatPopup] = useState(false);
@@ -533,6 +535,46 @@ function Chat({ devMode = false }) {
     };
   }, [groupBar]);
 
+  // Close newGroupPopup when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        newGroupPopupRef.current &&
+        !newGroupPopupRef.current.contains(event.target)
+      ) {
+        setNewGroupPopup(false);
+      }
+    };
+
+    if (newGroupPopup) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [newGroupPopup]);
+
+  // Close logoutBar when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        logoutBarRef.current &&
+        !logoutBarRef.current.contains(event.target)
+      ) {
+        setLogoutBar(false);
+      }
+    };
+
+    if (logoutBar) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [logoutBar]);
+
   // SignalR connection setup
   useEffect(() => {
     const setupSignalR = async () => {
@@ -618,7 +660,10 @@ function Chat({ devMode = false }) {
             <PlusIcon className="size-6" color="currentColor" />
           </button>
           {newGroupPopup && (
-            <div className="absolute top-36 left-16 bg-white border rounded-lg shadow-lg w-80 z-10">
+            <div
+              ref={newGroupPopupRef}
+              className="absolute top-36 left-16 bg-white border rounded-lg shadow-lg w-80 z-10"
+            >
               <button
                 className="flex gap-1 items-center justify-left w-full px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150"
                 onClick={() => {
@@ -690,7 +735,10 @@ function Chat({ devMode = false }) {
         </button>
 
         {logoutBar && (
-          <div className="absolute bottom-14 left-4 bg-white border rounded-lg shadow-lg w-72 z-10">
+          <div
+            ref={logoutBarRef}
+            className="absolute bottom-14 left-4 bg-white border rounded-lg shadow-lg w-72 z-10"
+          >
             <button
               className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150"
               onClick={() => handleLogout(navigate)}
