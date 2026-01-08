@@ -784,13 +784,13 @@ function Chat({ devMode = false }) {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="hover:scale-110 transition-transform duration-200 cursor-pointer"
+            className="hover:scale-110 transition-transform duration-200 cursor-pointer flex items-center justify-center w-fit h-fit"
           >
             <PaperClipIcon className="size-6" color="currentColor" />
           </button>
-          <div className="relative w-full">
-            <input
-              className="w-full rounded-lg border border-gray-200 py-3 text-gray-700 text-xs px-2"
+          <div className="flex gap-3 w-full items-center">
+            <textarea
+              className="flex-1 rounded-lg border border-gray-200 py-3 text-gray-700 text-xs px-2 resize-none"
               placeholder="Wprowadź wiadomość"
               value={messageSent}
               onChange={(e) => setMessageSent(e.target.value)}
@@ -802,10 +802,11 @@ function Chat({ devMode = false }) {
                   }
                 }
               }}
+              rows={1}
               autoFocus
             />
             <button
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 hover:scale-110 disabled:scale-100 disabled:opacity-50 transition-all duration-200 cursor-pointer"
+              className="hover:scale-110 disabled:scale-100 disabled:opacity-50 transition-all duration-200 cursor-pointer flex-shrink-0"
               onClick={() => handleSendMessage(selectedChatId, messageSent)}
               disabled={!messageSent.trim()}
             >
