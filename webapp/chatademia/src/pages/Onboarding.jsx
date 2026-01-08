@@ -99,28 +99,30 @@ function Onboarding() {
           </span>
         </div>
         <div
-          className="flex-1 w-full flex flex-col items-center justify-center px-8 pb-8 mt-32 onboarding-content"
+          className="flex-1 w-full flex flex-col items-center px-8 pb-8 onboarding-content"
           key={currentStep}
         >
-          <img
-            src={steps[currentStep].image}
-            alt={steps[currentStep].title}
-            className="w-full max-h-80 max-w-lg object-contain mb-2"
-            style={{ minHeight: 220 }}
-          />
-          <h1
-            className="text-4xl font-bold text-center mt-2 mb-2"
-            style={{ color: "#5004E0" }}
-          >
-            {steps[currentStep].title}
-          </h1>
-          <p
-            className="text-lg text-gray-500 text-center mb-4"
-            style={{ maxWidth: 600 }}
-          >
-            {steps[currentStep].description}
-          </p>
-          <div className="flex justify-center gap-2 mb-4 mt-24">
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <img
+              src={steps[currentStep].image}
+              alt={steps[currentStep].title}
+              className="w-full max-h-80 max-w-lg object-contain mb-2"
+              style={{ minHeight: 220 }}
+            />
+            <h1
+              className="text-4xl font-bold text-center mt-2 mb-2"
+              style={{ color: "#5004E0" }}
+            >
+              {steps[currentStep].title}
+            </h1>
+            <p
+              className="text-lg text-gray-500 text-center mb-4"
+              style={{ maxWidth: 600 }}
+            >
+              {steps[currentStep].description}
+            </p>
+          </div>
+          <div className="flex justify-center gap-2 mb-4">
             {steps.map((_, index) => (
               <button
                 key={index}
