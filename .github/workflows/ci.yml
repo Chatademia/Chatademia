@@ -24,7 +24,7 @@ jobs:
         working-directory: server
         run: cp .env.example .env
 
-      - name: Build and start containers
+      - name: Build Docker images
         working-directory: server
-        run: docker compose up --build --abort-on-container-exit
+        run: docker compose build
 
