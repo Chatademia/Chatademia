@@ -76,8 +76,8 @@ function Message({
                     src={message.content}
                     alt={message.fileName || "Zdjęcie"}
                     onError={() => setImageError(true)}
-                    className="max-w-full h-auto object-contain"
-                    style={{ maxHeight: "300px" }}
+                    className="max-w-full h-auto object-contain select-none"
+                    style={{ maxHeight: "300px", userSelect: "none" }}
                   />
                 </a>
               ) : (
