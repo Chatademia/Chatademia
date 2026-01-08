@@ -383,6 +383,28 @@ function Chat({ devMode = false }) {
     getChatsData(setChats, setSelectedChatId, navigate);
   }, [navigate, devMode]);
 
+  // Close message menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (selectedMessageId) {
+        const messageElement = event.target.closest(
+          `[data-message-id="${selectedMessageId}"]`
+        );
+        if (!messageElement) {
+          setSelectedMessageId(null);
+        }
+      }
+    };
+
+    if (selectedMessageId) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [selectedMessageId]);
+
   // Close groupBar when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -668,7 +690,11 @@ function Chat({ devMode = false }) {
                     ?.participants?.find((p) => p.id === message.senderId);
                   const isMenuOpen = selectedMessageId === message.id;
                   return (
-                    <div key={message.id} className="relative">
+                    <div
+                      key={message.id}
+                      className="relative"
+                      data-message-id={message.id}
+                    >
                       <MessageItem
                         message={message}
                         isOwnMessage={isOwnMessage}
