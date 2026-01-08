@@ -75,72 +75,7 @@ function Chat({ devMode = false }) {
     id: null,
     color: null,
   });
-  const [chats, setChats] = useState([
-    {
-      id: 1,
-      color: "red",
-      shortName: "IO",
-      name: "Inżynieria Oprogramowania (gr. 24)",
-      participants: [
-        {
-          id: 1,
-          firstName: "Anna",
-          lastName: "Kowalska",
-          shortName: "AK",
-          color: "A",
-        },
-        {
-          id: 2,
-          firstName: "Jan",
-          lastName: "Nowak",
-          shortName: "JN",
-          color: "B",
-        },
-        {
-          id: 3,
-          firstName: "Maria",
-          lastName: "Wiśniewska",
-          shortName: "MW",
-          color: "C",
-        },
-        {
-          id: 4,
-          firstName: "Piotr",
-          lastName: "Zieliński",
-          shortName: "PZ",
-          color: "D",
-        },
-      ],
-    },
-    {
-      id: 2,
-      color: "blue",
-      shortName: "SI",
-      name: "Sztuczna Inteligencja (gr. 11)",
-      participants: [],
-    },
-    {
-      id: 3,
-      color: "green",
-      shortName: "AM",
-      name: "Analiza Matematyczna 1 (gr. 10)",
-      participants: [],
-    },
-    {
-      id: 4,
-      color: "yellow",
-      shortName: "PP",
-      name: "Podstawy programowania (gr. 14)",
-      participants: [],
-    },
-    {
-      id: 5,
-      color: "green",
-      shortName: "ZR",
-      name: "Zbiory Rozmyte (gr. 12)",
-      participants: [],
-    },
-  ]);
+  const [chats, setChats] = useState([]);
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
   const allowedFileTypes = [
     "application/pdf",
@@ -164,79 +99,7 @@ function Chat({ devMode = false }) {
     9: "bg-cyan-500",
   };
 
-  const [messages, setMessages] = useState([
-    // Dummy messages
-    {
-      id: 1,
-      senderId: 1,
-      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      createdAt: "2025-12-11T22:29:06.3840716+00:00",
-      type: "message",
-    },
-    {
-      id: 2,
-      senderId: 2,
-      content: "snwdwd",
-      createdAt: "2025-12-11T22:30:06.3840716+00:00",
-      type: "message",
-    },
-    {
-      id: 3,
-      senderId: userData.id,
-      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      createdAt: "2025-12-11T22:31:06.3840716+00:00",
-      type: "message",
-    },
-    {
-      id: 4,
-      senderId: 3,
-      content: "Dokument wizji projektu.pdf",
-      createdAt: "2025-12-11T22:32:06.3840716+00:00",
-      type: "file",
-    },
-    {
-      id: 5,
-      senderId: userData.id,
-      content: "Schemat bazy danych.png",
-      createdAt: "2025-12-11T22:33:06.3840716+00:00",
-      type: "file",
-    },
-    {
-      id: 6,
-      senderId: 1,
-      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      createdAt: "2025-12-11T22:34:06.3840716+00:00",
-      type: "message",
-    },
-    {
-      id: 7,
-      senderId: 2,
-      content: "snwdwd",
-      createdAt: "2025-12-11T22:35:06.3840716+00:00",
-      type: "message",
-    },
-    {
-      id: 8,
-      senderId: userData.id,
-      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-      createdAt: "2025-12-11T22:36:06.3840716+00:00",
-      type: "message",
-    },
-    {
-      id: 9,
-      senderId: 3,
-      content: "Dokument wizji projektu.pdf",
-      createdAt: "2025-12-11T22:37:06.3840716+00:00",
-      type: "file",
-    },
-    {
-      id: 10,
-      senderId: userData.id,
-      content: "Schemat bazy danych.png",
-      createdAt: "2025-12-11T22:38:06.3840716+00:00",
-      type: "file",
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
 
   const [selectedChatId, setSelectedChatId] = useState(null);
 
