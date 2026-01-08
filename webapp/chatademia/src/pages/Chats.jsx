@@ -643,7 +643,10 @@ function Chat({ devMode = false }) {
   return (
     <div className="bg-white flex h-screen relative">
       <div className="w-1/4 border flex flex-col relative">
-        <div className=" flex gap-2 pr-4 px-5 h-[7.74%] border-b items-center">
+        <div
+          className=" flex gap-2 pr-4 px-5 h-[7.74%] border-b items-center cursor-pointer hover:bg-gray-50 transition-colors"
+          onClick={() => setSelectedChatId(null)}
+        >
           <img src={icon} alt="Logo" className="h-12 w-12" />
           <h1 className="text-4xl font-bold text-primary">Chatademia</h1>
         </div>
@@ -754,247 +757,270 @@ function Chat({ devMode = false }) {
           </div>
         )}
       </div>
-      <div className="w-1/2 border">
-        <div className=" flex gap-4  h-[7.74%] justify-center p-5 border-b items-center">
-          <div
-            className={`rounded-xl text-white ${
-              colors[chats.find((chat) => chat.id === selectedChatId)?.color]
-            }  flex items-center justify-center w-12 h-12`}
-          >
-            <h1 className="text-2xl font-black">
-              {chats.find((chat) => chat.id === selectedChatId)?.shortName}
-            </h1>
-          </div>
-          <h1 className="font-semibold text-xl text-black">
-            {chats.find((chat) => chat.id === selectedChatId)?.name}
-          </h1>
-        </div>
-        <div className="bg-white h-[82.885%] overflow-y-auto">
-          <div className="p-5 flex flex-col gap-4">
-            {messages.map((message) => {
-              const isOwnMessage = message.senderId === userData.id;
-              const sender = chats
-                .find((chat) => chat.id === selectedChatId)
-                ?.participants?.find((p) => p.id === message.senderId);
-              const isMenuOpen = selectedMessageId === message.id;
-              return (
-                <div key={message.id} className="relative">
-                  <MessageItem
-                    message={message}
-                    isOwnMessage={isOwnMessage}
-                    senderShortName={sender?.shortName}
-                    senderColor={colors[sender?.color]}
-                    formatTimestamp={formatTimestamp}
-                    onClick={() => {
-                      if (isOwnMessage) {
-                        setSelectedMessageId(isMenuOpen ? null : message.id);
-                      }
-                    }}
-                  />
-                  {isMenuOpen && isOwnMessage && (
-                    <div className="absolute bottom-10 right-10 bg-white border rounded-lg shadow-lg z-10">
-                      <button
-                        className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteMessage(selectedChatId, message.id);
-                          setSelectedMessageId(null);
+      {selectedChatId ? (
+        <>
+          <div className="w-1/2 border">
+            <div className=" flex gap-4  h-[7.74%] justify-center p-5 border-b items-center">
+              <div
+                className={`rounded-xl text-white ${
+                  colors[
+                    chats.find((chat) => chat.id === selectedChatId)?.color
+                  ]
+                }  flex items-center justify-center w-12 h-12`}
+              >
+                <h1 className="text-2xl font-black">
+                  {chats.find((chat) => chat.id === selectedChatId)?.shortName}
+                </h1>
+              </div>
+              <h1 className="font-semibold text-xl text-black">
+                {chats.find((chat) => chat.id === selectedChatId)?.name}
+              </h1>
+            </div>
+            <div className="bg-white h-[82.885%] overflow-y-auto">
+              <div className="p-5 flex flex-col gap-4">
+                {messages.map((message) => {
+                  const isOwnMessage = message.senderId === userData.id;
+                  const sender = chats
+                    .find((chat) => chat.id === selectedChatId)
+                    ?.participants?.find((p) => p.id === message.senderId);
+                  const isMenuOpen = selectedMessageId === message.id;
+                  return (
+                    <div key={message.id} className="relative">
+                      <MessageItem
+                        message={message}
+                        isOwnMessage={isOwnMessage}
+                        senderShortName={sender?.shortName}
+                        senderColor={colors[sender?.color]}
+                        formatTimestamp={formatTimestamp}
+                        onClick={() => {
+                          if (isOwnMessage) {
+                            setSelectedMessageId(
+                              isMenuOpen ? null : message.id
+                            );
+                          }
                         }}
-                      >
-                        <TrashIcon className="size-5 text-red-400" />
-                        <h1 className="font-semibold text-red-400 cursor-pointer">
-                          Usuń wiadomość u wszystkich
+                      />
+                      {isMenuOpen && isOwnMessage && (
+                        <div className="absolute bottom-10 right-10 bg-white border rounded-lg shadow-lg z-10">
+                          <button
+                            className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteMessage(selectedChatId, message.id);
+                              setSelectedMessageId(null);
+                            }}
+                          >
+                            <TrashIcon className="size-5 text-red-400" />
+                            <h1 className="font-semibold text-red-400 cursor-pointer">
+                              Usuń wiadomość u wszystkich
+                            </h1>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+            <div className="h-[9.375%] p-5 flex gap-5 items-center">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={(event) =>
+                  handleFileSelect(
+                    event,
+                    MAX_FILE_SIZE,
+                    allowedFileTypes,
+                    selectedChatId,
+                    handleSendAttachment
+                  )
+                }
+                style={{ display: "none" }}
+                accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="hover:scale-110 transition-transform duration-200 cursor-pointer flex items-center justify-center w-fit h-fit"
+              >
+                <PaperClipIcon className="size-6" color="currentColor" />
+              </button>
+              <div className="flex gap-3 w-full items-center">
+                <textarea
+                  className="flex-1 rounded-lg border border-gray-200 py-3 text-gray-700 text-xs px-2 resize-none"
+                  placeholder="Wprowadź wiadomość"
+                  value={messageSent}
+                  onChange={(e) => setMessageSent(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      if (messageSent.trim()) {
+                        handleSendMessage(selectedChatId, messageSent);
+                      }
+                    }
+                  }}
+                  rows={1}
+                  autoFocus
+                />
+                <button
+                  className="hover:scale-110 disabled:scale-100 disabled:opacity-50 transition-all duration-200 cursor-pointer flex-shrink-0"
+                  onClick={() => handleSendMessage(selectedChatId, messageSent)}
+                  disabled={!messageSent.trim()}
+                >
+                  <PaperAirplaneIcon className="size-6" color="#5004e0" />
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="w-1/4 border relative">
+            <div className=" flex gap-2 pr-4 h-[7.74%] justify-between p-5 border-b items-center relative">
+              <h1 className="font-semibold text-black text-xl">Grupa</h1>
+              <div className="relative" ref={groupBarRef}>
+                <button
+                  onClick={() => setGroupBar((s) => !s)}
+                  className="rounded-full h-8 w-8 bg-violet-50 flex items-center justify-center cursor-pointer hover:scale-110 transition-all duration-200"
+                  aria-expanded={groupBar}
+                  aria-label="Opcje grupy"
+                >
+                  <EllipsisVerticalIcon
+                    className="size-6"
+                    color="currentColor"
+                  />
+                </button>
+
+                {groupBar && (
+                  <div className="absolute top-10 right-4 bg-white border rounded-lg shadow-lg w-72 z-10">
+                    <div className="py-2">
+                      <button className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150">
+                        <PencilSquareIcon
+                          className="size-6"
+                          color="currentColor"
+                        />
+                        <h1 className="px-4 py-2 font-semibold cursor-pointer">
+                          Zmień nazwę grupy
                         </h1>
                       </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-        <div className="h-[9.375%] p-5 flex gap-5 items-center">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={(event) =>
-              handleFileSelect(
-                event,
-                MAX_FILE_SIZE,
-                allowedFileTypes,
-                selectedChatId,
-                handleSendAttachment
-              )
-            }
-            style={{ display: "none" }}
-            accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="hover:scale-110 transition-transform duration-200 cursor-pointer flex items-center justify-center w-fit h-fit"
-          >
-            <PaperClipIcon className="size-6" color="currentColor" />
-          </button>
-          <div className="flex gap-3 w-full items-center">
-            <textarea
-              className="flex-1 rounded-lg border border-gray-200 py-3 text-gray-700 text-xs px-2 resize-none"
-              placeholder="Wprowadź wiadomość"
-              value={messageSent}
-              onChange={(e) => setMessageSent(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  if (messageSent.trim()) {
-                    handleSendMessage(selectedChatId, messageSent);
-                  }
-                }
-              }}
-              rows={1}
-              autoFocus
-            />
-            <button
-              className="hover:scale-110 disabled:scale-100 disabled:opacity-50 transition-all duration-200 cursor-pointer flex-shrink-0"
-              onClick={() => handleSendMessage(selectedChatId, messageSent)}
-              disabled={!messageSent.trim()}
-            >
-              <PaperAirplaneIcon className="size-6" color="#5004e0" />
-            </button>
-          </div>
-        </div>
-      </div>
-      <div className="w-1/4 border relative">
-        <div className=" flex gap-2 pr-4 h-[7.74%] justify-between p-5 border-b items-center relative">
-          <h1 className="font-semibold text-black text-xl">Grupa</h1>
-          <div className="relative" ref={groupBarRef}>
-            <button
-              onClick={() => setGroupBar((s) => !s)}
-              className="rounded-full h-8 w-8 bg-violet-50 flex items-center justify-center cursor-pointer hover:scale-110 transition-all duration-200"
-              aria-expanded={groupBar}
-              aria-label="Opcje grupy"
-            >
-              <EllipsisVerticalIcon className="size-6" color="currentColor" />
-            </button>
-
-            {groupBar && (
-              <div className="absolute top-10 right-4 bg-white border rounded-lg shadow-lg w-72 z-10">
-                <div className="py-2">
-                  <button className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150">
-                    <PencilSquareIcon className="size-6" color="currentColor" />
-                    <h1 className="px-4 py-2 font-semibold cursor-pointer">
-                      Zmień nazwę grupy
-                    </h1>
-                  </button>
-                  <button
-                    className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150"
-                    onClick={handleShowInviteCodePopup}
-                  >
-                    <UserGroupIcon className="size-6" color="currentColor" />
-                    <h1 className="px-4 py-2 font-semibold cursor-pointer">
-                      Zaproś inne osoby
-                    </h1>
-                  </button>
-                  {!leaveChatConfirm ? (
-                    <button
-                      className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150"
-                      onClick={handleLeaveChatClick}
-                    >
-                      <ArrowRightStartOnRectangleIcon
-                        className="size-6"
-                        color="#f87171"
-                      />
-                      <h1 className="px-4 py-2 font-semibold text-red-400 cursor-pointer">
-                        Opuść grupę
-                      </h1>
-                    </button>
-                  ) : (
-                    <div className="px-4 py-2 flex flex-col gap-2">
-                      <h1 className="font-semibold text-red-400">
-                        Czy na pewno chcesz opuścić grupę?
-                      </h1>
-                      <div className="flex gap-2">
+                      <button
+                        className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150"
+                        onClick={handleShowInviteCodePopup}
+                      >
+                        <UserGroupIcon
+                          className="size-6"
+                          color="currentColor"
+                        />
+                        <h1 className="px-4 py-2 font-semibold cursor-pointer">
+                          Zaproś inne osoby
+                        </h1>
+                      </button>
+                      {!leaveChatConfirm ? (
                         <button
-                          className="flex-1 px-3 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors duration-150 font-semibold text-sm"
-                          onClick={handleConfirmLeaveChat}
+                          className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150"
+                          onClick={handleLeaveChatClick}
                         >
-                          Tak
+                          <ArrowRightStartOnRectangleIcon
+                            className="size-6"
+                            color="#f87171"
+                          />
+                          <h1 className="px-4 py-2 font-semibold text-red-400 cursor-pointer">
+                            Opuść grupę
+                          </h1>
                         </button>
-                        <button
-                          className="flex-1 px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-150 font-semibold text-sm"
-                          onClick={handleCancelLeaveChat}
-                        >
-                          Nie
-                        </button>
-                      </div>
+                      ) : (
+                        <div className="px-4 py-2 flex flex-col gap-2">
+                          <h1 className="font-semibold text-red-400">
+                            Czy na pewno chcesz opuścić grupę?
+                          </h1>
+                          <div className="flex gap-2">
+                            <button
+                              className="flex-1 px-3 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors duration-150 font-semibold text-sm"
+                              onClick={handleConfirmLeaveChat}
+                            >
+                              Tak
+                            </button>
+                            <button
+                              className="flex-1 px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-150 font-semibold text-sm"
+                              onClick={handleCancelLeaveChat}
+                            >
+                              Nie
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-col gap-4 p-5 h-[92.26%] overflow-y-auto">
-          <div className="flex gap-2 items-center">
-            <h1 className="font-medium text-black text-lg">Uczestnicy</h1>
-            <span className="bg-purple-50 text-primary text-xs font-bold px-2 py-1 rounded-full">
-              {chats.find((chat) => chat.id === selectedChatId)?.participants
-                ?.length || 0}
-            </span>
-          </div>
-          {chats
-            .find((chat) => chat.id === selectedChatId)
-            ?.participants?.map((participant) => (
-              <div
-                key={participant.id}
-                className="relative"
-                onClick={() =>
-                  removeParticipantId === participant.id
-                    ? handleCancelRemoveParticipant()
-                    : null
-                }
-              >
-                {removeParticipantId === participant.id ? (
-                  <div
-                    className="w-full flex gap-2 items-center px-3 py-2 bg-red-50 rounded-lg cursor-pointer hover:bg-red-100 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleConfirmRemoveParticipant(participant.id);
-                    }}
-                  >
-                    <UserMinusIcon className="size-5 text-red-400" />
-                    <h1 className="text-xs font-semibold text-red-400">
-                      {removeParticipantConfirm
-                        ? "Czy na pewno?"
-                        : "Wyrzuć uczestnika"}
-                    </h1>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`rounded-xl ${
-                        colors[participant.color]
-                      } text-white flex items-center justify-center w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveParticipantClick(participant.id);
-                      }}
-                    >
-                      <h1 className="text-2xl font-black">
-                        {participant.shortName}
-                      </h1>
-                    </div>
-                    <h1 className="font-semibold text-sm text-black mr-6">
-                      {participant.firstName} {participant.lastName}
-                    </h1>
                   </div>
                 )}
               </div>
-            ))}
-          <div className="w-full mt-2">
-            <hr className="border-t-1 border-gray-300" />
+            </div>
+            <div className="flex flex-col gap-4 p-5 h-[92.26%] overflow-y-auto">
+              <div className="flex gap-2 items-center">
+                <h1 className="font-medium text-black text-lg">Uczestnicy</h1>
+                <span className="bg-purple-50 text-primary text-xs font-bold px-2 py-1 rounded-full">
+                  {chats.find((chat) => chat.id === selectedChatId)
+                    ?.participants?.length || 0}
+                </span>
+              </div>
+              {chats
+                .find((chat) => chat.id === selectedChatId)
+                ?.participants?.map((participant) => (
+                  <div
+                    key={participant.id}
+                    className="relative"
+                    onClick={() =>
+                      removeParticipantId === participant.id
+                        ? handleCancelRemoveParticipant()
+                        : null
+                    }
+                  >
+                    {removeParticipantId === participant.id ? (
+                      <div
+                        className="w-full flex gap-2 items-center px-3 py-2 bg-red-50 rounded-lg cursor-pointer hover:bg-red-100 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleConfirmRemoveParticipant(participant.id);
+                        }}
+                      >
+                        <UserMinusIcon className="size-5 text-red-400" />
+                        <h1 className="text-xs font-semibold text-red-400">
+                          {removeParticipantConfirm
+                            ? "Czy na pewno?"
+                            : "Wyrzuć uczestnika"}
+                        </h1>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={`rounded-xl ${
+                            colors[participant.color]
+                          } text-white flex items-center justify-center w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveParticipantClick(participant.id);
+                          }}
+                        >
+                          <h1 className="text-2xl font-black">
+                            {participant.shortName}
+                          </h1>
+                        </div>
+                        <h1 className="font-semibold text-sm text-black mr-6">
+                          {participant.firstName} {participant.lastName}
+                        </h1>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              <div className="w-full mt-2">
+                <hr className="border-t-1 border-gray-300" />
+              </div>
+            </div>
           </div>
+        </>
+      ) : (
+        <div className="w-3/4 border flex items-center justify-center bg-gray-50">
+          <h1 className="text-gray-400 text-xl">
+            Wybierz czat, aby rozpocząć konwersację
+          </h1>
         </div>
-      </div>
+      )}
       <CreateChatPopup
         isOpen={showCreateChatPopup}
         onClose={() => setShowCreateChatPopup(false)}
