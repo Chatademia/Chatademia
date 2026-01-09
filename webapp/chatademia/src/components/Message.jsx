@@ -41,7 +41,7 @@ function Message({
           <div
             className={`${
               isOwnMessage ? "bg-primary text-white" : "bg-white text-black "
-            } rounded-xl border border-gray-200 p-3 pb-8 relative min-w-[64px] max-w-[420px] w-fit break-words`}
+            } rounded-xl border border-gray-200 p-3 pb-8 pr-10 relative min-w-[64px] max-w-[420px] w-fit break-words`}
             style={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}
           >
             <p className="text-base font-medium break-words">
