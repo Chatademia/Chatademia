@@ -2,6 +2,7 @@ import WelcomePage from "./pages/Home.js";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Chats from "./pages/Chats.jsx";
 import AuthCallback from "./AuthCallback.js";
+import GoogleAuthCallback from "./GoogleAuthCallback.js";
 import { useEffect, useState } from "react";
 import Onboarding from "./pages/Onboarding.jsx";
 
@@ -137,6 +138,7 @@ function App() {
           }
         />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
         <Route path="/onboarding" element={<Onboarding />} />
       </Routes>
     </>

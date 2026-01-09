@@ -945,6 +945,7 @@ function Chat({ devMode = false }) {
                         <h1 className="font-semibold text-sm text-black mr-6 overflow-hidden whitespace-nowrap text-ellipsis">
                           {participant.firstName} {participant.lastName}
                         </h1>
+                        
                       </div>
                     )}
                   </div>
