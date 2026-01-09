@@ -103,6 +103,7 @@ namespace Chatademia.Services
                 Name = dbchat.Name,
                 ShortName = dbchat.ShortName,
                 Color = dbchat.Color,
+                ModeratorId = user.Id
             };
             if (dbchat.InviteCode != null)
                 chat.InviteCode = dbchat.InviteCode;
@@ -276,6 +277,7 @@ namespace Chatademia.Services
                 Name = chatData.Name,
                 ShortName = string.Concat(chatData.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(word => char.ToUpper(word[0]))),
                 Color = chatData.Color ?? 0,
+                ModeratorId = user.Id,
                 InviteCode = await CodeGenerator(),
                 LastInviteCodeRefresh = DateTimeOffset.UtcNow
             };
@@ -299,6 +301,7 @@ namespace Chatademia.Services
                 ShortName = chat.ShortName,
                 Color = chat.Color,
                 InviteCode = chat.InviteCode,
+                ModeratorId = chat.ModeratorId,
                 Participants = new List<UserVM>
                 {
                     new UserVM
@@ -341,6 +344,37 @@ namespace Chatademia.Services
 
             return null;
         }
+
+        public async Task<IActionResult> RemoveUser(Guid session, Guid? chatId, string? UserToRemoveId)
+        {
+            using var _context = _factory.CreateDbContext();
+            var user = await _context.Users
+                .Include(u => u.UserTokens)
+                .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
+
+            if (user == null)
+                throw new Exception($"Invalid session");
+
+            var chat = await _context.Chats
+                .FirstOrDefaultAsync(c => c.Id == chatId);
+
+            if (user.Id != chat.ModeratorId)
+                throw new Exception($"User is not moderator");
+
+            var chatRelation = await _context.UserChatMTMRelations
+                .FirstOrDefaultAsync(uc => uc.ChatId == chatId && uc.UserId == UserToRemoveId && uc.IsRelationActive == true);
+
+            if (chatRelation == null)
+                throw new Exception("Relation not found");
+
+            chatRelation.IsRelationActive = false;
+
+            chat.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return null;
+        }
         public async Task JoinChat(Guid session, string inviteCode)
         {
             using var _context = _factory.CreateDbContext();
@@ -358,10 +392,22 @@ namespace Chatademia.Services
                 throw new Exception($"Invalid session");
             
             var alreadyInChat = await _context.Set<UserChatMTMRelation>()
-                .AnyAsync(uc => uc.ChatId == chat.Id && uc.UserId == user.Id);
+                .AnyAsync(uc => uc.ChatId == chat.Id && uc.UserId == user.Id && uc.IsRelationActive == true);
 
             if (alreadyInChat)
                 throw new Exception($"User already in chat");
+
+            var wasInChat = await _context.Set<UserChatMTMRelation>()
+                .FirstOrDefaultAsync(uc => uc.ChatId == chat.Id && uc.UserId == user.Id && uc.IsRelationActive == false);
+
+            if (wasInChat.IsRelationActive == false)
+            {
+                wasInChat.IsRelationActive = true;
+
+                await _context.SaveChangesAsync();
+
+                return;
+            }
 
             await _context.AddAsync(new UserChatMTMRelation
             {
