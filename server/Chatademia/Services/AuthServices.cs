@@ -25,6 +25,31 @@ namespace Chatademia.Services
         private string AUTHORIZE_URL = "/services/oauth/authorize";
         private string USER_URL = "/services/users/user";
 
+
+        private static readonly string[] AllowedStartsWith =
+        {
+            "http://localhost:3000",
+            "http://localhost:8080",
+            "https://chatademia.social"
+        };
+
+        private const string DefaultRedirect = "http://localhost:8080/scalar/v1#tag/"; // change for production to "https://chatademia.social"
+
+        public string Validate(string? redirectUrl)
+        {
+            if (string.IsNullOrWhiteSpace(redirectUrl))
+                return DefaultRedirect;
+
+            foreach (var allowed in AllowedStartsWith)
+            {
+                if (redirectUrl.StartsWith(allowed, StringComparison.OrdinalIgnoreCase))
+                    return redirectUrl;
+            }
+
+            return DefaultRedirect;
+        }
+
+
         private string BuildOAuthHeaderAcces(string url, string method, string oauth_token,string oauth_verifier, string oauth_token_secret)
         {
             string nonce = Guid.NewGuid().ToString("N");
@@ -288,8 +313,12 @@ namespace Chatademia.Services
             }
         }
 
-        public async Task<string> LoginUrl(string callbackURL) // REMOVE FULL CUSTOMIZATION OF CALLBACK
+        public async Task<string> LoginUrl(string callbackURL)
         {
+
+            var safeCallback = Validate(callbackURL);
+
+
             using var _context = _factory.CreateDbContext();
             string requestUrl = BASE_URL + REQUEST_TOKEN_URL;
 
@@ -298,7 +327,7 @@ namespace Chatademia.Services
 
             using var client = new HttpClient();
 
-            string authHeader = BuildOAuthHeaderRequest(requestUrl, "POST", callbackURL);
+            string authHeader = BuildOAuthHeaderRequest(requestUrl, "POST", safeCallback);
             client.DefaultRequestHeaders.Add("Authorization", authHeader);
 
             var bodyParams = new Dictionary<string,string>
@@ -355,8 +384,11 @@ namespace Chatademia.Services
             return;
         }
 
-        public async Task<string> GoogleLoginUrl(string callbackURL) // REMOVE FULL CUSTOMIZATION OF CALLBACK
+        public async Task<string> GoogleLoginUrl(string callbackURL)
         {
+            var safeCallback = Validate(callbackURL);
+
+
             using var _context = _factory.CreateDbContext();
 
             var state = Guid.NewGuid().ToString("N");
@@ -373,7 +405,7 @@ namespace Chatademia.Services
 
             var tempUser = new GoogleTempUser();
             tempUser.State = state;
-            tempUser.Callback = callbackURL;
+            tempUser.Callback = safeCallback;
             await _context.GoogleTempUsers.AddAsync(tempUser);
             await _context.SaveChangesAsync();
 

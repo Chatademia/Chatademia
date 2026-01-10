@@ -1,5 +1,6 @@
 ﻿using Chatademia.Data.ViewModels;
 using Chatademia.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +39,7 @@ namespace chatademia.Controllers
         }
 
         [HttpGet("login-url")]
-        public async Task<IActionResult> LoginUrl([FromQuery] string callbackUrl) // REMOVE FULL CUSTOMIZATION OF CALLBACK
+        public async Task<IActionResult> LoginUrl([FromQuery] string callbackUrl)
         {
             var url = await _loginServices.LoginUrl(callbackUrl);
             return Ok(url);
@@ -71,7 +72,7 @@ namespace chatademia.Controllers
         }
 
         [HttpGet("google/login-url")]
-        public async Task<IActionResult> GoogleLoginUrl([FromQuery] string callbackUrl) // REMOVE FULL CUSTOMIZATION OF CALLBACK
+        public async Task<IActionResult> GoogleLoginUrl([FromQuery] string callbackUrl)
         {
             var url = await _loginServices.GoogleLoginUrl(callbackUrl);
             return Ok(url);
