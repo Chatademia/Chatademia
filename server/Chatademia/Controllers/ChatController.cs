@@ -15,23 +15,23 @@ namespace Chatademia.Controllers
         {
             _chatServices = chatServices;
         }
-        [HttpPost("chat")]
-        public async Task<IActionResult> GetChat([FromBody] ChatIdVM request)
-        {
-            // Read session token from HttpOnly cookie
-            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
-            {
-                return Unauthorized(new { error = "Brak tokenu sesji" });
-            }
+        //[HttpPost("chat")]
+        //public async Task<IActionResult> GetChat([FromBody] ChatIdVM request)
+        //{
+        //    // Read session token from HttpOnly cookie
+        //    if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
+        //    {
+        //        return Unauthorized(new { error = "Brak tokenu sesji" });
+        //    }
 
-            if (!Guid.TryParse(sessionToken, out var session))
-            {
-                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
-            }
+        //    if (!Guid.TryParse(sessionToken, out var session))
+        //    {
+        //        return Unauthorized(new { error = "Nieprawidłowy token sesji" });
+        //    }
 
-            var chat = await _chatServices.GetChat(session, request.ChatId);
-            return Ok(chat);
-        }
+        //    var chat = await _chatServices.GetChat(session, request.ChatId);
+        //    return Ok(chat);
+        //}
 
         [HttpPost("chat-messages")]
         public async Task<IActionResult> GetChatMessages([FromBody] ChatIdVM request)
@@ -174,6 +174,22 @@ namespace Chatademia.Controllers
             }
             await _chatServices.JoinChat(session, request.InviteCode);
             return Ok();
+        }
+
+        [HttpPost("favorite-status")]
+        public async Task<IActionResult> SetFavoriteStatus([FromBody] SetFavoriteChatVM request)
+        {
+            // Read session token from HttpOnly cookie
+            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
+            {
+                return Unauthorized(new { error = "Brak tokenu sesji" });
+            }
+            if (!Guid.TryParse(sessionToken, out var session))
+            {
+                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
+            }
+            var response = await _chatServices.SetFavoriteStatus(session, request);
+            return Ok(response);
         }
     }
 }

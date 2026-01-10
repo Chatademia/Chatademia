@@ -2,6 +2,7 @@
 using Chatademia.Data;
 using Chatademia.Data.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Text;
@@ -27,6 +28,18 @@ namespace Chatademia.Services
                 throw new ArgumentNullException("USOS_SECRET is missing from configuration");
         }
 
+
+        private async Task<string> CodeGenerator()
+        {
+            const string chars = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
+            const int inviteCodeLength = 6;
+            string code = string.Concat(
+                Enumerable.Range(0, inviteCodeLength)
+                .Select(_ => chars[RandomNumberGenerator.GetInt32(chars.Length)])
+            );
+
+            return code;
+        }
 
         private string BuildOAuthHeaderUser(string url, string method, string oauth_token, string oauth_verifier)
         {
@@ -337,6 +350,28 @@ namespace Chatademia.Services
                 }
 
             }
+
+            // Refresh code if older than 4 days
+            var chatsToRefresh = await _context.UserChatMTMRelations
+                .Where(uc => 
+                    uc.UserId == user.Id &&
+                    uc.IsRelationActive == true &&
+                    uc.Chat.InviteCode != null)
+                .Select(c => c.Chat)
+                .ToListAsync();
+            
+            foreach (var dbchat in chatsToRefresh)
+            {
+                if (dbchat.LastInviteCodeRefresh?.AddDays(4) <= DateTimeOffset.UtcNow)
+                {
+                    dbchat.OldInviteCode = dbchat.InviteCode;
+                    dbchat.InviteCode = await CodeGenerator();
+                    dbchat.LastInviteCodeRefresh = DateTimeOffset.UtcNow;
+                }
+            }
+            await _context.SaveChangesAsync();
+
+
             var chatVMs = await _context.Chats
             .Select(c => new ChatVM
             {
@@ -346,6 +381,12 @@ namespace Chatademia.Services
                 ShortName = c.ShortName,
                 Color = c.Color,
                 InviteCode = c.InviteCode,
+
+                IsFavorite = c.UserChatsMTMR
+                    .Where(uc => uc.UserId == user.Id)
+                    .Select(uc => uc.IsFavorite)
+                    .FirstOrDefault(),
+
                 Participants = c.UserChatsMTMR
                     .Where(uc => uc.IsRelationActive)
                     .Select(uc => uc.User)

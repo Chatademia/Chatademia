@@ -71,59 +71,63 @@ namespace Chatademia.Services
             return filePath;
         }
 
-        public async Task<ChatVM> GetChat(Guid session, Guid Id)
-        {
-            using var _context = _factory.CreateDbContext();
-            var user = await _context.Users
-                .Include(u => u.UserTokens)
-                .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
+        //public async Task<ChatVM> GetChat(Guid session, Guid Id)
+        //{
+        //    using var _context = _factory.CreateDbContext();
+        //    var user = await _context.Users
+        //        .Include(u => u.UserTokens)
+        //        .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
-            if (user == null)
-                throw new Exception($"Invalid session");
+        //    if (user == null)
+        //        throw new Exception($"Invalid session");
 
-            var dbchat = await _context.Chats
-                .Where(c => c.Id == Id && c.UserChatsMTMR.Any(uc => uc.UserId == user.Id && uc.IsRelationActive == true))
-                .FirstOrDefaultAsync();
+        //    var dbchat = await _context.Chats
+        //        .Where(c => c.Id == Id && c.UserChatsMTMR.Any(uc => uc.UserId == user.Id && uc.IsRelationActive == true))
+        //        .FirstOrDefaultAsync();
 
-            if (dbchat == null)
-                throw new Exception($"Chat not found");
+        //    if (dbchat == null)
+        //        throw new Exception($"Chat not found");
 
-            // Refresh code if older than 4 days
-            if (dbchat.LastInviteCodeRefresh?.AddDays(4) <= DateTimeOffset.UtcNow)
-            {
-                dbchat.OldInviteCode = dbchat.InviteCode;
-                dbchat.InviteCode = await CodeGenerator();
-                dbchat.LastInviteCodeRefresh = DateTimeOffset.UtcNow;
-            }
-            await _context.SaveChangesAsync();
+        //    // Refresh code if older than 4 days
+        //    if (dbchat.LastInviteCodeRefresh?.AddDays(4) <= DateTimeOffset.UtcNow)
+        //    {
+        //        dbchat.OldInviteCode = dbchat.InviteCode;
+        //        dbchat.InviteCode = await CodeGenerator();
+        //        dbchat.LastInviteCodeRefresh = DateTimeOffset.UtcNow;
+        //    }
+        //    await _context.SaveChangesAsync();
           
-            var chat = new ChatVM
-            {
-                Id = dbchat.Id,
-                Name = dbchat.Name,
-                ShortName = dbchat.ShortName,
-                Color = dbchat.Color,
-                ModeratorId = user.Id
-            };
-            if (dbchat.InviteCode != null)
-                chat.InviteCode = dbchat.InviteCode;
+        //    var chat = new ChatVM
+        //    {
+        //        Id = dbchat.Id,
+        //        Name = dbchat.Name,
+        //        ShortName = dbchat.ShortName,
+        //        Color = dbchat.Color,
+        //        IsFavorite = dbchat.UserChatsMTMR
+        //        .Where(uc => user.Id == uc.UserId)
+        //        .Select(uc => uc.IsFavorite)
+        //        .FirstOrDefault(),
+        //        ModeratorId = user.Id
+        //    };
+        //    if (dbchat.InviteCode != null)
+        //        chat.InviteCode = dbchat.InviteCode;
 
 
-            var userChats = await _context.UserChatMTMRelations
-                .Where(uc => uc.ChatId == chat.Id && uc.IsRelationActive == true)
-                .Include(uc => uc.User)
-                .ToListAsync();
-                chat.Participants = userChats.Select(uc => new UserVM
-                {
-                    Id = uc.User.Id,
-                    FirstName = uc.User.FirstName,
-                    LastName = uc.User.LastName,
-                    ShortName = uc.User.ShortName,
-                    Color = uc.User.Color
-                }).ToList();
+        //    var userChats = await _context.UserChatMTMRelations
+        //        .Where(uc => uc.ChatId == chat.Id && uc.IsRelationActive == true)
+        //        .Include(uc => uc.User)
+        //        .ToListAsync();
+        //        chat.Participants = userChats.Select(uc => new UserVM
+        //        {
+        //            Id = uc.User.Id,
+        //            FirstName = uc.User.FirstName,
+        //            LastName = uc.User.LastName,
+        //            ShortName = uc.User.ShortName,
+        //            Color = uc.User.Color
+        //        }).ToList();
 
-            return chat;
-        }
+        //    return chat;
+        //}
 
         public async Task<List<MessageVM>> GetChatMessages(Guid session, Guid chatId)
         {
@@ -418,6 +422,32 @@ namespace Chatademia.Services
             await _context.SaveChangesAsync();
 
             return;
+        }
+
+        public async Task<SetFavoriteChatVM> SetFavoriteStatus(Guid session, SetFavoriteChatVM setFavoriteChatVM)
+        {
+            using var _context = _factory.CreateDbContext();
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
+
+            if (user == null)
+                throw new Exception($"Invalid session");
+
+            var chatRelation = await _context.UserChatMTMRelations
+                .FirstOrDefaultAsync(uc => 
+                    uc.ChatId == setFavoriteChatVM.ChatId && 
+                    uc.UserId == user.Id && 
+                    uc.IsRelationActive == true);
+
+            if (chatRelation == null)
+                throw new Exception("Relation not found");
+
+            var isFav = setFavoriteChatVM.IsFavorite ?? false;
+
+            chatRelation.IsFavorite = isFav;
+            await _context.SaveChangesAsync();
+
+            return setFavoriteChatVM;
         }
     }
 }
