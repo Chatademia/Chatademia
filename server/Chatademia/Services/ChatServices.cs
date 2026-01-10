@@ -169,6 +169,11 @@ namespace Chatademia.Services
             if (user == null)
                 throw new Exception($"Invalid session");
 
+            var chat = await _context.Chats
+                .FirstOrDefaultAsync(c => c.Id == chatId);
+            if(chat == null)
+                throw new Exception("Chat not found");
+
             string type;
             if (string.IsNullOrWhiteSpace(content) && file != null)
                 type = "file";
@@ -197,6 +202,7 @@ namespace Chatademia.Services
             }
 
             _context.Messages.Add(message);
+            chat.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             var new_msg = new MessageVM()
