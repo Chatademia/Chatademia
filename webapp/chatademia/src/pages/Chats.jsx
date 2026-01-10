@@ -4,7 +4,13 @@ import ChatItem from "../components/Chat.jsx";
 import ParticipantItem from "../components/Participant.jsx";
 import CreateChatPopup from "../components/CreateChatPopup.jsx";
 import CreateChatSuccessPopup from "../components/CreateChatSuccessPopup.jsx";
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import * as signalR from "@microsoft/signalr";
 
@@ -47,6 +53,29 @@ import JoinChatPopup from "../components/JoinChatPopup.jsx";
 import InviteCodePopup from "../components/InviteCodePopup.jsx";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_FILE_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+];
+const COLORS = {
+  0: "bg-red-500",
+  1: "bg-blue-500",
+  2: "bg-green-500",
+  3: "bg-yellow-500",
+  4: "bg-purple-500",
+  5: "bg-orange-500",
+  6: "bg-pink-500",
+  7: "bg-teal-500",
+  8: "bg-indigo-500",
+  9: "bg-cyan-500",
+};
+
 function Chat({ devMode = false }) {
   const [messageSent, setMessageSent] = useState("");
   const [groupBar, setGroupBar] = useState(false);
@@ -79,28 +108,6 @@ function Chat({ devMode = false }) {
     color: null,
   });
   const [chats, setChats] = useState([]);
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-  const allowedFileTypes = [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "text/plain",
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-  ];
-  const colors = {
-    0: "bg-red-500",
-    1: "bg-blue-500",
-    2: "bg-green-500",
-    3: "bg-yellow-500",
-    4: "bg-purple-500",
-    5: "bg-orange-500",
-    6: "bg-pink-500",
-    7: "bg-teal-500",
-    8: "bg-indigo-500",
-    9: "bg-cyan-500",
-  };
 
   const [messages, setMessages] = useState([]);
 
@@ -120,7 +127,15 @@ function Chat({ devMode = false }) {
     return chats.find((chat) => chat.id === selectedChatId);
   }, [chats, selectedChatId]);
 
-  const handleSendAttachment = async (chatId, file) => {
+  const participantsMap = useMemo(() => {
+    if (!selectedChat?.participants) return {};
+    return selectedChat.participants.reduce((acc, participant) => {
+      acc[participant.id] = participant;
+      return acc;
+    }, {});
+  }, [selectedChat?.participants]);
+
+  const handleSendAttachment = useCallback(async (chatId, file) => {
     if (!file || !chatId) {
       return;
     }
@@ -163,7 +178,7 @@ function Chat({ devMode = false }) {
       console.error("Błąd podczas wysyłania załącznika:", error);
       alert("Nie udało się wysłać załącznika. Spróbuj ponownie.");
     }
-  };
+  }, []);
 
   const handleShowInviteCodePopup = () => {
     if (!selectedChatId || !selectedChat?.inviteCode?.length > 0) return;
@@ -173,7 +188,7 @@ function Chat({ devMode = false }) {
     }
   };
 
-  const fetchMessages = async (chatId) => {
+  const fetchMessages = useCallback(async (chatId) => {
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/chat/chat-messages`,
@@ -213,9 +228,9 @@ function Chat({ devMode = false }) {
     } catch (error) {
       console.error("Błąd podczas pobierania wiadomości:", error);
     }
-  };
+  }, []);
 
-  const handleSendMessage = async (chatId, content) => {
+  const handleSendMessage = useCallback(async (chatId, content) => {
     if (!content.trim() || !chatId) {
       return;
     }
@@ -258,9 +273,9 @@ function Chat({ devMode = false }) {
     } catch (error) {
       console.error("Błąd podczas wysyłania wiadomości:", error);
     }
-  };
+  }, []);
 
-  const handleDeleteMessage = async (chatId, messageId) => {
+  const handleDeleteMessage = useCallback(async (chatId, messageId) => {
     // Delete message on the backend
     try {
       const response = await fetch(
@@ -289,7 +304,7 @@ function Chat({ devMode = false }) {
     } catch (error) {
       console.error("Błąd podczas usuwania wiadomości:", error);
     }
-  };
+  }, []);
 
   const handleLeaveChatClick = () => {
     setLeaveChatConfirm(true);
@@ -468,46 +483,18 @@ function Chat({ devMode = false }) {
     };
   }, [selectedMessageId]);
 
-  // Close groupBar when clicking outside
+  // Close popups when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (groupBarRef.current && !groupBarRef.current.contains(event.target)) {
         setGroupBar(false);
       }
-    };
-
-    if (groupBar) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [groupBar]);
-
-  // Close newGroupPopup when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
       if (
         newGroupPopupRef.current &&
         !newGroupPopupRef.current.contains(event.target)
       ) {
         setNewGroupPopup(false);
       }
-    };
-
-    if (newGroupPopup) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [newGroupPopup]);
-
-  // Close logoutBar when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
       if (
         logoutBarRef.current &&
         !logoutBarRef.current.contains(event.target)
@@ -516,14 +503,14 @@ function Chat({ devMode = false }) {
       }
     };
 
-    if (logoutBar) {
+    if (groupBar || newGroupPopup || logoutBar) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [logoutBar]);
+  }, [groupBar, newGroupPopup, logoutBar]);
 
   // SignalR connection setup
   useEffect(() => {
@@ -661,7 +648,7 @@ function Chat({ devMode = false }) {
                 <ChatItem
                   key={chat.id}
                   isActive={chat.id === selectedChatId}
-                  color={colors[chat.color]}
+                  color={COLORS[chat.color]}
                   chatShortName={chat.shortName}
                   chatName={chat.name}
                   onClick={() =>
@@ -695,7 +682,7 @@ function Chat({ devMode = false }) {
                 )}
                 <ChatItem
                   isActive={chat.id === selectedChatId}
-                  color={colors[chat.color]}
+                  color={COLORS[chat.color]}
                   chatShortName={chat.shortName}
                   chatName={chat.name}
                   onClick={() =>
@@ -721,7 +708,7 @@ function Chat({ devMode = false }) {
         >
           <div
             className={`rounded-xl text-white flex items-center justify-center w-10 h-10 aspect-square focus:outline-none ${
-              colors[userData.color]
+              COLORS[userData.color]
             }`}
           >
             <h1 className="text-xl font-black">
@@ -761,7 +748,7 @@ function Chat({ devMode = false }) {
             <div className=" flex gap-4  h-[7.74%] justify-center p-5 border-b items-center">
               <div
                 className={`rounded-xl text-white aspect-square ${
-                  colors[selectedChat?.color]
+                  COLORS[selectedChat?.color]
                 }  flex items-center justify-center w-12 h-12`}
               >
                 <h1 className="text-2xl font-black">
@@ -776,9 +763,7 @@ function Chat({ devMode = false }) {
               <div className="p-5 flex flex-col gap-4">
                 {messages.map((message) => {
                   const isOwnMessage = message.senderId === userData.id;
-                  const sender = selectedChat?.participants?.find(
-                    (p) => p.id === message.senderId
-                  );
+                  const sender = participantsMap[message.senderId];
                   const isMenuOpen = selectedMessageId === message.id;
                   return (
                     <div
@@ -790,7 +775,7 @@ function Chat({ devMode = false }) {
                         message={message}
                         isOwnMessage={isOwnMessage}
                         senderShortName={sender?.shortName}
-                        senderColor={colors[sender?.color]}
+                        senderColor={COLORS[sender?.color]}
                         formatTimestamp={formatTimestamp}
                         onClick={() => {
                           if (isOwnMessage) {
@@ -831,7 +816,7 @@ function Chat({ devMode = false }) {
                   handleFileSelect(
                     event,
                     MAX_FILE_SIZE,
-                    allowedFileTypes,
+                    ALLOWED_FILE_TYPES,
                     setSelectedFile
                   )
                 }
@@ -1020,7 +1005,7 @@ function Chat({ devMode = false }) {
                     <div className="flex items-center gap-4">
                       <div
                         className={`rounded-xl aspect-square focus:outline-none ${
-                          colors[participant.color]
+                          COLORS[participant.color]
                         } text-white flex items-center justify-center w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity`}
                         onClick={(e) => {
                           e.stopPropagation();
