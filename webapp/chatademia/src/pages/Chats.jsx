@@ -4,7 +4,7 @@ import ChatItem from "../components/Chat.jsx";
 import ParticipantItem from "../components/Participant.jsx";
 import CreateChatPopup from "../components/CreateChatPopup.jsx";
 import CreateChatSuccessPopup from "../components/CreateChatSuccessPopup.jsx";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import * as signalR from "@microsoft/signalr";
 
@@ -41,6 +41,7 @@ import {
   ArrowRightEndOnRectangleIcon,
   TrashIcon,
   UserMinusIcon,
+  StarIcon,
 } from "@heroicons/react/24/solid";
 import JoinChatPopup from "../components/JoinChatPopup.jsx";
 import InviteCodePopup from "../components/InviteCodePopup.jsx";
@@ -105,6 +106,20 @@ function Chat({ devMode = false }) {
 
   const [selectedChatId, setSelectedChatId] = useState(null);
 
+  const { favoriteChats, nonFavoriteChats } = useMemo(() => {
+    const favorites = chats.filter((chat) => chat.isFavorite);
+    const nonFavorites = chats.filter((chat) => !chat.isFavorite);
+
+    return {
+      favoriteChats: favorites,
+      nonFavoriteChats: nonFavorites,
+    };
+  }, [chats]);
+
+  const selectedChat = useMemo(() => {
+    return chats.find((chat) => chat.id === selectedChatId);
+  }, [chats, selectedChatId]);
+
   const handleSendAttachment = async (chatId, file) => {
     if (!file || !chatId) {
       return;
@@ -151,15 +166,9 @@ function Chat({ devMode = false }) {
   };
 
   const handleShowInviteCodePopup = () => {
-    if (
-      !selectedChatId ||
-      !chats.find((chat) => chat.id === selectedChatId).inviteCode?.length > 0
-    )
-      return;
+    if (!selectedChatId || !selectedChat?.inviteCode?.length > 0) return;
     else {
-      setInviteCode(
-        chats.find((chat) => chat.id === selectedChatId).inviteCode
-      );
+      setInviteCode(selectedChat.inviteCode);
       setShowInviteCodePopup(true);
     }
   };
@@ -374,6 +383,60 @@ function Chat({ devMode = false }) {
     setRemoveParticipantConfirm(false);
   };
 
+  const handleToggleFavorite = async () => {
+    if (!selectedChatId) return;
+
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/chat/favorite-status`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chatId: selectedChatId,
+            isFavorite: !selectedChat.isFavorite,
+          }),
+          credentials: "include",
+        }
+      );
+
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        throw new Error(response.status);
+      }
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
+        throw new Error("Serwer zwrócił nieprawidłowy format danych");
+      }
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Update chats list
+      setChats((prevChats) =>
+        prevChats.map((chat) => {
+          if (chat.id === selectedChatId) {
+            return {
+              ...chat,
+              isFavorite: data.isFavorite,
+            };
+          }
+          return chat;
+        })
+      );
+    } catch (error) {
+      console.error("Błąd podczas zmiany statusu ulubionych:", error);
+      alert("Nie udało się zmienić statusu ulubionych. Spróbuj ponownie.");
+    }
+  };
+
   useEffect(() => {
     if (devMode) {
       return;
@@ -585,9 +648,39 @@ function Chat({ devMode = false }) {
           )}
         </div>
         <div className="flex flex-col gap-2 p-5 border-b h-[76.77%] overflow-y-auto">
-          {chats.map((chat, index) => {
+          {favoriteChats.length > 0 && (
+            <>
+              <div className="flex items-center gap-3 my-2">
+                <div className="flex-1 h-px bg-gray-300"></div>
+                <h2 className="text-sm font-semibold text-gray-500 px-2">
+                  Ulubione
+                </h2>
+                <div className="flex-1 h-px bg-gray-300"></div>
+              </div>
+              {favoriteChats.map((chat) => (
+                <ChatItem
+                  key={chat.id}
+                  isActive={chat.id === selectedChatId}
+                  color={colors[chat.color]}
+                  chatShortName={chat.shortName}
+                  chatName={chat.name}
+                  onClick={() =>
+                    handleChatSwitch(
+                      chat.id,
+                      selectedChatId,
+                      hubConnectionRef,
+                      setSelectedChatId,
+                      fetchMessages
+                    )
+                  }
+                />
+              ))}
+            </>
+          )}
+          {nonFavoriteChats.map((chat, index) => {
             const showSemesterHeader =
-              index === 0 || chat.semester !== chats[index - 1]?.semester;
+              index === 0 ||
+              chat.semester !== nonFavoriteChats[index - 1]?.semester;
 
             return (
               <React.Fragment key={chat.id}>
@@ -668,26 +761,24 @@ function Chat({ devMode = false }) {
             <div className=" flex gap-4  h-[7.74%] justify-center p-5 border-b items-center">
               <div
                 className={`rounded-xl text-white aspect-square ${
-                  colors[
-                    chats.find((chat) => chat.id === selectedChatId)?.color
-                  ]
+                  colors[selectedChat?.color]
                 }  flex items-center justify-center w-12 h-12`}
               >
                 <h1 className="text-2xl font-black">
-                  {chats.find((chat) => chat.id === selectedChatId)?.shortName}
+                  {selectedChat?.shortName}
                 </h1>
               </div>
               <h1 className="font-semibold text-xl text-black overflow-hidden whitespace-nowrap text-ellipsis">
-                {chats.find((chat) => chat.id === selectedChatId)?.name}
+                {selectedChat?.name}
               </h1>
             </div>
             <div className="bg-white h-[82.885%] overflow-y-auto">
               <div className="p-5 flex flex-col gap-4">
                 {messages.map((message) => {
                   const isOwnMessage = message.senderId === userData.id;
-                  const sender = chats
-                    .find((chat) => chat.id === selectedChatId)
-                    ?.participants?.find((p) => p.id === message.senderId);
+                  const sender = selectedChat?.participants?.find(
+                    (p) => p.id === message.senderId
+                  );
                   const isMenuOpen = selectedMessageId === message.id;
                   return (
                     <div
@@ -829,17 +920,18 @@ function Chat({ devMode = false }) {
                 {groupBar && (
                   <div className="absolute top-10 right-4 bg-white border rounded-lg shadow-lg w-72 z-10">
                     <div className="py-2">
-                      <button className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150">
-                        <PencilSquareIcon
-                          className="size-6"
-                          color="currentColor"
-                        />
+                      <button
+                        className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150"
+                        onClick={handleToggleFavorite}
+                      >
+                        <StarIcon className="size-6" color="currentColor" />
                         <h1 className="px-4 py-2 font-semibold cursor-pointer">
-                          Zmień nazwę grupy
+                          {selectedChat?.isFavorite
+                            ? "Usuń z ulubionych"
+                            : "Dodaj do ulubionych"}
                         </h1>
                       </button>
-                      {chats.find((chat) => chat.id === selectedChatId)
-                        ?.inviteCode && (
+                      {selectedChat?.inviteCode && (
                         <button
                           className="w-full flex gap-2 items-center justify-left px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-150"
                           onClick={handleShowInviteCodePopup}
@@ -896,60 +988,56 @@ function Chat({ devMode = false }) {
               <div className="flex gap-2 items-center">
                 <h1 className="font-medium text-black text-lg">Uczestnicy</h1>
                 <span className="bg-purple-50 text-primary text-xs font-bold px-2 py-1 rounded-full">
-                  {chats.find((chat) => chat.id === selectedChatId)
-                    ?.participants?.length || 0}
+                  {selectedChat?.participants?.length || 0}
                 </span>
               </div>
-              {chats
-                .find((chat) => chat.id === selectedChatId)
-                ?.participants?.map((participant) => (
-                  <div
-                    key={participant.id}
-                    className="relative"
-                    onClick={() =>
-                      removeParticipantId === participant.id
-                        ? handleCancelRemoveParticipant()
-                        : null
-                    }
-                  >
-                    {removeParticipantId === participant.id ? (
+              {selectedChat?.participants?.map((participant) => (
+                <div
+                  key={participant.id}
+                  className="relative"
+                  onClick={() =>
+                    removeParticipantId === participant.id
+                      ? handleCancelRemoveParticipant()
+                      : null
+                  }
+                >
+                  {removeParticipantId === participant.id ? (
+                    <div
+                      className="w-full flex gap-2 items-center px-3 py-2 bg-red-50 rounded-lg cursor-pointer hover:bg-red-100 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleConfirmRemoveParticipant(participant.id);
+                      }}
+                    >
+                      <UserMinusIcon className="size-5 text-red-400" />
+                      <h1 className="text-xs font-semibold text-red-400">
+                        {removeParticipantConfirm
+                          ? "Czy na pewno?"
+                          : "Wyrzuć uczestnika"}
+                      </h1>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-4">
                       <div
-                        className="w-full flex gap-2 items-center px-3 py-2 bg-red-50 rounded-lg cursor-pointer hover:bg-red-100 transition-colors"
+                        className={`rounded-xl aspect-square focus:outline-none ${
+                          colors[participant.color]
+                        } text-white flex items-center justify-center w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleConfirmRemoveParticipant(participant.id);
+                          handleRemoveParticipantClick(participant.id);
                         }}
                       >
-                        <UserMinusIcon className="size-5 text-red-400" />
-                        <h1 className="text-xs font-semibold text-red-400">
-                          {removeParticipantConfirm
-                            ? "Czy na pewno?"
-                            : "Wyrzuć uczestnika"}
+                        <h1 className="text-2xl font-black">
+                          {participant.shortName}
                         </h1>
                       </div>
-                    ) : (
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={`rounded-xl aspect-square focus:outline-none ${
-                            colors[participant.color]
-                          } text-white flex items-center justify-center w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveParticipantClick(participant.id);
-                          }}
-                        >
-                          <h1 className="text-2xl font-black">
-                            {participant.shortName}
-                          </h1>
-                        </div>
-                        <h1 className="font-semibold text-sm text-black mr-6 overflow-hidden whitespace-nowrap text-ellipsis">
-                          {participant.firstName} {participant.lastName}
-                        </h1>
-                        
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      <h1 className="font-semibold text-sm text-black mr-6 overflow-hidden whitespace-nowrap text-ellipsis">
+                        {participant.firstName} {participant.lastName}
+                      </h1>
+                    </div>
+                  )}
+                </div>
+              ))}
               <div className="w-full mt-2">
                 <hr className="border-t-1 border-gray-300" />
               </div>

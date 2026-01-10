@@ -17,6 +17,6 @@ export const formatTimestamp = (timestamp) => {
     const MM2 = String(date.getMonth() + 1).padStart(2, "0");
     const YYYY = date.getFullYear();
 
-    return `${HH}:${MM} ${DD}.${MM2}.${YYYY}`;
+    return `${HH}:${MM} ${DD}.${MM2}`;
   }
 };
