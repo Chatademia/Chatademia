@@ -8,6 +8,7 @@
         public string Name { get; set; }
         public string ShortName { get; set; }
         public int Color { get; set; }
+        public string? ModeratorId { get; set; } = null;
         public string? OldInviteCode { get; set; }
         public string? InviteCode { get; set; }
         public List<UserChatMTMRelation> UserChatsMTMR { get; set; } = new List<UserChatMTMRelation>();

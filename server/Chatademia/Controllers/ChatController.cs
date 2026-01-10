@@ -143,6 +143,22 @@ namespace Chatademia.Controllers
             return Ok(chat);
         }
 
+        [HttpDelete("remove-user-as-moderator")]
+        public async Task<IActionResult> RemoveUser([FromBody] ChatRemoveUserVM request)
+        {
+            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
+            {
+                return Unauthorized(new { error = "Brak tokenu sesji" });
+            }
+
+            if (!Guid.TryParse(sessionToken, out var session))
+            {
+                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
+            }
+            var chat = await _chatServices.RemoveUser(session, request.ChatId, request.UserToRemoveId);
+            return Ok(chat);
+        }
+
         [HttpPost("join-chat")]
         public async Task<IActionResult> JoinChat([FromBody] InviteCodeVM request)
         {
