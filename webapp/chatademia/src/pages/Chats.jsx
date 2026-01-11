@@ -1016,9 +1016,16 @@ function Chat({ devMode = false }) {
                           {participant.shortName}
                         </h1>
                       </div>
-                      <h1 className="font-semibold text-sm text-black mr-6 overflow-hidden whitespace-nowrap text-ellipsis">
-                        {participant.firstName} {participant.lastName}
-                      </h1>
+                      <div className="flex gap-4 flex-1 min-w-0">
+                        <h1 className="font-semibold text-sm text-black overflow-hidden whitespace-nowrap text-ellipsis">
+                          {participant.firstName} {participant.lastName}
+                        </h1>
+                        {selectedChat?.moderatorId === participant.id && (
+                          <div className="inline-flex items-center justify-center bg-orange-100 text-orange-500 text-xs font-bold px-3 py-1 rounded-full w-fit">
+                            Moderator
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
