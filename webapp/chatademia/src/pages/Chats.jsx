@@ -969,7 +969,11 @@ function Chat({ devMode = false }) {
                 )}
               </div>
             </div>
-            <div className="flex flex-col gap-4 p-5 h-[92.26%] overflow-y-auto">
+            <div className="flex flex-col gap-4 p-5 h-[92.26%] overflow-y-auto" onClick={() => {
+              if (removeParticipantId) {
+                handleCancelRemoveParticipant();
+              }
+            }}>
               <div className="flex gap-2 items-center">
                 <h1 className="font-medium text-black text-lg">Uczestnicy</h1>
                 <span className="bg-purple-50 text-primary text-xs font-bold px-2 py-1 rounded-full">
@@ -979,53 +983,49 @@ function Chat({ devMode = false }) {
               {selectedChat?.participants?.map((participant) => (
                 <div
                   key={participant.id}
-                  className="relative"
-                  onClick={() =>
-                    removeParticipantId === participant.id
-                      ? handleCancelRemoveParticipant()
-                      : null
-                  }
+                  className="flex flex-col gap-0"
                 >
-                  {removeParticipantId === participant.id ? (
+                  <div className="flex items-center gap-4">
                     <div
-                      className="w-full flex gap-2 items-center px-3 py-2 bg-red-50 rounded-lg cursor-pointer hover:bg-red-100 transition-colors"
+                      className={`rounded-xl aspect-square focus:outline-none ${
+                        COLORS[participant.color]
+                      } text-white flex items-center justify-center w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveParticipantClick(participant.id);
+                      }}
+                    >
+                      <h1 className="text-2xl font-black">
+                        {participant.shortName}
+                      </h1>
+                    </div>
+                    <div className="flex gap-3 flex-1 min-w-0 items-center">
+                      <div className="flex flex-col gap-1 flex-1 min-w-0">
+                        <h1 className="font-semibold text-sm text-black overflow-hidden whitespace-nowrap text-ellipsis">
+                          {participant.firstName} {participant.lastName}
+                        </h1>
+                        {selectedChat?.moderatorId === participant.id && (
+                          <div className="inline-flex items-center justify-center bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full w-fit">
+                            moderator
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {removeParticipantId === participant.id && (
+                    <div
+                      className="flex gap-2 items-center px-3 py-2 bg-white border shadow-md rounded-md cursor-pointer hover:bg-red-50 transition-colors whitespace-nowrap w-fit"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleConfirmRemoveParticipant(participant.id);
                       }}
                     >
-                      <UserMinusIcon className="size-5 text-red-400" />
-                      <h1 className="text-xs font-semibold text-red-400">
+                      <UserMinusIcon className="size-4 text-red-500" />
+                      <h1 className="text-xs font-semibold text-red-500">
                         {removeParticipantConfirm
                           ? "Czy na pewno?"
                           : "Wyrzuć uczestnika"}
                       </h1>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`rounded-xl aspect-square focus:outline-none ${
-                          COLORS[participant.color]
-                        } text-white flex items-center justify-center w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveParticipantClick(participant.id);
-                        }}
-                      >
-                        <h1 className="text-2xl font-black">
-                          {participant.shortName}
-                        </h1>
-                      </div>
-                      <div className="flex gap-4 flex-1 min-w-0">
-                        <h1 className="font-semibold text-sm text-black overflow-hidden whitespace-nowrap text-ellipsis">
-                          {participant.firstName} {participant.lastName}
-                        </h1>
-                        {selectedChat?.moderatorId === participant.id && (
-                          <div className="inline-flex items-center justify-center bg-orange-100 text-orange-500 text-xs font-bold px-3 py-1 rounded-full w-fit">
-                            Moderator
-                          </div>
-                        )}
-                      </div>
                     </div>
                   )}
                 </div>
