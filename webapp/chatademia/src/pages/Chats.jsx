@@ -353,10 +353,18 @@ function Chat({ devMode = false }) {
   };
 
   const handleRemoveParticipantClick = (participantId) => {
-    // if (userData.id !== participantId) {
+    // Tylko moderator może usuwać
+    if (userData.id !== selectedChat?.moderatorId) {
+      alert("Tylko moderator grupy może usuwać użytkowników");
+      return;
+    }
+    // Moderator nie może usunąć siebie
+    if (userData.id === participantId) {
+      alert("Nie możesz usunąć siebie z grupy");
+      return;
+    }
     setRemoveParticipantId(participantId);
     setRemoveParticipantConfirm(false);
-    // }
   };
 
   const handleConfirmRemoveParticipant = async (participantId) => {
@@ -365,9 +373,28 @@ function Chat({ devMode = false }) {
       return;
     }
 
-    // TODO: Dodać endpoint do usuwania uczestnika
-    // Na razie tylko aktualizujemy UI
     try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/chat/remove-user-as-moderator`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            chatId: selectedChatId,
+            userToRemoveId: participantId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Nie udało się usunąć uczestnika");
+      }
+
+      // Aktualizacja UI po pomyślnym usunięciu
       setChats((prevChats) =>
         prevChats.map((chat) => {
           if (chat.id === selectedChatId) {
@@ -384,10 +411,10 @@ function Chat({ devMode = false }) {
 
       setRemoveParticipantId(null);
       setRemoveParticipantConfirm(false);
-      console.log("Usunięto uczestnika o id:", participantId);
+      alert("Użytkownik został usunięty z grupy");
     } catch (error) {
       console.error("Błąd podczas usuwania uczestnika:", error);
-      alert("Nie udało się usunąć uczestnika. Spróbuj ponownie.");
+      alert(error.message || "Nie udało się usunąć uczestnika. Spróbuj ponownie.");
       setRemoveParticipantId(null);
       setRemoveParticipantConfirm(false);
     }
@@ -989,10 +1016,20 @@ function Chat({ devMode = false }) {
                     <div
                       className={`rounded-xl aspect-square focus:outline-none ${
                         COLORS[participant.color]
-                      } text-white flex items-center justify-center w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity`}
+                      } text-white flex items-center justify-center w-12 h-12 ${
+                        userData.id === selectedChat?.moderatorId &&
+                        userData.id !== participant.id
+                          ? "cursor-pointer hover:opacity-80 transition-opacity"
+                          : "cursor-default"
+                      }`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleRemoveParticipantClick(participant.id);
+                        if (
+                          userData.id === selectedChat?.moderatorId &&
+                          userData.id !== participant.id
+                        ) {
+                          handleRemoveParticipantClick(participant.id);
+                        }
                       }}
                     >
                       <h1 className="text-2xl font-black">
@@ -1000,13 +1037,13 @@ function Chat({ devMode = false }) {
                       </h1>
                     </div>
                     <div className="flex gap-3 flex-1 min-w-0 items-center">
-                      <div className="flex flex-col gap-1 flex-1 min-w-0">
+                      <div className="flex gap-3 items-center flex-1 min-w-0">
                         <h1 className="font-semibold text-sm text-black overflow-hidden whitespace-nowrap text-ellipsis">
                           {participant.firstName} {participant.lastName}
                         </h1>
                         {selectedChat?.moderatorId === participant.id && (
-                          <div className="inline-flex items-center justify-center bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full w-fit">
-                            moderator
+                          <div className="inline-flex items-center justify-center bg-orange-100 text-orange-500 text-xs font-bold px-3 py-1 rounded-full w-fit">
+                            Moderator
                           </div>
                         )}
                       </div>
