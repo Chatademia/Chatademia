@@ -92,6 +92,7 @@ function Chat({ devMode = false }) {
   const hubConnectionRef = useRef(null);
   const groupBarRef = useRef(null);
   const newGroupPopupRef = useRef(null);
+  const participantsAreaRef = useRef(null);
   const logoutBarRef = useRef(null);
   const [newGroupPopup, setNewGroupPopup] = useState(false);
   const [showCreateChatPopup, setShowCreateChatPopup] = useState(false);
@@ -424,6 +425,24 @@ function Chat({ devMode = false }) {
     setRemoveParticipantId(null);
     setRemoveParticipantConfirm(false);
   };
+
+  // Zamykaj popup usuwania przy kliknięciu poza listą uczestników
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        removeParticipantId &&
+        participantsAreaRef.current &&
+        !participantsAreaRef.current.contains(event.target)
+      ) {
+        handleCancelRemoveParticipant();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [removeParticipantId]);
 
   const handleToggleFavorite = async () => {
     if (!selectedChatId) return;
@@ -996,11 +1015,15 @@ function Chat({ devMode = false }) {
                 )}
               </div>
             </div>
-            <div className="flex flex-col gap-4 p-5 h-[92.26%] overflow-y-auto" onClick={() => {
-              if (removeParticipantId) {
-                handleCancelRemoveParticipant();
-              }
-            }}>
+            <div
+              ref={participantsAreaRef}
+              className="flex flex-col gap-4 p-5 h-[92.26%] overflow-y-auto"
+              onClick={() => {
+                if (removeParticipantId) {
+                  handleCancelRemoveParticipant();
+                }
+              }}
+            >
               <div className="flex gap-2 items-center">
                 <h1 className="font-medium text-black text-lg">Uczestnicy</h1>
                 <span className="bg-purple-50 text-primary text-xs font-bold px-2 py-1 rounded-full">
