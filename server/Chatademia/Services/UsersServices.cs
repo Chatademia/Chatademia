@@ -4,6 +4,7 @@ using Chatademia.Data.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Buffers.Text;
+using System.Diagnostics.SymbolStore;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -90,7 +91,7 @@ namespace Chatademia.Services
                 { "oauth_version", "1.0" },
                 //{ "oauth_verifier", oauth_verifier},
                 { "oauth_token", oauth_token},
-                { "fields", "course_id|course_name" },
+                { "fields", "course_id|course_name|group_number|class_type" },
                 { "active_terms", "true" }
             };
 
@@ -173,9 +174,17 @@ namespace Chatademia.Services
             public string course_id { get; set; }
             public CourseName course_name { get; set; }
             public string term_id { get; set; }
+            public int group_number { get; set; }
+            public ClassType class_type { get; set; }
         }
 
         private class CourseName
+        {
+            public string pl { get; set; }
+            public string en { get; set; }
+        }
+
+        private class ClassType
         {
             public string pl { get; set; }
             public string en { get; set; }
@@ -219,7 +228,7 @@ namespace Chatademia.Services
 
             var bodyParams = new Dictionary<string,string>
             {
-                { "fields", "course_id|course_name" },
+                { "fields", "course_id|course_name|group_number|class_type" },
                 { "active_terms", "true" }
             };
 
@@ -235,9 +244,10 @@ namespace Chatademia.Services
                 .Select(c => new Chat
                 {
                     Id = Guid.NewGuid(),
-                    UsosId = c.course_id,
+                    UsosId = c.course_id + c.group_number,
                     Semester = ParseSemester(c.course_id),
-                    Name = c.course_name.pl,
+                    Name = c.course_name.pl + " gr. " + c.group_number,
+                    Type = c.class_type.pl,
                     ShortName = string.Concat(c.course_name.pl.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(word => char.ToUpper(word[0]))),
                     Color = Random.Shared.Next(0,10) // Assuming a default color value, update as needed
                 })
@@ -378,6 +388,7 @@ namespace Chatademia.Services
             {
                 Id = c.Id,
                 Name = c.Name,
+                Type = c.Type,
                 Semester = c.Semester,
                 ShortName = c.ShortName,
                 Color = c.Color,

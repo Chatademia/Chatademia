@@ -6,7 +6,7 @@
 
         public int? Semester { get; set; }
         public string? Name { get; set; }
-
+        public string? Type {  get; set; }
         public string? ShortName { get; set; }
         public int? Color { get; set; }
         public string? InviteCode { get; set; }
