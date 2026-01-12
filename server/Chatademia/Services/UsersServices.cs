@@ -373,6 +373,7 @@ namespace Chatademia.Services
 
 
             var chatVMs = await _context.Chats
+            .Where(c => c.UserChatsMTMR.Any(uc => uc.UserId == user.Id && uc.IsRelationActive == true))
             .Select(c => new ChatVM
             {
                 Id = c.Id,

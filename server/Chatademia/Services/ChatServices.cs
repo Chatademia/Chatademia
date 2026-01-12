@@ -407,23 +407,22 @@ namespace Chatademia.Services
             if (alreadyInChat)
                 throw new Exception($"User already in chat");
 
-            var wasInChat = await _context.Set<UserChatMTMRelation>()
+            var relation = await _context.Set<UserChatMTMRelation>()
                 .FirstOrDefaultAsync(uc => uc.ChatId == chat.Id && uc.UserId == user.Id && uc.IsRelationActive == false);
 
-            if (wasInChat.IsRelationActive == false)
+            if (relation != null)
             {
-                wasInChat.IsRelationActive = true;
-
-                await _context.SaveChangesAsync();
-
-                return;
+                relation.IsRelationActive = true;
             }
-
-            await _context.AddAsync(new UserChatMTMRelation
+            else
             {
-                ChatId = chat.Id,
-                UserId = user.Id
-            });
+                await _context.AddAsync(new UserChatMTMRelation
+                {
+                    ChatId = chat.Id,
+                    UserId = user.Id,
+                    IsRelationActive = true
+                });
+            }
 
             await _context.SaveChangesAsync();
 

@@ -479,7 +479,9 @@ namespace Chatademia.Services
             Console.WriteLine($"Expiration: {payload.ExpirationTimeSeconds}");
             //Console.WriteLine($"Hosted domain (hd): {payload.HostedDomain}");
 
-            var oldUser = _context.Users.FirstOrDefault(u => u.Id == payload.Subject);
+            var oldUser = _context.Users
+                .Include(u => u.UserTokens)
+                .FirstOrDefault(u => u.Id == payload.Subject);
 
             if (oldUser == null) // if new user
             {
