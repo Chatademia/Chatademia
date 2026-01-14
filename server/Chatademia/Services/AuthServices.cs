@@ -265,7 +265,7 @@ namespace Chatademia.Services
 
                 var old_user = await _context.Users
                     .Include(u => u.UserTokens)
-                    .FirstOrDefaultAsync(u => u.Id == user_data.Id);
+                    .FirstOrDefaultAsync(u => u.ProviderId == user_data.Id && u.IsUsosAccount);
 
                 // found user in db
                 if (old_user != null)
@@ -293,7 +293,7 @@ namespace Chatademia.Services
                     Console.WriteLine("User not found in db, creating new user");
                     User new_user = new User
                     {
-                        Id = user_data.Id,
+                        ProviderId = user_data.Id,
                         FirstName = user_data.FirstName,
                         LastName = user_data.LastName,
                         ShortName = user_data.ShortName,
@@ -481,13 +481,13 @@ namespace Chatademia.Services
 
             var oldUser = _context.Users
                 .Include(u => u.UserTokens)
-                .FirstOrDefault(u => u.Id == payload.Subject);
+                .FirstOrDefault(u => u.ProviderId == payload.Subject && !u.IsUsosAccount);
 
             if (oldUser == null) // if new user
             {
                 var newUser = new User
                 {
-                    Id = payload.Subject,
+                    ProviderId = payload.Subject,
                     FirstName = payload.GivenName,
                     LastName = payload.FamilyName,
                     ShortName = (payload.GivenName.Length > 0 ? payload.GivenName[0].ToString().ToUpper() : "") +

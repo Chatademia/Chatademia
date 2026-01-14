@@ -6,7 +6,8 @@ namespace Chatademia.Data
     public class User
     {
         [Key]
-        public string Id { get; set; }// = Guid.NewGuid();
+        public string Id { get; init; } = Guid.NewGuid().ToString();
+        public string ProviderId { get; set; } = "";// = Guid.NewGuid();
         public string FirstName { get; set; } = "";
         public string LastName { get; set; } = "";        
         public string ShortName { get; set; } = "";
