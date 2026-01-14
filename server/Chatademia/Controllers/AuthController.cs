@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Web;
 
 namespace chatademia.Controllers
@@ -35,7 +36,7 @@ namespace chatademia.Controllers
                 Expires = DateTimeOffset.UtcNow.AddDays(1)
             });
 
-            return Ok(new { session = session.Session.ToString() });
+            return Ok();
         }
 
         [HttpGet("login-url")]
@@ -45,19 +46,11 @@ namespace chatademia.Controllers
             return Ok(url);
         }
 
+        [Authorize]
         [HttpDelete("session")]
         public async Task<IActionResult> TerminateSession()
         {
-            // Read session token from HttpOnly cookie
-            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
-            {
-                return Unauthorized(new { error = "Brak tokenu sesji" });
-            }
-
-            if (!Guid.TryParse(sessionToken, out var session))
-            {
-                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
-            }
+            var session = Guid.Parse(User.FindFirstValue("session_id"));
 
             await _loginServices.TerminateSession(session);
 

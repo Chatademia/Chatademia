@@ -3,6 +3,8 @@ using chatademia.Data;
 using Scalar.AspNetCore;
 using Chatademia.Services;
 using Chatademia.Sockets;
+using Microsoft.AspNetCore.Authentication;
+using Chatademia.Authentication;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,7 +45,17 @@ builder.Services.AddRouting(options =>
     options.LowercaseUrls = true;
 });
 
+builder.Services
+    .AddAuthentication("Session")
+    .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>(
+        "Session", options => { });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapHub<ChatHub>("/chatademia/chatHub");
 
@@ -61,8 +73,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors("AllowFrontend");
-
-app.UseAuthorization();
 
 app.MapControllers();
 

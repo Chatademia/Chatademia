@@ -2,9 +2,12 @@
 using Chatademia.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Chatademia.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ChatController : ControllerBase
@@ -36,16 +39,7 @@ namespace Chatademia.Controllers
         [HttpPost("chat-messages")]
         public async Task<IActionResult> GetChatMessages([FromBody] ChatIdVM request)
         {
-            // Read session token from HttpOnly cookie
-            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
-            {
-                return Unauthorized(new { error = "Brak tokenu sesji" });
-            }
-
-            if (!Guid.TryParse(sessionToken, out var session))
-            {
-                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
-            }
+            var session = Guid.Parse(User.FindFirstValue("session_id"));
 
             var messages = await _chatServices.GetChatMessages(session, request.ChatId);
             return Ok(messages);
@@ -55,16 +49,7 @@ namespace Chatademia.Controllers
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> CreateMessage([FromForm] MessageCreateVM request)
         {
-            // Read session token from HttpOnly cookie
-            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
-            {
-                return Unauthorized(new { error = "Brak tokenu sesji" });
-            }
-
-            if (!Guid.TryParse(sessionToken, out var session))
-            {
-                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
-            }
+            var session = Guid.Parse(User.FindFirstValue("session_id"));
 
             var chat = await _chatServices.CreateMessage(session, request.ChatId, request.Content, request.File);
             return Ok(chat);
@@ -73,16 +58,7 @@ namespace Chatademia.Controllers
         [HttpDelete("message")]
         public async Task<IActionResult> DeleteMessage([FromBody] MessageDeleteVM request)
         {
-            // Read session token from HttpOnly cookie
-            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
-            {
-                return Unauthorized(new { error = "Brak tokenu sesji" });
-            }
-
-            if (!Guid.TryParse(sessionToken, out var session))
-            {
-                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
-            }
+            var session = Guid.Parse(User.FindFirstValue("session_id"));
 
             var chat = await _chatServices.DeleteMessage(session, request.ChatId, request.MessageId);
             return Ok(chat);
@@ -91,15 +67,7 @@ namespace Chatademia.Controllers
         [HttpGet("files/{messageId}")]
         public async Task<IActionResult> DownloadFile([FromRoute] Guid messageId)
         {
-            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
-            {
-                return Unauthorized(new { error = "Brak tokenu sesji" });
-            }
-
-            if (!Guid.TryParse(sessionToken, out var session))
-            {
-                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
-            }
+            var session = Guid.Parse(User.FindFirstValue("session_id"));
 
             var (filePath, fileName) = await _chatServices.DownloadFile(session, messageId);
             return new PhysicalFileResult(filePath, "application/octet-stream")
@@ -112,16 +80,7 @@ namespace Chatademia.Controllers
         [HttpPost("create-chat")]
         public async Task<IActionResult> CreateChat([FromBody] ChatCreateVM request)
         {
-            // Read session token from HttpOnly cookie
-            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
-            {
-                return Unauthorized(new { error = "Brak tokenu sesji" });
-            }
-
-            if (!Guid.TryParse(sessionToken, out var session))
-            {
-                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
-            }
+            var session = Guid.Parse(User.FindFirstValue("session_id"));
 
             var chat = await _chatServices.CreateChat(session, request);
             return Ok(chat);
@@ -130,15 +89,8 @@ namespace Chatademia.Controllers
         [HttpDelete("leave-chat")]
         public async Task<IActionResult> LeaveChat([FromBody] ChatIdVM request)
         {
-            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
-            {
-                return Unauthorized(new { error = "Brak tokenu sesji" });
-            }
+            var session = Guid.Parse(User.FindFirstValue("session_id"));
 
-            if (!Guid.TryParse(sessionToken, out var session))
-            {
-                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
-            }
             var chat = await _chatServices.LeaveChat(session, request.ChatId);
             return Ok(chat);
         }
@@ -146,15 +98,8 @@ namespace Chatademia.Controllers
         [HttpDelete("remove-user-as-moderator")]
         public async Task<IActionResult> RemoveUser([FromBody] ChatRemoveUserVM request)
         {
-            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
-            {
-                return Unauthorized(new { error = "Brak tokenu sesji" });
-            }
+            var session = Guid.Parse(User.FindFirstValue("session_id"));
 
-            if (!Guid.TryParse(sessionToken, out var session))
-            {
-                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
-            }
             var chat = await _chatServices.RemoveUser(session, request.ChatId, request.UserToRemoveId);
             return Ok(chat);
         }
@@ -162,16 +107,8 @@ namespace Chatademia.Controllers
         [HttpPost("join-chat")]
         public async Task<IActionResult> JoinChat([FromBody] InviteCodeVM request)
         {
-            // Read session token from HttpOnly cookie
-            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
-            {
-                return Unauthorized(new { error = "Brak tokenu sesji" });
-            }
+            var session = Guid.Parse(User.FindFirstValue("session_id"));
 
-            if (!Guid.TryParse(sessionToken, out var session))
-            {
-                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
-            }
             await _chatServices.JoinChat(session, request.InviteCode);
             return Ok();
         }
@@ -179,15 +116,8 @@ namespace Chatademia.Controllers
         [HttpPost("favorite-status")]
         public async Task<IActionResult> SetFavoriteStatus([FromBody] SetFavoriteChatVM request)
         {
-            // Read session token from HttpOnly cookie
-            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
-            {
-                return Unauthorized(new { error = "Brak tokenu sesji" });
-            }
-            if (!Guid.TryParse(sessionToken, out var session))
-            {
-                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
-            }
+            var session = Guid.Parse(User.FindFirstValue("session_id"));
+
             var response = await _chatServices.SetFavoriteStatus(session, request);
             return Ok(response);
         }
