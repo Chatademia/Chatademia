@@ -247,7 +247,7 @@ namespace Chatademia.Services
                     UsosId = c.course_id + c.group_number,
                     Semester = ParseSemester(c.course_id),
                     Name = c.course_name.pl + " gr. " + c.group_number,
-                    Type = c.class_type.pl,
+                    ClassType = c.class_type.pl,
                     ShortName = string.Concat(c.course_name.pl.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(word => char.ToUpper(word[0]))),
                     Color = Random.Shared.Next(0,10) // Assuming a default color value, update as needed
                 })
@@ -388,7 +388,7 @@ namespace Chatademia.Services
             {
                 Id = c.Id,
                 Name = c.Name,
-                Type = c.Type,
+                ClassType = c.ClassType,
                 Semester = c.Semester,
                 ShortName = c.ShortName,
                 Color = c.Color,
