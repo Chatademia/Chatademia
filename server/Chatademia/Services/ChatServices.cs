@@ -139,6 +139,13 @@ namespace Chatademia.Services
             if (user == null)
                 throw new Exception($"Invalid session");
 
+            var chatUserRelation = await _context.UserChatMTMRelations
+                .Where(cu => cu.ChatId == chatId && cu.UserId == user.Id)
+                .FirstOrDefaultAsync();
+
+            if (chatUserRelation == null || chatUserRelation.IsRelationActive == false)
+                throw new Exception($"User not in chat");
+
             var messages = _context.Messages
                 .Where(m => m.ChatId == chatId && m.IsDeleted == false)            
                 .Select(m => new MessageVM
@@ -173,6 +180,13 @@ namespace Chatademia.Services
                 .FirstOrDefaultAsync(c => c.Id == chatId);
             if(chat == null)
                 throw new Exception("Chat not found");
+
+            var chatUserRelation = await _context.UserChatMTMRelations
+                .Where(cu => cu.ChatId == chatId && cu.UserId == user.Id)
+                .FirstOrDefaultAsync();
+
+            if (chatUserRelation == null || chatUserRelation.IsRelationActive == false)
+                throw new Exception($"User not in chat");
 
             string type;
             if (string.IsNullOrWhiteSpace(content) && file != null)
@@ -229,7 +243,14 @@ namespace Chatademia.Services
             if (user == null)
                 throw new Exception($"Invalid session");
 
-            var message = await _context.Messages.FirstOrDefaultAsync(m => m.Id == messageId && m.ChatId == chatId);
+            var chatUserRelation = await _context.UserChatMTMRelations
+                .Where(cu => cu.ChatId == chatId && cu.UserId == user.Id)
+                .FirstOrDefaultAsync();
+
+            if (chatUserRelation == null || chatUserRelation.IsRelationActive == false)
+                throw new Exception($"User not in chat");
+
+            var message = await _context.Messages.FirstOrDefaultAsync(m => m.Id == messageId && m.ChatId == chatId && user.Id == m.UserId);
 
             if (message == null)
                 throw new Exception("Message not found");
