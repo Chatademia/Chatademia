@@ -1124,8 +1124,8 @@ function Chat({ devMode = false }) {
       <JoinChatPopup
         isOpen={showJoinChatPopup}
         onClose={() => setShowJoinChatPopup(false)}
-        onSubmit={(chatName) =>
-          handleJoinChat(setChats, setSelectedChatId, inviteCode)
+        onSubmit={(code) =>
+          handleJoinChat(setChats, setSelectedChatId, code)
         }
       />
       <InviteCodePopup

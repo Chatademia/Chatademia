@@ -61,6 +61,7 @@ export const handleJoinChat = async (
   inviteCode
 ) => {
   try {
+    console.log("Próba dołączenia do czatu z kodem:", inviteCode); //debug
     const response = await fetch(
       `${process.env.REACT_APP_BACKEND_URL}/api/chat/join-chat`,
       {
@@ -69,7 +70,7 @@ export const handleJoinChat = async (
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          inviteCode: inviteCode,
+          InviteCode: inviteCode,
         }),
         credentials: "include",
       }
