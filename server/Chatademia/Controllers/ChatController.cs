@@ -37,7 +37,7 @@ namespace Chatademia.Controllers
         //}
 
         [HttpGet("chat-messages")]
-        public async Task<IActionResult> GetChatMessages([FromBody] ChatIdVM request)
+        public async Task<IActionResult> GetChatMessages([FromRoute] ChatIdVM request)
         {
             var session = Guid.Parse(User.FindFirstValue("session_id"));
 
