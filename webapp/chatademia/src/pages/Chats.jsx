@@ -192,15 +192,12 @@ function Chat({ devMode = false }) {
   const fetchMessages = useCallback(async (chatId) => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/chat/chat-messages`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/chat/chat-messages/${chatId}`,
         {
-          method: "POST",
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            chatId: chatId,
-          }),
           credentials: "include", // Send cookie with session token
         }
       );
