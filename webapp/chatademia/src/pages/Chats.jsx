@@ -580,6 +580,31 @@ function Chat({ devMode = false }) {
         }
       });
 
+      connection.on("MSG DEL", async () => {
+        console.log("Otrzymano usunięcie wiadomości, odświeżanie...");
+        if (selectedChatId) {
+          await fetchMessages(selectedChatId);
+          console.log("Wiadomość usunięta!");
+        }
+      });
+
+      // connection.on("USER JOINED", async () => {
+      //   console.log("Otrzymano nową wiadomość, odświeżanie...");
+      //   if (selectedChatId) {
+      //     await fetchChatDetails(selectedChatId);
+      //     console.log("Nowy użytkownik dołączył!");
+      //   }
+      // });
+
+      // connection.on("USER LEFT", async () => {
+      //   console.log("Otrzymano nową wiadomość o wyjściu użytkownika, odświeżanie...");
+      //   if (selectedChatId) {
+      //     await fetchChatDetails(selectedChatId);
+      //     console.log("Nowy użytkownik dołączył!");
+      //   }
+      // });
+
+
       try {
         await connection.start();
         console.log("SignalR połączony");
