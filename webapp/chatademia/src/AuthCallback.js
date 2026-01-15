@@ -55,43 +55,14 @@ function AuthCallback() {
           }
         );
 
-        // Read response text
-        const responseText = await response.text();
-
         if (!response.ok) {
           throw new Error("Błąd podczas tworzenia sesji: " + response.status);
         }
 
-        // Parse response to JSON
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (e) {
-          console.error("Nieprawidłowa odpowiedź z serwera:", responseText);
-          throw new Error("Serwer zwrócił nieprawidłowy format danych");
-        }
-
-        // Extract session token from response
-        const sessionToken = data.session;
-
-        if (!sessionToken) {
-          throw new Error("Nie otrzymano tokenu sesji");
-        }
-
-        // Validate session token format
-        const sessionTokenRegex =
-          /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-        if (
-          sessionToken.length === 0 ||
-          !sessionTokenRegex.test(sessionToken)
-        ) {
-          throw new Error("Nieprawidłowy token sesji");
-        }
-
-        // Send message to the main window
+        // Session cookie is set by backend, send success message
         if (window.opener && !window.opener.closed) {
           window.opener.postMessage(
-            { type: "LOGIN_SUCCESS", sessionToken },
+            { type: "LOGIN_SUCCESS" },
             window.location.origin
           );
         }
