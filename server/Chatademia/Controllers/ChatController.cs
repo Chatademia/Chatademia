@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
+
 
 namespace Chatademia.Controllers
 {
@@ -104,6 +106,7 @@ namespace Chatademia.Controllers
             return Ok(chat);
         }
 
+        [EnableRateLimiting("auth")]
         [HttpPost("join-chat")]
         public async Task<IActionResult> JoinChat([FromBody] InviteCodeVM request)
         {

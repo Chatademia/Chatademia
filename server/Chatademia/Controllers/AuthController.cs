@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Web;
+using Microsoft.AspNetCore.RateLimiting;
+
 
 namespace chatademia.Controllers
 {
@@ -21,6 +23,7 @@ namespace chatademia.Controllers
         }
 
         [HttpPost("session")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Login([FromBody] SessionRequestVM request)
         {
             var session = await _loginServices.Login(request.OauthToken, request.OauthVerifier);
@@ -40,6 +43,7 @@ namespace chatademia.Controllers
         }
 
         [HttpGet("login-url")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> LoginUrl([FromQuery] string callbackUrl)
         {
             var url = await _loginServices.LoginUrl(callbackUrl);
@@ -65,6 +69,7 @@ namespace chatademia.Controllers
         }
 
         [HttpGet("google/login-url")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> GoogleLoginUrl([FromQuery] string callbackUrl)
         {
             var url = await _loginServices.GoogleLoginUrl(callbackUrl);
