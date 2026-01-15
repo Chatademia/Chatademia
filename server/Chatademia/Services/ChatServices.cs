@@ -1,8 +1,10 @@
 ﻿using chatademia.Data;
 using Chatademia.Data;
 using Chatademia.Data.ViewModels;
+using Chatademia.Sockets;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 using System;
@@ -16,11 +18,13 @@ namespace Chatademia.Services
     public class ChatServices
     {
         private readonly IDbContextFactory<AppDbContext> _factory;
+        private readonly IHubContext<ChatHub> _hub;
         private readonly string BASE_URL = "http://localhost:8080";
 
-        public ChatServices(IDbContextFactory<AppDbContext> factory)
+        public ChatServices(IDbContextFactory<AppDbContext> factory, IHubContext<ChatHub> hub)
         {
             _factory = factory;
+            _hub = hub;
         }
 
         private async Task<string> CodeGenerator()
@@ -33,6 +37,24 @@ namespace Chatademia.Services
             );
 
             return code;
+        }
+
+        private async Task HubUpdate(Guid chatId, string message)
+        {
+            using var _context = _factory.CreateDbContext();
+
+            var membersId = await _context.UserChatMTMRelations
+                .Where(uc => uc.ChatId == chatId && uc.IsRelationActive == true)
+                .Select(uc => uc.UserId)
+                .ToListAsync();
+
+            foreach (var userId in membersId)
+            {
+                await _hub.Clients
+                    .Group($"user:{userId}")
+                    .SendAsync(message, new { chatId });
+            }
+            return;
         }
 
         private async Task<string> UploadFile(Guid session, IFormFile file)
@@ -230,6 +252,9 @@ namespace Chatademia.Services
 
             if (type == "file")
                 new_msg.FileName = message.oldFileName;
+
+            await HubUpdate(chatId, "NEW MSG");
+
             return new_msg;
         }
 
@@ -259,6 +284,8 @@ namespace Chatademia.Services
             message.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            await HubUpdate(chatId, "MSG DEL");
 
             return null;
         }
@@ -373,6 +400,8 @@ namespace Chatademia.Services
 
             await _context.SaveChangesAsync();
 
+            await HubUpdate(chat.Id, "USER LEFT");
+
             return null;
         }
 
@@ -403,6 +432,8 @@ namespace Chatademia.Services
             chat.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            await HubUpdate(chat.Id, "USER REMOVED");
 
             return null;
         }
@@ -446,6 +477,8 @@ namespace Chatademia.Services
             }
 
             await _context.SaveChangesAsync();
+
+            await HubUpdate(chat.Id, "USER JOINED");
 
             return;
         }
