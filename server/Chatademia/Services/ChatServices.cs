@@ -177,6 +177,10 @@ namespace Chatademia.Services
                     Content = m.Content,
                     Type = m.Type,
                     FileName = m.Type == "file" ? m.oldFileName : null,
+                    ReadByUserAt = m.MessageReads
+                        .Where(mr => mr.UserId == user.Id)
+                        .Select(mr => mr.ReadAt)
+                        .FirstOrDefault(),
                     CreatedAt = m.CreatedAt,
                     UpdatedAt = m.UpdatedAt,
                 }).ToList();
@@ -198,17 +202,16 @@ namespace Chatademia.Services
             if (user == null)
                 throw new Exception($"Invalid session");
 
-            var chat = await _context.Chats
-                .FirstOrDefaultAsync(c => c.Id == chatId);
-            if(chat == null)
-                throw new Exception("Chat not found");
-
-            var chatUserRelation = await _context.UserChatMTMRelations
-                .Where(cu => cu.ChatId == chatId && cu.UserId == user.Id)
+            var chat = await _context.UserChatMTMRelations
+                .Where(uc =>
+                    uc.ChatId == chatId &&
+                    uc.UserId == user.Id &&
+                    uc.IsRelationActive)
+                .Select(uc => uc.Chat)
                 .FirstOrDefaultAsync();
 
-            if (chatUserRelation == null || chatUserRelation.IsRelationActive == false)
-                throw new Exception($"User not in chat");
+            if (chat == null)
+                throw new Exception("Chat not found");
 
             string type;
             if (string.IsNullOrWhiteSpace(content) && file != null)
@@ -219,14 +222,23 @@ namespace Chatademia.Services
                 throw new Exception("One and only one of content and file must be provided");
 
             var message = new Message
+            {
+                Id = Guid.NewGuid(),
+                Type = type,
+                ChatId = chatId,
+                UserId = user.Id,
+                CreatedAt = DateTime.UtcNow,
+                IsDeleted = false,
+                MessageReads = new List<MessageRead>
                 {
-                    Id = Guid.NewGuid(),
-                    Type = type,
-                    ChatId = chatId,
-                    UserId = user.Id,
-                    CreatedAt = DateTime.UtcNow,
-                    IsDeleted = false,
-                };
+                    // Sender has read their own message
+                    new MessageRead
+                    {
+                        UserId = user.Id,
+                        ReadAt = DateTimeOffset.UtcNow
+                    }
+                }
+            };
 
             if (type == "text")
                 message.Content = content;
@@ -247,6 +259,10 @@ namespace Chatademia.Services
                 SenderId = message.UserId,
                 Type = type,
                 Content = message.Content,
+                ReadByUserAt = message.MessageReads
+                    .Where(mr => mr.UserId == user.Id)
+                    .Select(mr => mr.ReadAt)
+                    .FirstOrDefault(),
                 CreatedAt = message.CreatedAt
             };
 
@@ -315,6 +331,42 @@ namespace Chatademia.Services
 
             return (filePath, fileName);
 
+        }
+
+        public async Task MarkMessagesAsRead(Guid session, Guid chatId)
+        {
+            using var _context = _factory.CreateDbContext();
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
+
+            if (user == null)
+                throw new Exception($"Invalid session");
+
+            var chatRelation = await _context.UserChatMTMRelations
+                .FirstOrDefaultAsync(uc => uc.ChatId == chatId && uc.UserId == user.Id && uc.IsRelationActive == true);
+
+            if (chatRelation == null)
+                throw new Exception("Relation not found");
+
+            var unreadMessageIds = await _context.Messages
+                .Where(m => m.ChatId == chatId)
+                .Where(m => !m.MessageReads.Any(mr => mr.UserId == user.Id)) // no read record for this user
+                .Select(m => m.Id)
+                .ToListAsync();
+
+            foreach (var messageId in unreadMessageIds)
+            {
+                _context.MessageReads.Add(new MessageRead
+                {
+                    MessageId = messageId,
+                    UserId = user.Id,
+                    ReadAt = DateTimeOffset.UtcNow
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            return;
         }
 
         public async Task<ChatVM> CreateChat(Guid session, ChatCreateVM chatData)

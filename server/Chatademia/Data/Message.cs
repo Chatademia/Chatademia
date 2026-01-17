@@ -16,6 +16,7 @@ namespace Chatademia.Data
 
         public string UserId { get; set; }
         public User User { get; set; }
+        public List<MessageRead> MessageReads { get; set; } = new();
         public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
         public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
         public bool IsDeleted { get; set; } = false;

@@ -18,6 +18,7 @@ namespace Chatademia.Data
         public DateTimeOffset? ChatsUpdatedAt { get; set; }
         public List<UserChatMTMRelation> UserChatsMTMR { get; set; } = new List<UserChatMTMRelation>();
         public List<Message> Messages { get; set; } = new List<Message>();
+        public List<MessageRead> MessageReads { get; set; } = new List<MessageRead>();
         public UserTokens UserTokens { get; set; } = new UserTokens();
     }
 }

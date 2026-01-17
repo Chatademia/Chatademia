@@ -38,7 +38,7 @@ namespace Chatademia.Controllers
         //    return Ok(chat);
         //}
 
-        [HttpGet("chat-messages")]
+        [HttpGet("chat-messages/{chatId}")]
         public async Task<IActionResult> GetChatMessages([FromRoute] ChatIdVM request)
         {
             var session = Guid.Parse(User.FindFirstValue("session_id"));
@@ -78,7 +78,15 @@ namespace Chatademia.Controllers
             };
 
         }
-        
+
+        [HttpPost("read")]
+        public async Task<IActionResult> MarkMessagesAsRead([FromBody] ChatIdVM request)
+        {
+            var session = Guid.Parse(User.FindFirstValue("session_id"));
+            await _chatServices.MarkMessagesAsRead(session, request.ChatId);
+            return Ok();
+        }
+
         [HttpPost("create-chat")]
         public async Task<IActionResult> CreateChat([FromBody] ChatCreateVM request)
         {
