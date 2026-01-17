@@ -395,6 +395,9 @@ namespace Chatademia.Services
                 InviteCode = c.InviteCode,
                 UpdatedAt = c.UpdatedAt,
 
+                HasUnreadMessages = c.Messages
+                    .Any(m => !m.MessageReads.Any(mr => mr.UserId == user.Id)),
+
                 IsFavorite = c.UserChatsMTMR
                     .Where(uc => uc.UserId == user.Id)
                     .Select(uc => uc.IsFavorite)
