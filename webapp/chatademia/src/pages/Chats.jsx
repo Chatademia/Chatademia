@@ -110,6 +110,8 @@ function Chat({ devMode = false }) {
   });
   const [chats, setChats] = useState([]);
 
+  const [newMessageChatId, setNewMessageChatId] = useState([]);
+
   const [messages, setMessages] = useState([]);
 
   const [selectedChatId, setSelectedChatId] = useState(null);
@@ -573,14 +575,18 @@ function Chat({ devMode = false }) {
         .build();
 
       // Handle incoming messages
-      connection.on("NEW MSG", async ({chatId}) => {
+      connection.on("NEW MSG", async ({ chatId }) => {
         console.log("Otrzymano nową wiadomość, odświeżanie...");
-        if (chatId === selectedChatId){ 
+        if (chatId === selectedChatId) {
           await fetchMessages(selectedChatId);
         } else {
-          console.log("wiadmosc z innego czatu", chatId);
+          console.log("wiadomość z innego czatu", chatId);
+          setNewMessageChatId((prev) =>
+            prev.includes(chatId) ? prev : [...prev, chatId]
+          );
         }
       });
+    
 
       connection.on("MSG DEL", async () => {
         console.log("Otrzymano usunięcie wiadomości, odświeżanie...");
@@ -637,6 +643,33 @@ function Chat({ devMode = false }) {
       }
     };
   }, [selectedChatId, userData.id]);
+
+  // Remove new flag when entering a chat
+  useEffect(() => {
+    if (selectedChatId) {
+      setNewMessageChatId((prev) => prev.filter((id) => id !== selectedChatId));
+      try {
+        const response = fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/chat/read`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              chatId: selectedChatId,
+            }),
+            credentials: "include",
+          },
+        );
+        if (!response.ok) {
+          throw new Error(response.status);
+        }
+      } catch (error) {
+        console.error("Błąd podczas zaznaczania wiadomości z chatu jako odczytane:", error);
+      }
+    }
+  }, [selectedChatId]);
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -721,6 +754,7 @@ function Chat({ devMode = false }) {
                   color={COLORS[chat.color]}
                   chatShortName={chat.shortName}
                   chatName={chat.name}
+                  hasNew={newMessageChatId.includes(chat.id)}
                   onClick={() =>
                     handleChatSwitch(
                       chat.id,
@@ -755,6 +789,7 @@ function Chat({ devMode = false }) {
                   color={COLORS[chat.color]}
                   chatShortName={chat.shortName}
                   chatName={chat.name}
+                  hasNew={newMessageChatId.includes(chat.id)}
                   onClick={() =>
                     handleChatSwitch(
                       chat.id,
