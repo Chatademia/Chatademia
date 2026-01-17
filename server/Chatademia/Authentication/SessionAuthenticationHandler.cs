@@ -37,15 +37,19 @@ namespace Chatademia.Authentication
 
             using var context = _factory.CreateDbContext();
 
-            var sessionExists = await context.UserTokens
-                .AnyAsync(t => t.Session == session);
+            // Find the user associated with this session
+            var user = await context.Users
+                .Include(u => u.UserTokens)
+                .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
-            if (!sessionExists)
+            if (user == null)
                 return AuthenticateResult.Fail("Session not found");
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
-                new Claim("session_id", session.ToString())
+                new Claim("session_id", session.ToString()),
+                // Required by SignalR hub to put connection into user-specific group
+                new Claim(ClaimTypes.NameIdentifier, user.Id)
             };
 
 

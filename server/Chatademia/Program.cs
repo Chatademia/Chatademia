@@ -88,14 +88,16 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
+app.UseCors("AllowFrontend");
+
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseRateLimiter();
 
-app.MapHub<ChatHub>("/chatademia/chatHub")
-    .RequireRateLimiting("auth");
+app.MapHub<ChatHub>("/chatademia/chatHub");
+    // .RequireRateLimiting("auth");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -110,7 +112,6 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
-app.UseCors("AllowFrontend");
 
 app.MapControllers();
 

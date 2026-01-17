@@ -3,7 +3,7 @@ export const handleCreateChat = async (
   setChats,
   setSelectedChatId,
   setInviteCode,
-  setShowSuccessPopup
+  setShowSuccessPopup,
 ) => {
   try {
     const response = await fetch(
@@ -18,7 +18,7 @@ export const handleCreateChat = async (
           color: Math.floor(Math.random() * 10),
         }),
         credentials: "include",
-      }
+      },
     );
 
     const responseText = await response.text();
@@ -58,7 +58,7 @@ export const handleCreateChat = async (
 export const handleJoinChat = async (
   setChats,
   setSelectedChatId,
-  inviteCode
+  inviteCode,
 ) => {
   try {
     console.log("Próba dołączenia do czatu z kodem:", inviteCode); //debug
@@ -73,7 +73,7 @@ export const handleJoinChat = async (
           InviteCode: inviteCode,
         }),
         credentials: "include",
-      }
+      },
     );
 
     const responseText = await response.text();
@@ -111,30 +111,11 @@ export const handleChatSwitch = async (
   selectedChatId,
   hubConnectionRef,
   setSelectedChatId,
-  fetchMessages
+  fetchMessages,
 ) => {
-  // Leave previous chat subscription
-  if (hubConnectionRef.current && selectedChatId) {
-    try {
-      await hubConnectionRef.current.invoke(
-        "QuitChatSubscription",
-        selectedChatId
-      );
-    } catch (error) {
-      console.error("Błąd podczas opuszczania subskrypcji czatu:", error);
-    }
-  }
-
+  // Simply switch to the new chat
+  // SignalR notifies all user:{userId} groups, so no need for explicit subscription change
   setSelectedChatId(chatId);
-
-  // Join new chat subscription
-  if (hubConnectionRef.current) {
-    try {
-      await hubConnectionRef.current.invoke("JoinChatSubscription", chatId);
-    } catch (error) {
-      console.error("Błąd podczas dołączania do subskrypcji czatu:", error);
-    }
-  }
 
   // Fetch messages for the selected chat from the backend
   await fetchMessages(chatId);

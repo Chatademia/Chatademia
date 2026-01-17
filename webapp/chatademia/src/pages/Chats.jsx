@@ -573,10 +573,12 @@ function Chat({ devMode = false }) {
         .build();
 
       // Handle incoming messages
-      connection.on("NEW MSG", async () => {
+      connection.on("NEW MSG", async ({chatId}) => {
         console.log("Otrzymano nową wiadomość, odświeżanie...");
-        if (selectedChatId) {
+        if (chatId === selectedChatId){ 
           await fetchMessages(selectedChatId);
+        } else {
+          console.log("wiadmosc z innego czatu", chatId);
         }
       });
 
@@ -588,6 +590,8 @@ function Chat({ devMode = false }) {
         }
       });
 
+      //future development plan
+      
       // connection.on("USER JOINED", async () => {
       //   console.log("Otrzymano nową wiadomość, odświeżanie...");
       //   if (selectedChatId) {
@@ -610,14 +614,12 @@ function Chat({ devMode = false }) {
         console.log("SignalR połączony");
         hubConnectionRef.current = connection;
 
-        // Join initial chat subscription
+        // Load messages for the selected chat
+        // (Already in user:{userId} group from OnConnectedAsync on backend)
         try {
-          await connection.invoke("JoinChatSubscription", selectedChatId);
-
-          // Load messages for the selected chat
           await fetchMessages(selectedChatId);
         } catch (error) {
-          console.error("Błąd podczas przełączania czatów:", error);
+          console.error("Błąd podczas pobierania wiadomości:", error);
         }
       } catch (error) {
         console.error("Błąd połączenia SignalR:", error);
