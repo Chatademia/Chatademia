@@ -11,6 +11,7 @@ import React, {
   useMemo,
   useCallback,
 } from "react";
+import Skeleton from "@mui/material/Skeleton";
 import { useNavigate } from "react-router-dom";
 import * as signalR from "@microsoft/signalr";
 
@@ -101,6 +102,9 @@ function Chat({ devMode = false }) {
   const [showInviteCodePopup, setShowInviteCodePopup] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [isLoadingChats, setIsLoadingChats] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   const [userData, setUserData] = useState({
     firstName: null,
@@ -152,7 +156,7 @@ function Chat({ devMode = false }) {
           method: "POST",
           body: formData, // Send file and chatId as FormData
           credentials: "include", // Send cookie with session token
-        }
+        },
       );
 
       const responseText = await response.text();
@@ -190,6 +194,7 @@ function Chat({ devMode = false }) {
   };
 
   const fetchMessages = useCallback(async (chatId) => {
+    setIsLoadingMessages(true);
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/chat/chat-messages`,
@@ -202,7 +207,7 @@ function Chat({ devMode = false }) {
             chatId: chatId,
           }),
           credentials: "include", // Send cookie with session token
-        }
+        },
       );
 
       // Read response text
@@ -228,6 +233,8 @@ function Chat({ devMode = false }) {
       setMessages(data);
     } catch (error) {
       console.error("Błąd podczas pobierania wiadomości:", error);
+    } finally {
+      setIsLoadingMessages(false);
     }
   }, []);
 
@@ -247,7 +254,7 @@ function Chat({ devMode = false }) {
           method: "POST",
           body: formData, // Send chatId and message as FormData
           credentials: "include", // Send cookie with session token
-        }
+        },
       );
 
       const responseText = await response.text();
@@ -291,14 +298,14 @@ function Chat({ devMode = false }) {
             messageId: messageId,
           }),
           credentials: "include", // Send cookie with session token
-        }
+        },
       );
 
       if (!response.ok) {
         throw new Error(response.status);
       } else {
         setMessages((prevMessages) =>
-          prevMessages.filter((message) => message.id !== messageId)
+          prevMessages.filter((message) => message.id !== messageId),
         );
         console.log("Usunięto wiadomość o id:", messageId);
       }
@@ -324,7 +331,7 @@ function Chat({ devMode = false }) {
             chatId: selectedChatId,
           }),
           credentials: "include",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -333,7 +340,7 @@ function Chat({ devMode = false }) {
 
       // Remove chat from the list
       setChats((prevChats) =>
-        prevChats.filter((chat) => chat.id !== selectedChatId)
+        prevChats.filter((chat) => chat.id !== selectedChatId),
       );
 
       // Reset states
@@ -387,7 +394,7 @@ function Chat({ devMode = false }) {
             chatId: selectedChatId,
             userToRemoveId: participantId,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -402,12 +409,12 @@ function Chat({ devMode = false }) {
             return {
               ...chat,
               participants: chat.participants.filter(
-                (p) => p.id !== participantId
+                (p) => p.id !== participantId,
               ),
             };
           }
           return chat;
-        })
+        }),
       );
 
       setRemoveParticipantId(null);
@@ -415,7 +422,9 @@ function Chat({ devMode = false }) {
       alert("Użytkownik został usunięty z grupy");
     } catch (error) {
       console.error("Błąd podczas usuwania uczestnika:", error);
-      alert(error.message || "Nie udało się usunąć uczestnika. Spróbuj ponownie.");
+      alert(
+        error.message || "Nie udało się usunąć uczestnika. Spróbuj ponownie.",
+      );
       setRemoveParticipantId(null);
       setRemoveParticipantConfirm(false);
     }
@@ -460,7 +469,7 @@ function Chat({ devMode = false }) {
             isFavorite: !selectedChat.isFavorite,
           }),
           credentials: "include",
-        }
+        },
       );
 
       const responseText = await response.text();
@@ -490,7 +499,7 @@ function Chat({ devMode = false }) {
             };
           }
           return chat;
-        })
+        }),
       );
     } catch (error) {
       console.error("Błąd podczas zmiany statusu ulubionych:", error);
@@ -500,11 +509,24 @@ function Chat({ devMode = false }) {
 
   useEffect(() => {
     if (devMode) {
+      setIsLoadingUser(false);
+      setIsLoadingChats(false);
       return;
     }
 
-    getUserData(setUserData, navigate);
-    getChatsData(setChats, setSelectedChatId, navigate);
+    const loadData = async () => {
+      try {
+        await getUserData(setUserData, navigate);
+      } finally {
+        setIsLoadingUser(false);
+      }
+      try {
+        await getChatsData(setChats, setSelectedChatId, navigate);
+      } finally {
+        setIsLoadingChats(false);
+      }
+    };
+    loadData();
   }, [navigate, devMode]);
 
   // Close message menu when clicking outside
@@ -512,7 +534,7 @@ function Chat({ devMode = false }) {
     const handleClickOutside = (event) => {
       if (selectedMessageId) {
         const messageElement = event.target.closest(
-          `[data-message-id="${selectedMessageId}"]`
+          `[data-message-id="${selectedMessageId}"]`,
         );
         if (!messageElement) {
           setSelectedMessageId(null);
@@ -681,69 +703,169 @@ function Chat({ devMode = false }) {
           )}
         </div>
         <div className="flex flex-col gap-2 p-5 border-b h-[76.77%] overflow-y-auto">
-          {favoriteChats.length > 0 && (
-            <>
-              <div className="flex items-center gap-3 my-2">
-                <div className="flex-1 h-px bg-gray-300"></div>
-                <h2 className="text-sm font-semibold text-gray-500 px-2">
-                  Ulubione
-                </h2>
-                <div className="flex-1 h-px bg-gray-300"></div>
-              </div>
-              {favoriteChats.map((chat) => (
-                <ChatItem
-                  key={chat.id}
-                  isActive={chat.id === selectedChatId}
-                  color={COLORS[chat.color]}
-                  chatShortName={chat.shortName}
-                  chatName={chat.name}
-                  onClick={() =>
-                    handleChatSwitch(
-                      chat.id,
-                      selectedChatId,
-                      hubConnectionRef,
-                      setSelectedChatId,
-                      fetchMessages
-                    )
-                  }
+          {isLoadingChats ? (
+            // Chats skeleton
+            <div className="flex flex-col gap-2">
+              <div className="bg-white flex p-4 rounded-xl gap-2 items-center">
+                <Skeleton
+                  variant="rounded"
+                  width={48}
+                  height={48}
+                  animation="wave"
+                  sx={{ borderRadius: 3 }}
                 />
-              ))}
-            </>
-          )}
-          {nonFavoriteChats.map((chat, index) => {
-            const showSemesterHeader =
-              index === 0 ||
-              chat.semester !== nonFavoriteChats[index - 1]?.semester;
-
-            return (
-              <React.Fragment key={chat.id}>
-                {showSemesterHeader && (
+                <Skeleton
+                  variant="text"
+                  width="70%"
+                  height={20}
+                  animation="wave"
+                />
+              </div>
+              <div className="bg-white flex p-4 rounded-xl gap-2 items-center">
+                <Skeleton
+                  variant="rounded"
+                  width={48}
+                  height={48}
+                  animation="wave"
+                  sx={{ borderRadius: 3 }}
+                />
+                <Skeleton
+                  variant="text"
+                  width="70%"
+                  height={20}
+                  animation="wave"
+                />
+              </div>
+              <div className="bg-white flex p-4 rounded-xl gap-2 items-center">
+                <Skeleton
+                  variant="rounded"
+                  width={48}
+                  height={48}
+                  animation="wave"
+                  sx={{ borderRadius: 3 }}
+                />
+                <Skeleton
+                  variant="text"
+                  width="70%"
+                  height={20}
+                  animation="wave"
+                />
+              </div>
+              <div className="bg-white flex p-4 rounded-xl gap-2 items-center">
+                <Skeleton
+                  variant="rounded"
+                  width={48}
+                  height={48}
+                  animation="wave"
+                  sx={{ borderRadius: 3 }}
+                />
+                <Skeleton
+                  variant="text"
+                  width="70%"
+                  height={20}
+                  animation="wave"
+                />
+              </div>
+              <div className="bg-white flex p-4 rounded-xl gap-2 items-center">
+                <Skeleton
+                  variant="rounded"
+                  width={48}
+                  height={48}
+                  animation="wave"
+                  sx={{ borderRadius: 3 }}
+                />
+                <Skeleton
+                  variant="text"
+                  width="70%"
+                  height={20}
+                  animation="wave"
+                />
+              </div>
+              <div className="bg-white flex p-4 rounded-xl gap-2 items-center">
+                <Skeleton
+                  variant="rounded"
+                  width={48}
+                  height={48}
+                  animation="wave"
+                  sx={{ borderRadius: 3 }}
+                />
+                <Skeleton
+                  variant="text"
+                  width="70%"
+                  height={20}
+                  animation="wave"
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              {favoriteChats.length > 0 && (
+                <>
                   <div className="flex items-center gap-3 my-2">
                     <div className="flex-1 h-px bg-gray-300"></div>
                     <h2 className="text-sm font-semibold text-gray-500 px-2">
-                      {chat.semester ? `Semestr ${chat.semester}` : "Pozostałe"}
+                      Ulubione
                     </h2>
                     <div className="flex-1 h-px bg-gray-300"></div>
                   </div>
-                )}
-                <ChatItem
-                  isActive={chat.id === selectedChatId}
-                  color={COLORS[chat.color]}
-                  chatShortName={chat.shortName}
-                  chatName={chat.name}
-                  onClick={() =>
-                    handleChatSwitch(
-                      chat.id,
-                      selectedChatId,
-                      hubConnectionRef,
-                      setSelectedChatId,
-                      fetchMessages
-                    )
-                  }
-                />
-              </React.Fragment>
-            );
-          })}
+                  {favoriteChats.map((chat) => (
+                    <ChatItem
+                      key={chat.id}
+                      isActive={chat.id === selectedChatId}
+                      color={COLORS[chat.color]}
+                      chatShortName={chat.shortName}
+                      chatName={chat.name}
+                      onClick={() =>
+                        handleChatSwitch(
+                          chat.id,
+                          selectedChatId,
+                          hubConnectionRef,
+                          setSelectedChatId,
+                          fetchMessages,
+                        )
+                      }
+                    />
+                  ))}
+                </>
+              )}
+              {nonFavoriteChats.map((chat, index) => {
+                const showSemesterHeader =
+                  index === 0 ||
+                  chat.semester !== nonFavoriteChats[index - 1]?.semester;
+
+                return (
+                  <React.Fragment key={chat.id}>
+                    {showSemesterHeader && (
+                      <div className="flex items-center gap-3 my-2">
+                        <div className="flex-1 h-px bg-gray-300"></div>
+                        <h2 className="text-sm font-semibold text-gray-500 px-2">
+                          {chat.semester
+                            ? `Semestr ${chat.semester}`
+                            : "Pozostałe"}
+                        </h2>
+                        <div className="flex-1 h-px bg-gray-300"></div>
+                      </div>
+                    )}
+                    <ChatItem
+                      isActive={chat.id === selectedChatId}
+                      color={COLORS[chat.color]}
+                      chatShortName={chat.shortName}
+                      chatName={chat.name}
+                      onClick={() =>
+                        handleChatSwitch(
+                          chat.id,
+                          selectedChatId,
+                          hubConnectionRef,
+                          setSelectedChatId,
+                          fetchMessages,
+                        )
+                      }
+                    />
+                  </React.Fragment>
+                );
+              })}
+            </>
+          )}
         </div>
         <button
           className="h-[6.94%] flex p-5 gap-3 justify-start items-center hover:bg-gray-100 transition-colors duration-150 rounded-lg"
@@ -751,21 +873,42 @@ function Chat({ devMode = false }) {
           onClick={() => setLogoutBar((s) => !s)}
           aria-expanded={logoutBar}
           aria-label="Opcje użytkownika"
+          disabled={isLoadingUser}
         >
-          <div
-            className={`rounded-xl text-white flex items-center justify-center w-10 h-10 aspect-square focus:outline-none ${
-              COLORS[userData.color]
-            }`}
-          >
-            <h1 className="text-xl font-black">
-              {(userData.firstName?.[0] || "").toUpperCase()}
-              {(userData.lastName?.[0] || "").toUpperCase()}
-            </h1>
-          </div>
+          {isLoadingUser ? (
+            <>
+              <Skeleton
+                variant="rounded"
+                width={40}
+                height={40}
+                animation="wave"
+                sx={{ borderRadius: 3 }}
+              />
+              <Skeleton
+                variant="text"
+                width={120}
+                height={18}
+                animation="wave"
+              />
+            </>
+          ) : (
+            <>
+              <div
+                className={`rounded-xl text-white flex items-center justify-center w-10 h-10 aspect-square focus:outline-none ${
+                  COLORS[userData.color]
+                }`}
+              >
+                <h1 className="text-xl font-black">
+                  {(userData.firstName?.[0] || "").toUpperCase()}
+                  {(userData.lastName?.[0] || "").toUpperCase()}
+                </h1>
+              </div>
 
-          <h1 className="font-semibold text-sm text-black overflow-hidden whitespace-nowrap text-ellipsis">
-            {userData.firstName} {userData.lastName}
-          </h1>
+              <h1 className="font-semibold text-sm text-black overflow-hidden whitespace-nowrap text-ellipsis">
+                {userData.firstName} {userData.lastName}
+              </h1>
+            </>
+          )}
         </button>
 
         {logoutBar && (
@@ -807,50 +950,121 @@ function Chat({ devMode = false }) {
             </div>
             <div className="bg-white h-[82.885%] overflow-y-auto">
               <div className="p-5 flex flex-col gap-4">
-                {messages.map((message) => {
-                  const isOwnMessage = message.senderId === userData.id;
-                  const sender = participantsMap[message.senderId];
-                  const isMenuOpen = selectedMessageId === message.id;
-                  return (
-                    <div
-                      key={message.id}
-                      className="relative"
-                      data-message-id={message.id}
-                    >
-                      <MessageItem
-                        message={message}
-                        isOwnMessage={isOwnMessage}
-                        senderShortName={sender?.shortName}
-                        senderColor={COLORS[sender?.color]}
-                        formatTimestamp={formatTimestamp}
-                        onClick={() => {
-                          if (isOwnMessage) {
-                            setSelectedMessageId(
-                              isMenuOpen ? null : message.id
-                            );
-                          }
-                        }}
+                {isLoadingMessages ? (
+                  <>
+                    <div className="flex gap-3 justify-start">
+                      <Skeleton
+                        variant="rounded"
+                        width={40}
+                        height={40}
+                        animation="wave"
+                        sx={{ borderRadius: 3 }}
                       />
-                      {isMenuOpen && isOwnMessage && (
-                        <div className="absolute bottom-10 right-10 bg-white border rounded-lg shadow-lg z-10">
-                          <button
-                            className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteMessage(selectedChatId, message.id);
-                              setSelectedMessageId(null);
-                            }}
-                          >
-                            <TrashIcon className="size-5 text-red-400" />
-                            <h1 className="font-semibold text-red-400 cursor-pointer">
-                              Usuń wiadomość u wszystkich
-                            </h1>
-                          </button>
-                        </div>
-                      )}
+                      <Skeleton
+                        variant="rounded"
+                        width={240}
+                        height={60}
+                        animation="wave"
+                        sx={{ borderRadius: 3 }}
+                      />
                     </div>
-                  );
-                })}
+                    <div className="flex gap-3 justify-end">
+                      <Skeleton
+                        variant="rounded"
+                        width={260}
+                        height={60}
+                        animation="wave"
+                        sx={{ borderRadius: 3 }}
+                      />
+                    </div>
+                    <div className="flex gap-3 justify-start">
+                      <Skeleton
+                        variant="rounded"
+                        width={40}
+                        height={40}
+                        animation="wave"
+                        sx={{ borderRadius: 3 }}
+                      />
+                      <Skeleton
+                        variant="rounded"
+                        width={280}
+                        height={60}
+                        animation="wave"
+                        sx={{ borderRadius: 3 }}
+                      />
+                    </div>
+                    <div className="flex gap-3 justify-end">
+                      <Skeleton
+                        variant="rounded"
+                        width={200}
+                        height={60}
+                        animation="wave"
+                        sx={{ borderRadius: 3 }}
+                      />
+                    </div>
+                    <div className="flex gap-3 justify-start">
+                      <Skeleton
+                        variant="rounded"
+                        width={40}
+                        height={40}
+                        animation="wave"
+                        sx={{ borderRadius: 3 }}
+                      />
+                      <Skeleton
+                        variant="rounded"
+                        width={250}
+                        height={60}
+                        animation="wave"
+                        sx={{ borderRadius: 3 }}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  messages.map((message) => {
+                    const isOwnMessage = message.senderId === userData.id;
+                    const sender = participantsMap[message.senderId];
+                    const isMenuOpen = selectedMessageId === message.id;
+                    return (
+                      <div
+                        key={message.id}
+                        className="relative"
+                        data-message-id={message.id}
+                      >
+                        <MessageItem
+                          message={message}
+                          isOwnMessage={isOwnMessage}
+                          senderShortName={sender?.shortName}
+                          senderColor={COLORS[sender?.color]}
+                          formatTimestamp={formatTimestamp}
+                          onClick={() => {
+                            if (isOwnMessage) {
+                              setSelectedMessageId(
+                                isMenuOpen ? null : message.id,
+                              );
+                            }
+                          }}
+                        />
+                        {isMenuOpen && isOwnMessage && (
+                          <div className="absolute bottom-10 right-10 bg-white border rounded-lg shadow-lg z-10">
+                            <button
+                              className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-red-50 rounded-lg transition-colors duration-150"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteMessage(selectedChatId, message.id);
+                                setSelectedMessageId(null);
+                              }}
+                            >
+                              <TrashIcon className="size-5 text-red-400" />
+                              <h1 className="font-semibold text-red-400 cursor-pointer">
+                                Usuń wiadomość u wszystkich
+                              </h1>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
                 <div ref={messagesEndRef} />
               </div>
             </div>
@@ -863,7 +1077,7 @@ function Chat({ devMode = false }) {
                     event,
                     MAX_FILE_SIZE,
                     ALLOWED_FILE_TYPES,
-                    setSelectedFile
+                    setSelectedFile,
                   )
                 }
                 style={{ display: "none" }}
@@ -1031,10 +1245,7 @@ function Chat({ devMode = false }) {
                 </span>
               </div>
               {selectedChat?.participants?.map((participant) => (
-                <div
-                  key={participant.id}
-                  className="flex flex-col gap-0"
-                >
+                <div key={participant.id} className="flex flex-col gap-0">
                   <div className="flex items-center gap-4">
                     <div
                       className={`rounded-xl aspect-square focus:outline-none ${
@@ -1112,7 +1323,7 @@ function Chat({ devMode = false }) {
             setChats,
             setSelectedChatId,
             setInviteCode,
-            setShowSuccessPopup
+            setShowSuccessPopup,
           )
         }
       />
@@ -1124,9 +1335,7 @@ function Chat({ devMode = false }) {
       <JoinChatPopup
         isOpen={showJoinChatPopup}
         onClose={() => setShowJoinChatPopup(false)}
-        onSubmit={(code) =>
-          handleJoinChat(setChats, setSelectedChatId, code)
-        }
+        onSubmit={(code) => handleJoinChat(setChats, setSelectedChatId, code)}
       />
       <InviteCodePopup
         isOpen={showInviteCodePopup}
