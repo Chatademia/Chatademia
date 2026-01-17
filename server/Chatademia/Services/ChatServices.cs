@@ -437,7 +437,7 @@ namespace Chatademia.Services
 
             return null;
         }
-        public async Task JoinChat(Guid session, string inviteCode)
+        public async Task<ChatVM> JoinChat(Guid session, string inviteCode)
         {
             using var _context = _factory.CreateDbContext();
 
@@ -480,7 +480,27 @@ namespace Chatademia.Services
 
             await HubUpdate(chat.Id, "USER JOINED");
 
-            return;
+            var chatVM = new ChatVM
+            {
+                Id = chat.Id,
+                Name = chat.Name,
+                ShortName = chat.ShortName,
+                Color = chat.Color,
+                InviteCode = chat.InviteCode,
+                ModeratorId = chat.ModeratorId,
+                Participants = _context.UserChatMTMRelations
+                    .Where(uc => uc.ChatId == chat.Id && uc.IsRelationActive == true)
+                    .Select(uc => new UserVM
+                    {
+                        Id = uc.User.Id,
+                        FirstName = uc.User.FirstName,
+                        LastName = uc.User.LastName,
+                        ShortName = uc.User.ShortName,
+                        Color = uc.User.Color
+                    }).ToList()
+            };
+
+            return chatVM;
         }
 
         public async Task<SetFavoriteChatVM> SetFavoriteStatus(Guid session, SetFavoriteChatVM setFavoriteChatVM)

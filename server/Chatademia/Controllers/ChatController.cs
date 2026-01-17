@@ -112,8 +112,8 @@ namespace Chatademia.Controllers
         {
             var session = Guid.Parse(User.FindFirstValue("session_id"));
 
-            await _chatServices.JoinChat(session, request.InviteCode);
-            return Ok();
+            var chat = await _chatServices.JoinChat(session, request.InviteCode);
+            return Ok(chat);
         }
 
         [HttpPost("favorite-status")]
