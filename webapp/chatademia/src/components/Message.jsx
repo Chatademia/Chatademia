@@ -116,7 +116,11 @@ function Message({
                 </p>
               </div>
             )}
-            <span className="text-xs text-white absolute bottom-2 right-2">
+            <span
+              className={`text-xs ${
+                isOwnMessage ? "text-white" : "text-black"
+              } absolute bottom-2 right-2`}
+            >
               {formatTimestamp(message.createdAt)}
             </span>
           </div>
