@@ -5,8 +5,14 @@ import AuthCallback from "./AuthCallback.js";
 import GoogleAuthCallback from "./GoogleAuthCallback.js";
 import { useEffect, useState } from "react";
 import Onboarding from "./pages/Onboarding.jsx";
+import MobileNotSupported from "./components/MobileNotSupported.jsx";
+import { isMobile } from "react-device-detect";
 
 function App() {
+  // If mobile device, show mobile not supported page
+  if (isMobile) {
+    return <MobileNotSupported />;
+  }
   const PublicRoute = ({ children }) => {
     const [isChecking, setIsChecking] = useState(true);
     const [isSessionValid, setIsSessionValid] = useState(false);
@@ -24,7 +30,7 @@ function App() {
                 "Content-Type": "application/json",
               },
               credentials: "include", // Send cookie with session token
-            }
+            },
           );
 
           // If response is ok, set isSessionValid as true
@@ -79,7 +85,7 @@ function App() {
                 "Content-Type": "application/json",
               },
               credentials: "include", // Send cookie with session token
-            }
+            },
           );
 
           // If response is ok, set isSessionValid as true
