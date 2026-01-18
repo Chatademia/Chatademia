@@ -7,7 +7,7 @@ export const handleLoginRedirect = async (loginPopupRef) => {
         headers: {
           "Content-Type": "text/plain",
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -29,7 +29,7 @@ export const handleLoginRedirect = async (loginPopupRef) => {
     loginPopupRef.current = window.open(
       data,
       "loginPopup",
-      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`,
     );
   } catch (error) {
     console.error("Wystąpił błąd podczas pobierania URL logowania: ", error);
@@ -43,14 +43,14 @@ export const handleGoogleLoginRedirect = async (loginPopupRef) => {
       `${
         process.env.REACT_APP_BACKEND_URL
       }/api/auth/google/login-url?callbackUrl=${encodeURIComponent(
-        callbackUrl
+        callbackUrl,
       )}`,
       {
         method: "GET",
         headers: {
           "Content-Type": "text/plain",
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -72,12 +72,12 @@ export const handleGoogleLoginRedirect = async (loginPopupRef) => {
     loginPopupRef.current = window.open(
       data,
       "googleLoginPopup",
-      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`,
     );
   } catch (error) {
     console.error(
       "Wystąpił błąd podczas pobierania URL logowania Google: ",
-      error
+      error,
     );
     alert("Wystąpił błąd podczas logowania. Spróbuj ponownie.");
   }
@@ -93,7 +93,7 @@ export const handleLogout = async (navigate) => {
           "Content-Type": "application/json",
         },
         credentials: "include",
-      }
+      },
     );
 
     if (!response.ok) {
@@ -116,7 +116,7 @@ export const getUserData = async (setUserData, navigate) => {
           "Content-Type": "application/json",
         },
         credentials: "include",
-      }
+      },
     );
 
     const responseText = await response.text();
@@ -144,7 +144,12 @@ export const getUserData = async (setUserData, navigate) => {
   }
 };
 
-export const getChatsData = async (setChats, setSelectedChatId, navigate) => {
+export const getChatsData = async (
+  setChats,
+  setSelectedChatId,
+  navigate,
+  setNewMessageChatId,
+) => {
   try {
     const response = await fetch(
       `${process.env.REACT_APP_BACKEND_URL}/api/users/chats`,
@@ -154,7 +159,7 @@ export const getChatsData = async (setChats, setSelectedChatId, navigate) => {
           "Content-Type": "application/json",
         },
         credentials: "include",
-      }
+      },
     );
 
     const responseText = await response.text();
@@ -190,6 +195,18 @@ export const getChatsData = async (setChats, setSelectedChatId, navigate) => {
       return a.name.localeCompare(b.name, { sensitivity: "base" });
     });
     setChats(sortedChats);
+
+    if (setNewMessageChatId) {
+      for (const i of sortedChats) {
+        if (i.hasUnreadMessages && i.id) {
+          setNewMessageChatId((prev) =>
+            prev.includes(i.id) ? prev : [...prev, i.id],
+          );
+        } else if (!i.hasUnreadMessages && i.id) {
+          setNewMessageChatId((prev) => prev.filter((id) => id !== i.id));
+        }
+      }
+    }
 
     if (sortedChats.length > 0) {
       setSelectedChatId(sortedChats[0].id);

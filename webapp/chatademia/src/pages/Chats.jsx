@@ -479,7 +479,6 @@ function Chat({ devMode = false }) {
         throw new Error(data.error);
       }
 
-      // Update chats list
       setChats((prevChats) =>
         prevChats.map((chat) => {
           if (chat.id === selectedChatId) {
@@ -503,7 +502,7 @@ function Chat({ devMode = false }) {
     }
 
     getUserData(setUserData, navigate);
-    getChatsData(setChats, setSelectedChatId, navigate);
+    getChatsData(setChats, setSelectedChatId, navigate, setNewMessageChatId);
   }, [navigate, devMode]);
 
   // Close message menu when clicking outside
@@ -560,7 +559,6 @@ function Chat({ devMode = false }) {
   // SignalR connection setup
   useEffect(() => {
     const setupSignalR = async () => {
-      // Wait for userData and selectedChatId to be loaded
       if (!userData.id || !selectedChatId) {
         console.log("Czekanie na załadowanie danych użytkownika i czatu...");
         return;
@@ -574,7 +572,6 @@ function Chat({ devMode = false }) {
         .configureLogging(signalR.LogLevel.Information)
         .build();
 
-      // Handle incoming messages
       connection.on("NEW MSG", async ({ chatId }) => {
         console.log("Otrzymano nową wiadomość, odświeżanie...");
         if (chatId === selectedChatId) {
@@ -646,29 +643,33 @@ function Chat({ devMode = false }) {
 
   // Remove new flag when entering a chat
   useEffect(() => {
-    if (selectedChatId) {
-      setNewMessageChatId((prev) => prev.filter((id) => id !== selectedChatId));
-      try {
-        const response = fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/chat/read`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
+    const markAsRead = async () => {
+      if (selectedChatId) {
+        setNewMessageChatId((prev) => prev.filter((id) => id !== selectedChatId));
+        try {
+          const response = await fetch(
+            `${process.env.REACT_APP_BACKEND_URL}/api/chat/read`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                chatId: selectedChatId,
+              }),
+              credentials: "include",
             },
-            body: JSON.stringify({
-              chatId: selectedChatId,
-            }),
-            credentials: "include",
-          },
-        );
-        if (!response.ok) {
-          throw new Error(response.status);
+          );
+          if (!response.ok) {
+            throw new Error(response.status);
+          }
+        } catch (error) {
+          console.error("Błąd podczas zaznaczania wiadomości z chatu jako odczytane:", error);
         }
-      } catch (error) {
-        console.error("Błąd podczas zaznaczania wiadomości z chatu jako odczytane:", error);
       }
-    }
+    };
+
+    markAsRead();
   }, [selectedChatId]);
 
   useEffect(() => {
