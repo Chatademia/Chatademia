@@ -399,6 +399,7 @@ namespace Chatademia.Services
                 ShortName = c.ShortName,
                 Color = c.Color,
                 InviteCode = c.InviteCode,
+                ModeratorId = c.ModeratorId,
                 UpdatedAt = c.UpdatedAt,
 
                 HasUnreadMessages = c.Messages

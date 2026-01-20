@@ -484,15 +484,17 @@ namespace Chatademia.Services
             var chat = await _context.Chats
                 .FirstOrDefaultAsync(c => c.Id == chatId);
 
-            if (user.Id != chat.ModeratorId)
-                throw new Exception($"User is not moderator");
-
             var chatRelation = await _context.UserChatMTMRelations
-                .Where(u => u.ChatId == chatId && u.UserId == user.Id && u.IsRelationActive == true)
                 .FirstOrDefaultAsync(uc => uc.ChatId == chatId && uc.UserId == UserToRemoveId && uc.IsRelationActive == true);
 
             if (chatRelation == null)
-                throw new Exception("Relation not found");
+                throw new Exception("User to remove not found");
+
+            var isModerator = await _context.UserChatMTMRelations
+                .AnyAsync(uc => uc.ChatId == chatId && uc.UserId == user.Id && uc.IsRelationActive == true && chat.ModeratorId == user.Id);
+
+            if (!isModerator)
+                throw new Exception($"User is not an active moderator");
 
             chatRelation.IsRelationActive = false;
 
