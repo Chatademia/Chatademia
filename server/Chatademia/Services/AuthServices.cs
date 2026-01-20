@@ -167,7 +167,7 @@ namespace Chatademia.Services
 
             Console.WriteLine("UserData");
             Console.WriteLine("Status: " + response.StatusCode);
-            Console.WriteLine("Response body:\n" + content);
+            //Console.WriteLine("Response body:\n" + content);
 
             var data = JsonSerializer.Deserialize<Dictionary<string, string>>(content);
 
@@ -210,8 +210,8 @@ namespace Chatademia.Services
             string requestUrl = BASE_URL + ACCESS_TOKEN_URL;
 
             Console.WriteLine("=== Step 1: ACCESS TOKEN ===");
-            Console.WriteLine("Request URL: " + requestUrl);
-            Console.WriteLine("Request token secret : " + tempUser.OAuthTokenSecret);
+            //Console.WriteLine("Request URL: " + requestUrl);
+            //Console.WriteLine("Request token secret : " + tempUser.OAuthTokenSecret);
 
             using var client = new HttpClient();
 
@@ -223,15 +223,15 @@ namespace Chatademia.Services
 
             Console.WriteLine("Login");
             Console.WriteLine("Status: " + response.StatusCode);
-            Console.WriteLine("Response body:\n" + content);
+            //Console.WriteLine("Response body:\n" + content);
 
             var query = HttpUtility.ParseQueryString(content);
             string accessToken = query["oauth_token"].ToString();
             string accessSecret = query["oauth_token_secret"].ToString();
 
             Console.WriteLine("\n=== TOKENS RECEIVED ===");
-            Console.WriteLine("oauth_token_acces = " + accessToken);
-            Console.WriteLine("oauth_token_secret_acces = " + accessSecret);
+            //Console.WriteLine("oauth_token_acces = " + accessToken);
+            //Console.WriteLine("oauth_token_secret_acces = " + accessSecret);
 
 
             // are access_tokens present in db?
@@ -341,20 +341,20 @@ namespace Chatademia.Services
 
             Console.WriteLine("LoginUrl");
             Console.WriteLine("Status: " + response.StatusCode);
-            Console.WriteLine("Response body:\n" + content);
+            //Console.WriteLine("Response body:\n" + content);
 
             var query = HttpUtility.ParseQueryString(content);
             string requestToken = query["oauth_token"];
             string requestSecret = query["oauth_token_secret"];
 
             Console.WriteLine("\n=== TOKENS RECEIVED ===");
-            Console.WriteLine("oauth_token = " + requestToken);
-            Console.WriteLine("oauth_token_secret = " + requestSecret);
+            //Console.WriteLine("oauth_token = " + requestToken);
+            //Console.WriteLine("oauth_token_secret = " + requestSecret);
 
             string finalUrl = $"{BASE_URL}{AUTHORIZE_URL}?oauth_token={requestToken}";
 
             Console.WriteLine("\n=== AUTHORIZATION URL ===");
-            Console.WriteLine(finalUrl);
+            //Console.WriteLine(finalUrl);
 
             TempUser tempUser = new TempUser();
             tempUser.OAuthToken = requestToken;

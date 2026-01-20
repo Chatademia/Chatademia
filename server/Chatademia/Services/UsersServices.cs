@@ -266,7 +266,7 @@ namespace Chatademia.Services
             using var _context = _factory.CreateDbContext();
 
             var user = await _context.Users
-                .Include(u => u.UserTokens)
+                //.Include(u => u.UserTokens)
                 .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
             if (user == null)

@@ -163,7 +163,7 @@ namespace Chatademia.Services
         {
             using var _context = _factory.CreateDbContext();
             var user = await _context.Users
-                .Include(u => u.UserTokens)
+                //.Include(u => u.UserTokens)
                 .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
             if (user == null)
@@ -287,7 +287,7 @@ namespace Chatademia.Services
         {
             using var _context = _factory.CreateDbContext();
             var user = await _context.Users
-                .Include(u => u.UserTokens)
+                //.Include(u => u.UserTokens)
                 .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
             if (user == null)
@@ -382,7 +382,7 @@ namespace Chatademia.Services
         {
             using var _context = _factory.CreateDbContext();
             var user = await _context.Users
-                .Include(u => u.UserTokens)
+                //.Include(u => u.UserTokens)
                 .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
             if (user == null)
@@ -397,7 +397,7 @@ namespace Chatademia.Services
             var chat = new Chat
             {
                 Id = ID,
-                UsosId = ID.ToString(),
+                //UsosId = ID.ToString(),
                 Name = chatData.Name,
                 ShortName = string.Concat(chatData.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(word => char.ToUpper(word[0]))),
                 Color = chatData.Color ?? 0,
@@ -445,7 +445,7 @@ namespace Chatademia.Services
         {
             using var _context = _factory.CreateDbContext();
             var user = await _context.Users
-                .Include(u => u.UserTokens)
+                //.Include(u => u.UserTokens)
                 .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
             if (user == null)
@@ -475,7 +475,7 @@ namespace Chatademia.Services
         {
             using var _context = _factory.CreateDbContext();
             var user = await _context.Users
-                .Include(u => u.UserTokens)
+                //.Include(u => u.UserTokens)
                 .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
             if (user == null)
