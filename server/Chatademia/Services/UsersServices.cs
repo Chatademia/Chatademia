@@ -238,7 +238,6 @@ namespace Chatademia.Services
 
             var chatData = JsonSerializer.Deserialize<ChatResponse>(content);
 
-            //FIXME: ENSURE ONLY THE GROUPS WITH VAILD DATE ARE ADDED
             var chats = chatData.groups
                 .SelectMany(g => g.Value)
                 .Select(c => new Chat
@@ -268,15 +267,16 @@ namespace Chatademia.Services
                 throw new Exception($"Invalid session");
 
 
-            if (user.UpdatedAt.AddHours(24) < DateTimeOffset.UtcNow && user.IsUsosAccount) // data may need to be refreshed
-            {
-                string access_token = user.UserTokens.PermaAccessToken;
-                string access_token_secret = user.UserTokens.PermaAccessTokenSecret;  
-                user.UpdatedAt = DateTimeOffset.UtcNow;  
-                return await QueryUser(access_token, access_token_secret);
-            }
-            else 
-            {
+            // refreshing on login already
+            //if (user.UpdatedAt.AddHours(24) < DateTimeOffset.UtcNow && user.IsUsosAccount) // data may need to be refreshed
+            //{
+            //    string access_token = user.UserTokens.PermaAccessToken;
+            //    string access_token_secret = user.UserTokens.PermaAccessTokenSecret;  
+            //    user.UpdatedAt = DateTimeOffset.UtcNow;  
+            //    return await QueryUser(access_token, access_token_secret);
+            //}
+            //else 
+            //{
                 UserVM user_data = new UserVM();
                 user_data.Id = user.Id;
                 user_data.FirstName = user.FirstName;
@@ -285,7 +285,7 @@ namespace Chatademia.Services
                 user_data.Color = user.Color;
 
                 return user_data;
-            }
+            //}
         }
 
         public async Task<List<ChatVM>> GetUserChats(Guid session)

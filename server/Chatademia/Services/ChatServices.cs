@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 using System;
 using System.Buffers.Text;
+using System.Drawing;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -213,6 +214,7 @@ namespace Chatademia.Services
             if (chat == null)
                 throw new Exception("Chat not found");
 
+
             string type;
             if (string.IsNullOrWhiteSpace(content) && file != null)
                 type = "file";
@@ -380,6 +382,11 @@ namespace Chatademia.Services
                 throw new Exception($"Invalid session");
 
             Guid ID = Guid.NewGuid();
+
+            chatData.Name = chatData.Name ?? "New Chat";
+            if (chatData.Color < 0 || chatData.Color > 10)
+                throw new Exception("Color must be between 0 and 10");
+
             var chat = new Chat
             {
                 Id = ID,
@@ -474,6 +481,7 @@ namespace Chatademia.Services
                 throw new Exception($"User is not moderator");
 
             var chatRelation = await _context.UserChatMTMRelations
+                .Where(u => u.ChatId == chatId && u.UserId == user.Id && u.IsRelationActive == true)
                 .FirstOrDefaultAsync(uc => uc.ChatId == chatId && uc.UserId == UserToRemoveId && uc.IsRelationActive == true);
 
             if (chatRelation == null)

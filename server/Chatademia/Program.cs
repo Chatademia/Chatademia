@@ -96,8 +96,8 @@ app.UseAuthorization();
 
 app.UseRateLimiter();
 
-app.MapHub<ChatHub>("/chatademia/chatHub");
-    // .RequireRateLimiting("auth");
+app.MapHub<ChatHub>("/chatademia/chatHub")
+    .RequireRateLimiting("auth");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
