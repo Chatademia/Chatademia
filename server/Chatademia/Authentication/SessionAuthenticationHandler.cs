@@ -27,7 +27,7 @@ namespace Chatademia.Authentication
         {
             if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
             {
-                return AuthenticateResult.NoResult();
+                return AuthenticateResult.Fail("Missing session token");
             }
 
             if (!Guid.TryParse(sessionToken, out var session))

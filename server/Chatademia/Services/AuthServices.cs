@@ -401,7 +401,8 @@ namespace Chatademia.Services
             "&redirect_uri=" + Uri.EscapeDataString("http://localhost:8080/api/auth/google/callback") +
             //"&scope=" + Uri.EscapeDataString("openid email profile") +
             "&scope=" + Uri.EscapeDataString("openid profile") +
-            "&state=" + state;
+            "&state=" + state +
+            "&prompt=select_account";
 
             var tempUser = new GoogleTempUser();
             tempUser.State = state;
