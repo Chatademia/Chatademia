@@ -28,16 +28,23 @@ namespace Chatademia.Services
             _hub = hub;
         }
 
-        private async Task<string> CodeGenerator()
+
+        private async Task<string> CodeGenerator(AppDbContext context)
         {
             const string chars = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
             const int inviteCodeLength = 6;
-            string code = string.Concat(
-                Enumerable.Range(0, inviteCodeLength)
-                .Select(_ => chars[RandomNumberGenerator.GetInt32(chars.Length)])
-            );
 
-            return code;
+            for (int attempt = 0; attempt < 30; attempt++)
+            {
+                string code = string.Concat(
+                Enumerable.Range(0, inviteCodeLength)
+                .Select(_ => chars[RandomNumberGenerator.GetInt32(chars.Length)]));
+
+                if (!await context.Chats.AnyAsync(c => c.InviteCode == code || c.OldInviteCode == code))
+                    return code;
+            }
+
+            throw new Exception("Failed to generate unique invite code after multiple attempts.");
         }
 
         private async Task HubUpdate(Guid chatId, string message)
@@ -384,8 +391,8 @@ namespace Chatademia.Services
             Guid ID = Guid.NewGuid();
 
             chatData.Name = chatData.Name ?? "New Chat";
-            if (chatData.Color < 0 || chatData.Color > 10)
-                throw new Exception("Color must be between 0 and 10");
+            if (chatData.Color < 0 || chatData.Color >= 10)
+                throw new Exception("Color must be between 0 and 9");
 
             var chat = new Chat
             {
@@ -395,7 +402,7 @@ namespace Chatademia.Services
                 ShortName = string.Concat(chatData.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(word => char.ToUpper(word[0]))),
                 Color = chatData.Color ?? 0,
                 ModeratorId = user.Id,
-                InviteCode = await CodeGenerator(),
+                InviteCode = await CodeGenerator(_context),
                 LastInviteCodeRefresh = DateTimeOffset.UtcNow
             };
 

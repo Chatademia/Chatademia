@@ -30,16 +30,22 @@ namespace Chatademia.Services
         }
 
 
-        private async Task<string> CodeGenerator()
+        private async Task<string> CodeGenerator(AppDbContext context)
         {
             const string chars = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
             const int inviteCodeLength = 6;
-            string code = string.Concat(
-                Enumerable.Range(0, inviteCodeLength)
-                .Select(_ => chars[RandomNumberGenerator.GetInt32(chars.Length)])
-            );
 
-            return code;
+            for (int attempt = 0; attempt < 30; attempt++)
+            {
+                string code = string.Concat(
+                Enumerable.Range(0, inviteCodeLength)
+                .Select(_ => chars[RandomNumberGenerator.GetInt32(chars.Length)]));
+
+                if (!await context.Chats.AnyAsync(c => c.InviteCode == code || c.OldInviteCode == code))
+                    return code;
+            }
+
+            throw new Exception("Failed to generate unique invite code after multiple attempts.");
         }
 
         private string BuildOAuthHeaderUser(string url, string method, string oauth_token, string oauth_verifier)
@@ -113,46 +119,46 @@ namespace Chatademia.Services
             return header;
         }
 
-        private async Task<UserVM> QueryUser(string access_token, string access_token_secret)
-        {
+        //private async Task<UserVM> QueryUser(string access_token, string access_token_secret)
+        //{
 
-            string requestUrl = BASE_URL + USER_URL;
+        //    string requestUrl = BASE_URL + USER_URL;
 
-            using var client = new HttpClient();
+        //    using var client = new HttpClient();
 
-            string authHeader = BuildOAuthHeaderUser(requestUrl, "GET", access_token, access_token_secret);
-            client.DefaultRequestHeaders.Add("Authorization", authHeader);
+        //    string authHeader = BuildOAuthHeaderUser(requestUrl, "GET", access_token, access_token_secret);
+        //    client.DefaultRequestHeaders.Add("Authorization", authHeader);
 
-            var response = await client.GetAsync(requestUrl);
-            string content = await response.Content.ReadAsStringAsync();
+        //    var response = await client.GetAsync(requestUrl);
+        //    string content = await response.Content.ReadAsStringAsync();
 
-            Console.WriteLine("UserData");
-            Console.WriteLine("Status: " + response.StatusCode);
-            Console.WriteLine("Response body:\n" + content);
+        //    Console.WriteLine("UserData");
+        //    Console.WriteLine("Status: " + response.StatusCode);
+        //    Console.WriteLine("Response body:\n" + content);
 
-            var data = JsonSerializer.Deserialize<Dictionary<string, string>>(content);
+        //    var data = JsonSerializer.Deserialize<Dictionary<string, string>>(content);
 
-            string id = data["id"];
-            string firstName = data["first_name"];
-            string lastName = data["last_name"];
+        //    string id = data["id"];
+        //    string firstName = data["first_name"];
+        //    string lastName = data["last_name"];
 
-            Console.WriteLine("user data: " + firstName + lastName);
+        //    Console.WriteLine("user data: " + firstName + lastName);
 
-            //user.FirstName = firstName; //crossed for now
-            //user.LastName = lastName; //crossed for now
+        //    //user.FirstName = firstName; //crossed for now
+        //    //user.LastName = lastName; //crossed for now
 
-            UserVM user_data = new UserVM();
-            user_data.Id = id;
-            user_data.FirstName = firstName;
-            user_data.LastName = lastName;
-            if(firstName.Length > 0)
-                user_data.ShortName = firstName[0].ToString().ToUpper();
-            if (lastName.Length > 0)
-                user_data.ShortName += lastName[0].ToString().ToUpper();
-            user_data.Color = Random.Shared.Next(0,10);
+        //    UserVM user_data = new UserVM();
+        //    user_data.Id = id;
+        //    user_data.FirstName = firstName;
+        //    user_data.LastName = lastName;
+        //    if (firstName.Length > 0)
+        //        user_data.ShortName = firstName[0].ToString().ToUpper();
+        //    if (lastName.Length > 0)
+        //        user_data.ShortName += lastName[0].ToString().ToUpper();
+        //    user_data.Color = Random.Shared.Next(0, 10);
 
-            return user_data;
-        }
+        //    return user_data;
+        //}
 
         private class Term
         {
@@ -375,7 +381,7 @@ namespace Chatademia.Services
                 if (dbchat.LastInviteCodeRefresh?.AddDays(4) <= DateTimeOffset.UtcNow)
                 {
                     dbchat.OldInviteCode = dbchat.InviteCode;
-                    dbchat.InviteCode = await CodeGenerator();
+                    dbchat.InviteCode = await CodeGenerator(_context);
                     dbchat.LastInviteCodeRefresh = DateTimeOffset.UtcNow;
                 }
             }
