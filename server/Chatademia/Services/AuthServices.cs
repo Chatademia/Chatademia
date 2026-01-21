@@ -489,10 +489,10 @@ namespace Chatademia.Services
                 var newUser = new User
                 {
                     ProviderId = payload.Subject,
-                    FirstName = payload.GivenName,
-                    LastName = payload.FamilyName,
-                    ShortName = (payload.GivenName.Length > 0 ? payload.GivenName[0].ToString().ToUpper() : "") +
-                            (payload.FamilyName.Length > 0 ? payload.FamilyName[0].ToString().ToUpper() : ""),
+                    FirstName = payload.GivenName ?? "",
+                    LastName = payload.FamilyName ?? "",
+                    ShortName = (payload.GivenName?.Length > 0 ? payload.GivenName[0].ToString().ToUpper() : "") +
+                            (payload.FamilyName?.Length > 0 ? payload.FamilyName[0].ToString().ToUpper() : ""),
                     Color = Random.Shared.Next(0, 10),
                     IsUsosAccount = false,
                     UserTokens = new UserTokens
@@ -509,10 +509,10 @@ namespace Chatademia.Services
             }
             else // refresh data
             {
-                oldUser.FirstName = payload.GivenName;
-                oldUser.LastName = payload.FamilyName;
-                oldUser.ShortName = (payload.GivenName.Length > 0 ? payload.GivenName[0].ToString().ToUpper() : "") +
-                        (payload.FamilyName.Length > 0 ? payload.FamilyName[0].ToString().ToUpper() : "");
+                oldUser.FirstName = payload.GivenName ?? "";
+                oldUser.LastName = payload.FamilyName ?? "";
+                oldUser.ShortName = (oldUser.FirstName.Length > 0 ? oldUser.FirstName[0].ToString().ToUpper() : "") +
+                        (oldUser.LastName.Length > 0 ? oldUser.LastName[0].ToString().ToUpper() : "");
                 oldUser.UserTokens.Session = Guid.NewGuid();
                 _context.Remove(tempUser);
                 await _context.SaveChangesAsync();
