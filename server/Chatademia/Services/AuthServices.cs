@@ -33,7 +33,7 @@ namespace Chatademia.Services
             "https://chatademia.social"
         };
 
-        private const string DefaultRedirect = "http://localhost:8080/scalar/v1#tag/"; // change for production to "https://chatademia.social"
+        private const string DefaultRedirect = "http://chatademia.social/backend"; // change for production to "https://chatademia.social"
 
         public string Validate(string? redirectUrl)
         {
@@ -398,7 +398,7 @@ namespace Chatademia.Services
             "https://accounts.google.com/o/oauth2/v2/auth" +
             "?response_type=code" +
             "&client_id=" + Uri.EscapeDataString(_CLIENT_ID) +
-            "&redirect_uri=" + Uri.EscapeDataString("http://localhost:8080/api/auth/google/callback") +
+            "&redirect_uri=" + Uri.EscapeDataString("https://chatademia.social/backend/api/auth/google/callback") +
             //"&scope=" + Uri.EscapeDataString("openid email profile") +
             "&scope=" + Uri.EscapeDataString("openid profile") +
             "&state=" + state +
@@ -454,7 +454,7 @@ namespace Chatademia.Services
                     ["code"] = code,
                     ["client_id"] = _CLIENT_ID,
                     ["client_secret"] = _CLIENT_SECRET,
-                    ["redirect_uri"] = "http://localhost:8080/api/auth/google/callback",
+                    ["redirect_uri"] = "https://chatademia.social/backend/api/auth/google/callback",
                     ["grant_type"] = "authorization_code"
                 })
             );

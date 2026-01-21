@@ -20,7 +20,7 @@ namespace Chatademia.Services
     {
         private readonly IDbContextFactory<AppDbContext> _factory;
         private readonly IHubContext<ChatHub> _hub;
-        private readonly string BASE_URL = "http://localhost:8080";
+        private readonly string BASE_URL = "https://chatademia.social/backend";
 
         public ChatServices(IDbContextFactory<AppDbContext> factory, IHubContext<ChatHub> hub)
         {

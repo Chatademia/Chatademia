@@ -146,6 +146,7 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
         <Route path="/onboarding" element={<Onboarding />} />
+	<Route path="/index" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   );
