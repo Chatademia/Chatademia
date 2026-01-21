@@ -191,7 +191,7 @@ namespace Chatademia.Services
                         .FirstOrDefault(),
                     CreatedAt = m.CreatedAt,
                     UpdatedAt = m.UpdatedAt,
-                }).ToList();
+                }).OrderBy(m => m.CreatedAt).ToList();
             
 
 
