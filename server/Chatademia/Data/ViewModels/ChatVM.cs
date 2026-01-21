@@ -12,6 +12,7 @@
         public string? InviteCode { get; set; }
         public bool? IsFavorite { get; set; }
         public string? ModeratorId { get; set; }
+        public bool? HasUnreadMessages { get; set; }
         public DateTimeOffset? UpdatedAt { get; set; } = null;
         public List<UserVM>? Participants { get; set; }
     }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using chatademia.Data;
@@ -11,9 +12,11 @@ using chatademia.Data;
 namespace chatademia.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260114175947_add_global_user_id")]
+    partial class add_global_user_id
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -64,6 +67,7 @@ namespace chatademia.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("UsosId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -130,31 +134,6 @@ namespace chatademia.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Messages");
-                });
-
-            modelBuilder.Entity("Chatademia.Data.MessageRead", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("MessageId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("ReadAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MessageId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("MessageReads");
                 });
 
             modelBuilder.Entity("Chatademia.Data.TempUser", b =>
@@ -292,25 +271,6 @@ namespace chatademia.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Chatademia.Data.MessageRead", b =>
-                {
-                    b.HasOne("Chatademia.Data.Message", "Message")
-                        .WithMany("MessageReads")
-                        .HasForeignKey("MessageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Chatademia.Data.User", "User")
-                        .WithMany("MessageReads")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Message");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Chatademia.Data.User", b =>
                 {
                     b.HasOne("Chatademia.Data.UserTokens", "UserTokens")
@@ -348,15 +308,8 @@ namespace chatademia.Migrations
                     b.Navigation("UserChatsMTMR");
                 });
 
-            modelBuilder.Entity("Chatademia.Data.Message", b =>
-                {
-                    b.Navigation("MessageReads");
-                });
-
             modelBuilder.Entity("Chatademia.Data.User", b =>
                 {
-                    b.Navigation("MessageReads");
-
                     b.Navigation("Messages");
 
                     b.Navigation("UserChatsMTMR");

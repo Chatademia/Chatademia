@@ -1,23 +1,17 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
 
 namespace Chatademia.Sockets
 {
+    [Authorize]
     public class ChatHub : Hub
     {
-        //TAKE THE GUID AND TURN IT INTO A STRING?
-        public async Task JoinChatSubscription(Guid chatId)
+        public override async Task OnConnectedAsync()
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, chatId.ToString());
-        }
-
-        public async Task NotifyChatSubscriptionMessageWasSent(Guid chatId)
-        {
-            await Clients.Group(chatId.ToString()).SendAsync("NEW MSG");
-        }
-
-        public async Task QuitChatSubscription(Guid chatId)
-        {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, chatId.ToString());
+            var userId = Context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"user:{userId}");
+            await base.OnConnectedAsync();
         }
     }
 }

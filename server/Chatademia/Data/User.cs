@@ -6,7 +6,8 @@ namespace Chatademia.Data
     public class User
     {
         [Key]
-        public string Id { get; set; }// = Guid.NewGuid();
+        public string Id { get; init; } = Guid.NewGuid().ToString();
+        public string ProviderId { get; set; } = "";// = Guid.NewGuid();
         public string FirstName { get; set; } = "";
         public string LastName { get; set; } = "";        
         public string ShortName { get; set; } = "";
@@ -17,6 +18,7 @@ namespace Chatademia.Data
         public DateTimeOffset? ChatsUpdatedAt { get; set; }
         public List<UserChatMTMRelation> UserChatsMTMR { get; set; } = new List<UserChatMTMRelation>();
         public List<Message> Messages { get; set; } = new List<Message>();
+        public List<MessageRead> MessageReads { get; set; } = new List<MessageRead>();
         public UserTokens UserTokens { get; set; } = new UserTokens();
     }
 }

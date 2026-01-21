@@ -114,6 +114,8 @@ function Chat({ devMode = false }) {
   });
   const [chats, setChats] = useState([]);
 
+  const [newMessageChatId, setNewMessageChatId] = useState([]);
+
   const [messages, setMessages] = useState([]);
 
   const [selectedChatId, setSelectedChatId] = useState(null);
@@ -197,15 +199,12 @@ function Chat({ devMode = false }) {
     setIsLoadingMessages(true);
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/chat/chat-messages`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/chat/chat-messages/${chatId}`,
         {
-          method: "POST",
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            chatId: chatId,
-          }),
           credentials: "include", // Send cookie with session token
         },
       );
@@ -489,7 +488,6 @@ function Chat({ devMode = false }) {
         throw new Error(data.error);
       }
 
-      // Update chats list
       setChats((prevChats) =>
         prevChats.map((chat) => {
           if (chat.id === selectedChatId) {
@@ -521,7 +519,12 @@ function Chat({ devMode = false }) {
         setIsLoadingUser(false);
       }
       try {
-        await getChatsData(setChats, setSelectedChatId, navigate);
+        await getChatsData(
+          setChats,
+          setSelectedChatId,
+          navigate,
+          setNewMessageChatId,
+        );
       } finally {
         setIsLoadingChats(false);
       }
@@ -583,7 +586,6 @@ function Chat({ devMode = false }) {
   // SignalR connection setup
   useEffect(() => {
     const setupSignalR = async () => {
-      // Wait for userData and selectedChatId to be loaded
       if (!userData.id || !selectedChatId) {
         console.log("Czekanie na załadowanie danych użytkownika i czatu...");
         return;
@@ -597,27 +599,55 @@ function Chat({ devMode = false }) {
         .configureLogging(signalR.LogLevel.Information)
         .build();
 
-      // Handle incoming messages
-      connection.on("NEW MSG", async () => {
+      connection.on("NEW MSG", async ({ chatId }) => {
         console.log("Otrzymano nową wiadomość, odświeżanie...");
-        if (selectedChatId) {
+        if (chatId === selectedChatId) {
           await fetchMessages(selectedChatId);
+        } else {
+          console.log("wiadomość z innego czatu", chatId);
+          setNewMessageChatId((prev) =>
+            prev.includes(chatId) ? prev : [...prev, chatId],
+          );
         }
       });
+
+      connection.on("MSG DEL", async () => {
+        console.log("Otrzymano usunięcie wiadomości, odświeżanie...");
+        if (selectedChatId) {
+          await fetchMessages(selectedChatId);
+          console.log("Wiadomość usunięta!");
+        }
+      });
+
+      //future development plan
+
+      // connection.on("USER JOINED", async () => {
+      //   console.log("Otrzymano nową wiadomość, odświeżanie...");
+      //   if (selectedChatId) {
+      //     await fetchChatDetails(selectedChatId);
+      //     console.log("Nowy użytkownik dołączył!");
+      //   }
+      // });
+
+      // connection.on("USER LEFT", async () => {
+      //   console.log("Otrzymano nową wiadomość o wyjściu użytkownika, odświeżanie...");
+      //   if (selectedChatId) {
+      //     await fetchChatDetails(selectedChatId);
+      //     console.log("Nowy użytkownik dołączył!");
+      //   }
+      // });
 
       try {
         await connection.start();
         console.log("SignalR połączony");
         hubConnectionRef.current = connection;
 
-        // Join initial chat subscription
+        // Load messages for the selected chat
+        // (Already in user:{userId} group from OnConnectedAsync on backend)
         try {
-          await connection.invoke("JoinChatSubscription", selectedChatId);
-
-          // Load messages for the selected chat
           await fetchMessages(selectedChatId);
         } catch (error) {
-          console.error("Błąd podczas przełączania czatów:", error);
+          console.error("Błąd podczas pobierania wiadomości:", error);
         }
       } catch (error) {
         console.error("Błąd połączenia SignalR:", error);
@@ -635,6 +665,42 @@ function Chat({ devMode = false }) {
       }
     };
   }, [selectedChatId, userData.id]);
+
+  // Remove new flag when entering a chat
+  useEffect(() => {
+    const markAsRead = async () => {
+      if (selectedChatId) {
+        setNewMessageChatId((prev) =>
+          prev.filter((id) => id !== selectedChatId),
+        );
+        try {
+          const response = await fetch(
+            `${process.env.REACT_APP_BACKEND_URL}/api/chat/read`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                chatId: selectedChatId,
+              }),
+              credentials: "include",
+            },
+          );
+          if (!response.ok) {
+            throw new Error(response.status);
+          }
+        } catch (error) {
+          console.error(
+            "Błąd podczas zaznaczania wiadomości z chatu jako odczytane:",
+            error,
+          );
+        }
+      }
+    };
+
+    markAsRead();
+  }, [selectedChatId]);
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -815,6 +881,7 @@ function Chat({ devMode = false }) {
                       color={COLORS[chat.color]}
                       chatShortName={chat.shortName}
                       chatName={chat.name}
+                      hasNew={newMessageChatId.includes(chat.id)}
                       onClick={() =>
                         handleChatSwitch(
                           chat.id,
@@ -851,6 +918,7 @@ function Chat({ devMode = false }) {
                       color={COLORS[chat.color]}
                       chatShortName={chat.shortName}
                       chatName={chat.name}
+                      hasNew={newMessageChatId.includes(chat.id)}
                       onClick={() =>
                         handleChatSwitch(
                           chat.id,

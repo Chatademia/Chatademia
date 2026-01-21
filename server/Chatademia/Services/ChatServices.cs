@@ -1,12 +1,15 @@
 ﻿using chatademia.Data;
 using Chatademia.Data;
 using Chatademia.Data.ViewModels;
+using Chatademia.Sockets;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 using System;
 using System.Buffers.Text;
+using System.Drawing;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -16,23 +19,50 @@ namespace Chatademia.Services
     public class ChatServices
     {
         private readonly IDbContextFactory<AppDbContext> _factory;
+        private readonly IHubContext<ChatHub> _hub;
         private readonly string BASE_URL = "http://localhost:8080";
 
-        public ChatServices(IDbContextFactory<AppDbContext> factory)
+        public ChatServices(IDbContextFactory<AppDbContext> factory, IHubContext<ChatHub> hub)
         {
             _factory = factory;
+            _hub = hub;
         }
 
-        private async Task<string> CodeGenerator()
+
+        private async Task<string> CodeGenerator(AppDbContext context)
         {
             const string chars = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
             const int inviteCodeLength = 6;
-            string code = string.Concat(
-                Enumerable.Range(0, inviteCodeLength)
-                .Select(_ => chars[RandomNumberGenerator.GetInt32(chars.Length)])
-            );
 
-            return code;
+            for (int attempt = 0; attempt < 30; attempt++)
+            {
+                string code = string.Concat(
+                Enumerable.Range(0, inviteCodeLength)
+                .Select(_ => chars[RandomNumberGenerator.GetInt32(chars.Length)]));
+
+                if (!await context.Chats.AnyAsync(c => c.InviteCode == code || c.OldInviteCode == code))
+                    return code;
+            }
+
+            throw new Exception("Failed to generate unique invite code after multiple attempts.");
+        }
+
+        private async Task HubUpdate(Guid chatId, string message)
+        {
+            using var _context = _factory.CreateDbContext();
+
+            var membersId = await _context.UserChatMTMRelations
+                .Where(uc => uc.ChatId == chatId && uc.IsRelationActive == true)
+                .Select(uc => uc.UserId)
+                .ToListAsync();
+
+            foreach (var userId in membersId)
+            {
+                await _hub.Clients
+                    .Group($"user:{userId}")
+                    .SendAsync(message, new { chatId });
+            }
+            return;
         }
 
         private async Task<string> UploadFile(Guid session, IFormFile file)
@@ -133,7 +163,7 @@ namespace Chatademia.Services
         {
             using var _context = _factory.CreateDbContext();
             var user = await _context.Users
-                .Include(u => u.UserTokens)
+                //.Include(u => u.UserTokens)
                 .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
             if (user == null)
@@ -155,9 +185,13 @@ namespace Chatademia.Services
                     Content = m.Content,
                     Type = m.Type,
                     FileName = m.Type == "file" ? m.oldFileName : null,
+                    ReadByUserAt = m.MessageReads
+                        .Where(mr => mr.UserId == user.Id)
+                        .Select(mr => mr.ReadAt)
+                        .FirstOrDefault(),
                     CreatedAt = m.CreatedAt,
                     UpdatedAt = m.UpdatedAt,
-                }).ToList();
+                }).OrderBy(m => m.CreatedAt).ToList();
             
 
 
@@ -176,17 +210,17 @@ namespace Chatademia.Services
             if (user == null)
                 throw new Exception($"Invalid session");
 
-            var chat = await _context.Chats
-                .FirstOrDefaultAsync(c => c.Id == chatId);
-            if(chat == null)
-                throw new Exception("Chat not found");
-
-            var chatUserRelation = await _context.UserChatMTMRelations
-                .Where(cu => cu.ChatId == chatId && cu.UserId == user.Id)
+            var chat = await _context.UserChatMTMRelations
+                .Where(uc =>
+                    uc.ChatId == chatId &&
+                    uc.UserId == user.Id &&
+                    uc.IsRelationActive)
+                .Select(uc => uc.Chat)
                 .FirstOrDefaultAsync();
 
-            if (chatUserRelation == null || chatUserRelation.IsRelationActive == false)
-                throw new Exception($"User not in chat");
+            if (chat == null)
+                throw new Exception("Chat not found");
+
 
             string type;
             if (string.IsNullOrWhiteSpace(content) && file != null)
@@ -197,14 +231,23 @@ namespace Chatademia.Services
                 throw new Exception("One and only one of content and file must be provided");
 
             var message = new Message
+            {
+                Id = Guid.NewGuid(),
+                Type = type,
+                ChatId = chatId,
+                UserId = user.Id,
+                CreatedAt = DateTime.UtcNow,
+                IsDeleted = false,
+                MessageReads = new List<MessageRead>
                 {
-                    Id = Guid.NewGuid(),
-                    Type = type,
-                    ChatId = chatId,
-                    UserId = user.Id,
-                    CreatedAt = DateTime.UtcNow,
-                    IsDeleted = false,
-                };
+                    // Sender has read their own message
+                    new MessageRead
+                    {
+                        UserId = user.Id,
+                        ReadAt = DateTimeOffset.UtcNow
+                    }
+                }
+            };
 
             if (type == "text")
                 message.Content = content;
@@ -225,11 +268,18 @@ namespace Chatademia.Services
                 SenderId = message.UserId,
                 Type = type,
                 Content = message.Content,
+                ReadByUserAt = message.MessageReads
+                    .Where(mr => mr.UserId == user.Id)
+                    .Select(mr => mr.ReadAt)
+                    .FirstOrDefault(),
                 CreatedAt = message.CreatedAt
             };
 
             if (type == "file")
                 new_msg.FileName = message.oldFileName;
+
+            await HubUpdate(chatId, "NEW MSG");
+
             return new_msg;
         }
 
@@ -237,7 +287,7 @@ namespace Chatademia.Services
         {
             using var _context = _factory.CreateDbContext();
             var user = await _context.Users
-                .Include(u => u.UserTokens)
+                //.Include(u => u.UserTokens)
                 .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
             if (user == null)
@@ -259,6 +309,8 @@ namespace Chatademia.Services
             message.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            await HubUpdate(chatId, "MSG DEL");
 
             return null;
         }
@@ -290,26 +342,67 @@ namespace Chatademia.Services
 
         }
 
+        public async Task MarkMessagesAsRead(Guid session, Guid chatId)
+        {
+            using var _context = _factory.CreateDbContext();
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
+
+            if (user == null)
+                throw new Exception($"Invalid session");
+
+            var chatRelation = await _context.UserChatMTMRelations
+                .FirstOrDefaultAsync(uc => uc.ChatId == chatId && uc.UserId == user.Id && uc.IsRelationActive == true);
+
+            if (chatRelation == null)
+                throw new Exception("Relation not found");
+
+            var unreadMessageIds = await _context.Messages
+                .Where(m => m.ChatId == chatId)
+                .Where(m => !m.MessageReads.Any(mr => mr.UserId == user.Id)) // no read record for this user
+                .Select(m => m.Id)
+                .ToListAsync();
+
+            foreach (var messageId in unreadMessageIds)
+            {
+                _context.MessageReads.Add(new MessageRead
+                {
+                    MessageId = messageId,
+                    UserId = user.Id,
+                    ReadAt = DateTimeOffset.UtcNow
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            return;
+        }
+
         public async Task<ChatVM> CreateChat(Guid session, ChatCreateVM chatData)
         {
             using var _context = _factory.CreateDbContext();
             var user = await _context.Users
-                .Include(u => u.UserTokens)
+                //.Include(u => u.UserTokens)
                 .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
             if (user == null)
                 throw new Exception($"Invalid session");
 
             Guid ID = Guid.NewGuid();
+
+            chatData.Name = chatData.Name ?? "New Chat";
+            if (chatData.Color < 0 || chatData.Color >= 10)
+                throw new Exception("Color must be between 0 and 9");
+
             var chat = new Chat
             {
                 Id = ID,
-                UsosId = ID.ToString(),
+                //UsosId = ID.ToString(),
                 Name = chatData.Name,
                 ShortName = string.Concat(chatData.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(word => char.ToUpper(word[0]))),
                 Color = chatData.Color ?? 0,
                 ModeratorId = user.Id,
-                InviteCode = await CodeGenerator(),
+                InviteCode = await CodeGenerator(_context),
                 LastInviteCodeRefresh = DateTimeOffset.UtcNow
             };
 
@@ -352,7 +445,7 @@ namespace Chatademia.Services
         {
             using var _context = _factory.CreateDbContext();
             var user = await _context.Users
-                .Include(u => u.UserTokens)
+                //.Include(u => u.UserTokens)
                 .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
             if (user == null)
@@ -373,6 +466,8 @@ namespace Chatademia.Services
 
             await _context.SaveChangesAsync();
 
+            await HubUpdate(chat.Id, "USER LEFT");
+
             return null;
         }
 
@@ -380,7 +475,7 @@ namespace Chatademia.Services
         {
             using var _context = _factory.CreateDbContext();
             var user = await _context.Users
-                .Include(u => u.UserTokens)
+                //.Include(u => u.UserTokens)
                 .FirstOrDefaultAsync(u => u.UserTokens.Session == session);
 
             if (user == null)
@@ -389,14 +484,17 @@ namespace Chatademia.Services
             var chat = await _context.Chats
                 .FirstOrDefaultAsync(c => c.Id == chatId);
 
-            if (user.Id != chat.ModeratorId)
-                throw new Exception($"User is not moderator");
-
             var chatRelation = await _context.UserChatMTMRelations
                 .FirstOrDefaultAsync(uc => uc.ChatId == chatId && uc.UserId == UserToRemoveId && uc.IsRelationActive == true);
 
             if (chatRelation == null)
-                throw new Exception("Relation not found");
+                throw new Exception("User to remove not found");
+
+            var isModerator = await _context.UserChatMTMRelations
+                .AnyAsync(uc => uc.ChatId == chatId && uc.UserId == user.Id && uc.IsRelationActive == true && chat.ModeratorId == user.Id);
+
+            if (!isModerator)
+                throw new Exception($"User is not an active moderator");
 
             chatRelation.IsRelationActive = false;
 
@@ -404,9 +502,11 @@ namespace Chatademia.Services
 
             await _context.SaveChangesAsync();
 
+            await HubUpdate(chat.Id, "USER REMOVED");
+
             return null;
         }
-        public async Task JoinChat(Guid session, string inviteCode)
+        public async Task<ChatVM> JoinChat(Guid session, string inviteCode)
         {
             using var _context = _factory.CreateDbContext();
 
@@ -447,7 +547,29 @@ namespace Chatademia.Services
 
             await _context.SaveChangesAsync();
 
-            return;
+            await HubUpdate(chat.Id, "USER JOINED");
+
+            var chatVM = new ChatVM
+            {
+                Id = chat.Id,
+                Name = chat.Name,
+                ShortName = chat.ShortName,
+                Color = chat.Color,
+                InviteCode = chat.InviteCode,
+                ModeratorId = chat.ModeratorId,
+                Participants = _context.UserChatMTMRelations
+                    .Where(uc => uc.ChatId == chat.Id && uc.IsRelationActive == true)
+                    .Select(uc => new UserVM
+                    {
+                        Id = uc.User.Id,
+                        FirstName = uc.User.FirstName,
+                        LastName = uc.User.LastName,
+                        ShortName = uc.User.ShortName,
+                        Color = uc.User.Color
+                    }).ToList()
+            };
+
+            return chatVM;
         }
 
         public async Task<SetFavoriteChatVM> SetFavoriteStatus(Guid session, SetFavoriteChatVM setFavoriteChatVM)

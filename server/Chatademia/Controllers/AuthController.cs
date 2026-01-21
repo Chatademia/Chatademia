@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Web;
+using Microsoft.AspNetCore.RateLimiting;
+
 
 namespace chatademia.Controllers
 {
@@ -20,6 +23,7 @@ namespace chatademia.Controllers
         }
 
         [HttpPost("session")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Login([FromBody] SessionRequestVM request)
         {
             var session = await _loginServices.Login(request.OauthToken, request.OauthVerifier);
@@ -35,29 +39,22 @@ namespace chatademia.Controllers
                 Expires = DateTimeOffset.UtcNow.AddDays(1)
             });
 
-            return Ok(new { session = session.Session.ToString() });
+            return Ok();
         }
 
         [HttpGet("login-url")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> LoginUrl([FromQuery] string callbackUrl)
         {
             var url = await _loginServices.LoginUrl(callbackUrl);
             return Ok(url);
         }
 
+        [Authorize]
         [HttpDelete("session")]
         public async Task<IActionResult> TerminateSession()
         {
-            // Read session token from HttpOnly cookie
-            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken))
-            {
-                return Unauthorized(new { error = "Brak tokenu sesji" });
-            }
-
-            if (!Guid.TryParse(sessionToken, out var session))
-            {
-                return Unauthorized(new { error = "Nieprawidłowy token sesji" });
-            }
+            var session = Guid.Parse(User.FindFirstValue("session_id"));
 
             await _loginServices.TerminateSession(session);
 
@@ -72,6 +69,7 @@ namespace chatademia.Controllers
         }
 
         [HttpGet("google/login-url")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> GoogleLoginUrl([FromQuery] string callbackUrl)
         {
             var url = await _loginServices.GoogleLoginUrl(callbackUrl);
