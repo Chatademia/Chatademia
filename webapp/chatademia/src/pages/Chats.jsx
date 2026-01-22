@@ -87,7 +87,9 @@ function Chat({ devMode = false }) {
     useState(false);
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
-  const isFirstRender = useRef(true);
+  const messagesContainerRef = useRef(null);
+  const shouldScrollInstantly = useRef(true);
+  const previousChatId = useRef(null);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const fileInputRef = useRef(null);
   const hubConnectionRef = useRef(null);
@@ -702,14 +704,34 @@ function Chat({ devMode = false }) {
     markAsRead();
   }, [selectedChatId]);
 
+  // Reset instant scroll flag when chat changes
   useEffect(() => {
-    if (isFirstRender.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-      isFirstRender.current = false;
+    if (selectedChatId !== previousChatId.current) {
+      shouldScrollInstantly.current = true;
+      previousChatId.current = selectedChatId;
+    }
+  }, [selectedChatId]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (!messagesContainerRef.current || messages.length === 0) return;
+
+    const container = messagesContainerRef.current;
+    const scrollToBottom = () => {
+      container.scrollTop = container.scrollHeight;
+    };
+
+    if (shouldScrollInstantly.current) {
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        scrollToBottom();
+        shouldScrollInstantly.current = false;
+      });
     } else {
+      // Smooth scroll for new messages
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, selectedChatId]);
+  }, [messages]);
 
   return (
     <div className="bg-white flex h-screen relative">
@@ -1016,7 +1038,7 @@ function Chat({ devMode = false }) {
                 {selectedChat?.name}
               </h1>
             </div>
-            <div className="bg-white h-[82.885%] overflow-y-auto">
+            <div ref={messagesContainerRef} className="bg-white h-[82.885%] overflow-y-auto">
               <div className="p-5 flex flex-col gap-4">
                 {false ? (
                   <>
