@@ -6,6 +6,7 @@ import CreateChatPopup from "../components/CreateChatPopup.jsx";
 import CreateChatSuccessPopup from "../components/CreateChatSuccessPopup.jsx";
 import React, {
   useEffect,
+  useLayoutEffect,
   useState,
   useRef,
   useMemo,
@@ -88,6 +89,13 @@ function Chat({ devMode = false }) {
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const isFirstRender = useRef(true);
+  const prevMessagesLengthRef = useRef(0);
+  const prevSelectedChatIdRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  // Track if the container was at bottom before an update (to decide whether to auto-scroll)
+  const lastWasAtBottomRef = useRef(true);
+  // Flag to indicate we appended a message locally (send/attachment) so we always scroll
+  const lastAppendLocalRef = useRef(false);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const fileInputRef = useRef(null);
   const hubConnectionRef = useRef(null);
@@ -178,8 +186,9 @@ function Chat({ devMode = false }) {
         throw new Error(data.error);
       }
 
-      // Add new message to the list
-      setMessages((prevMessages) => [...prevMessages, data]);
+  // Add new message to the list (mark as local append so layout effect will scroll)
+  lastAppendLocalRef.current = true;
+  setMessages((prevMessages) => [...prevMessages, data]);
       console.log("Wysłano załącznik:", data);
     } catch (error) {
       console.error("Błąd podczas wysyłania załącznika:", error);
@@ -195,8 +204,11 @@ function Chat({ devMode = false }) {
     }
   };
 
-  const fetchMessages = useCallback(async (chatId) => {
-    setIsLoadingMessages(true);
+  // fetchMessages accepts an options object. When showLoader is false
+  // we refresh messages in the background without showing skeletons so
+  // the old UI remains visible (prevents flicker / jump).
+  const fetchMessages = useCallback(async (chatId, { showLoader = true } = {}) => {
+    if (showLoader) setIsLoadingMessages(true);
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/chat/chat-messages/${chatId}`,
@@ -229,11 +241,23 @@ function Chat({ devMode = false }) {
       }
 
       console.log("Pobrano wiadomości:", data);
+      // Preserve scroll position: remember whether user was at (or near) bottom
+      const container = messagesContainerRef.current;
+      const wasAtBottom = container
+        ? container.scrollTop + container.clientHeight >=
+          container.scrollHeight - 20
+        : true;
+
+      // Save this state for the layout effect so it can decide whether to auto-scroll.
+      lastWasAtBottomRef.current = wasAtBottom;
+
+      // Replace messages (background refresh). Do NOT force scroll here —
+      // let the layout effect make a single, consistent decision before paint.
       setMessages(data);
     } catch (error) {
       console.error("Błąd podczas pobierania wiadomości:", error);
     } finally {
-      setIsLoadingMessages(false);
+      if (showLoader) setIsLoadingMessages(false);
     }
   }, []);
 
@@ -274,8 +298,9 @@ function Chat({ devMode = false }) {
         throw new Error(data.error);
       }
 
-      // Add new message to the list
-      setMessages((prevMessages) => [...prevMessages, data]);
+  // Add new message to the list (mark as local append so layout effect will scroll)
+  lastAppendLocalRef.current = true;
+  setMessages((prevMessages) => [...prevMessages, data]);
       console.log("Wysłano wiadomość:", data);
     } catch (error) {
       console.error("Błąd podczas wysyłania wiadomości:", error);
@@ -602,7 +627,8 @@ function Chat({ devMode = false }) {
       connection.on("NEW MSG", async ({ chatId }) => {
         console.log("Otrzymano nową wiadomość, odświeżanie...");
         if (chatId === selectedChatId) {
-          await fetchMessages(selectedChatId);
+          // Refresh in background without showing loader to avoid flicker
+          await fetchMessages(selectedChatId, { showLoader: false });
         } else {
           console.log("wiadomość z innego czatu", chatId);
           setNewMessageChatId((prev) =>
@@ -614,7 +640,8 @@ function Chat({ devMode = false }) {
       connection.on("MSG DEL", async () => {
         console.log("Otrzymano usunięcie wiadomości, odświeżanie...");
         if (selectedChatId) {
-          await fetchMessages(selectedChatId);
+          // Refresh in background without showing loader to avoid flicker
+          await fetchMessages(selectedChatId, { showLoader: false });
           console.log("Wiadomość usunięta!");
         }
       });
@@ -702,12 +729,40 @@ function Chat({ devMode = false }) {
     markAsRead();
   }, [selectedChatId]);
 
-  useEffect(() => {
-    if (isFirstRender.current) {
+  // Use a layout effect so scrolling happens before the browser paints.
+  // This prevents a visible jump from top -> bottom when messages are reloaded.
+  useLayoutEffect(() => {
+    try {
+      const prevLen = prevMessagesLengthRef.current;
+      const currLen = messages?.length || 0;
+      const prevSelected = prevSelectedChatIdRef.current;
+      // If we switched chats, jump to bottom immediately (new conversation).
+      if (prevSelected !== selectedChatId) {
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+        isFirstRender.current = false;
+      } else if (isFirstRender.current || prevLen === 0) {
+        // first load of messages: immediate jump
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+        isFirstRender.current = false;
+      } else if (currLen > prevLen) {
+        // New message appended -> decide based on whether user was at bottom
+        // or whether the append was a local action (user sent message).
+        if (lastAppendLocalRef.current || lastWasAtBottomRef.current) {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        } else {
+          // User isn't at bottom and update came from server — keep their view.
+          // Do not auto-scroll.
+        }
+      }
+
+      // Persist state for future diffs
+      prevMessagesLengthRef.current = currLen;
+      prevSelectedChatIdRef.current = selectedChatId;
+      // Clear local-append flag after handling
+      lastAppendLocalRef.current = false;
+    } catch (e) {
+      // defensive: if anything fails, still try to jump to bottom
       messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-      isFirstRender.current = false;
-    } else {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, selectedChatId]);
 
@@ -1016,7 +1071,7 @@ function Chat({ devMode = false }) {
                 {selectedChat?.name}
               </h1>
             </div>
-            <div className="bg-white h-[82.885%] overflow-y-auto">
+            <div ref={messagesContainerRef} className="bg-white h-[82.885%] overflow-y-auto">
               <div className="p-5 flex flex-col gap-4">
                 {isLoadingMessages ? (
                   <>
