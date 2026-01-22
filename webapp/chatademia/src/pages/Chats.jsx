@@ -1018,7 +1018,7 @@ function Chat({ devMode = false }) {
             </div>
             <div className="bg-white h-[82.885%] overflow-y-auto">
               <div className="p-5 flex flex-col gap-4">
-                {isLoadingMessages ? (
+                {false ? (
                   <>
                     <div className="flex gap-3 justify-start">
                       <Skeleton
